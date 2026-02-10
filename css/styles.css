@@ -13741,7 +13741,6 @@ img:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 30px;
   margin: 60px auto;
   padding: 0 40px;
   max-width: 1200px;
@@ -13891,6 +13890,9 @@ img:hover {
 }
 
 .blog-carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -13906,6 +13908,15 @@ img:hover {
   flex-shrink: 0;
   backdrop-filter: blur(10px);
   box-shadow: 0 8px 25px rgba(249, 5, 108, 0.2);
+  z-index: 100;
+}
+
+.blog-carousel-btn.prev-btn {
+  left: -25px;
+}
+
+.blog-carousel-btn.next-btn {
+  right: -25px;
 }
 
 .blog-carousel-btn:hover {
