@@ -459,6 +459,8 @@ legend {
   font-weight: 800;
   letter-spacing: 0.04em;
   text-shadow: 0 6px 18px rgba(181,4,68,0.06);
+  white-space: nowrap;
+  overflow: visible;
 }
 .masthead .btn-start-hero{
   display: inline-block;
@@ -13747,27 +13749,26 @@ img:hover {
 .blog-cards-wrapper {
   position: relative;
   width: 100%;
-  max-width: 1000px;
-  height: 550px;
+  max-width: 900px;
+  height: 420px;
   margin: 0 auto;
 }
 
 .blog-card {
   position: absolute;
   width: 100%;
-  max-width: 1000px;
-  height: 550px;
+  max-width: 900px;
+  height: 420px;
   top: 0;
   left: 0;
-  background: linear-gradient(135deg, #f9056c 0%, #ff3488 100%);
-  border-radius: 25px;
+  background: #ffffff;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 20px 50px rgba(249, 5, 108, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   opacity: 0;
   pointer-events: none;
-  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  border: 2px solid #f0f0f0;
   z-index: 1;
 }
 
@@ -13780,19 +13781,23 @@ img:hover {
 .blog-card-image {
   position: relative;
   width: 100%;
-  height: 300px;
+  height: 220px;
   overflow: hidden;
+  background: linear-gradient(135deg, #f9056c 0%, #ff3488 100%);
 }
 
 .blog-card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform 0.6s ease;
+  opacity: 0.95;
+  mix-blend-mode: multiply;
 }
 
 .blog-card:hover .blog-card-image img {
-  transform: scale(1.08) rotate(1deg);
+  transform: scale(1.05);
+  opacity: 1;
 }
 
 .blog-card-overlay {
@@ -13801,16 +13806,16 @@ img:hover {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(249, 5, 108, 0.8) 0%, rgba(255, 52, 136, 0.6) 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
   display: flex;
   align-items: flex-end;
   padding: 20px;
-  opacity: 0;
-  transition: opacity 0.4s ease;
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
 .blog-card:hover .blog-card-overlay {
-  opacity: 1;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.5) 100%);
 }
 
 .blog-tag {
@@ -13826,60 +13831,59 @@ img:hover {
 }
 
 .blog-card-content {
-  padding: 30px;
-  background: transparent;
+  padding: 22px 26px;
+  background: white;
 }
 
 .blog-card-date {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 12px;
-  font-weight: 600;
+  color: #f9056c;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 10px;
+  letter-spacing: 1.2px;
+  margin-bottom: 8px;
 }
 
 .blog-card-title {
-  font-size: 22px;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: white;
-  margin: 15px 0;
+  color: #2c3e50;
+  margin: 8px 0 12px;
   line-height: 1.4;
   transition: color 0.3s ease;
 }
 
 .blog-card:hover .blog-card-title {
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  color: #f9056c;
 }
 
 .blog-card-description {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 15px;
+  color: #555;
+  font-size: 0.9rem;
   line-height: 1.6;
-  margin: 15px 0;
-  min-height: 60px;
+  margin: 0 0 14px;
+  min-height: 48px;
 }
 
 .blog-card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 15px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 0.8rem;
+  color: #888;
 }
 
 .blog-card-author {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: white;
+  color: #666;
 }
 
 .blog-card-read {
-  color: rgba(255, 255, 255, 0.8);
+  color: #888;
 }
 
 .blog-carousel-btn {
