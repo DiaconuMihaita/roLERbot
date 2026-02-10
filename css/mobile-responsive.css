@@ -1,0 +1,309 @@
+/* Mobile Responsive Fixes - Added for phone compatibility */
+
+/* Prevent horizontal scrolling on all devices */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Mobile-first approach for phones (up to 640px) */
+@media (max-width: 640px) {
+  body {
+    padding: 0;
+    margin: 0;
+    font-size: 14px;
+  }
+
+  /* Container padding fixes */
+  .container {
+    padding-left: 12px;
+    padding-right: 12px;
+    max-width: 100% !important;
+    width: 100%;
+  }
+
+  .container-fluid {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Navbar fixes */
+  #mainNav {
+    padding: 0.5rem 0 !important;
+  }
+
+  .navbar-brand {
+    padding: 0.3rem 0;
+  }
+
+  .logo-img {
+    max-width: 40px;
+    height: auto;
+  }
+
+  .nav-link {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.8rem !important;
+  }
+
+  /* Hero section */
+  .masthead {
+    padding: 5rem 1.2rem 3rem;
+  }
+
+  .masthead-heading {
+    font-size: 1.75rem;
+    line-height: 1.2;
+    word-break: break-word;
+    font-weight: 700;
+  }
+
+  .masthead-subheading {
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  /* Page sections */
+  .page-section {
+    padding: 3.5rem 0;
+  }
+
+  .section-heading {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-subheading {
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Text content */
+  p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  h4 {
+    font-size: 1.1rem;
+  }
+
+  /* Portfolio & Grid items */
+  .portfolio-item {
+    margin-bottom: 1.5rem;
+  }
+
+  .col-lg-4,
+  .col-md-6,
+  .col-sm-6 {
+    padding: 0.75rem 0;
+  }
+
+  .portfolio-caption-heading {
+    font-size: 0.9rem;
+  }
+
+  /* Timeline layout */
+  .timeline {
+    padding-left: 0;
+  }
+
+  .timeline li {
+    margin-bottom: 2rem;
+    padding: 0;
+    margin-left: 0;
+    text-align: left;
+  }
+
+  .timeline-image {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    margin: 0 auto 1rem;
+    left: auto;
+  }
+
+  .timeline-panel {
+    padding: 0.5rem;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .timeline-heading h4 {
+    font-size: 0.95rem;
+  }
+
+  .timeline-body .text-muted {
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  /* Blog carousel */
+  .blog-carousel-container {
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .blog-cards-wrapper {
+    gap: 8px;
+  }
+
+  .blog-card {
+    min-width: 85vw;
+    max-width: calc(100vw - 32px);
+    flex-shrink: 0;
+  }
+
+  .blog-card-image {
+    height: 150px;
+  }
+
+  .blog-card-title {
+    font-size: 0.9rem;
+    line-height: 1.3;
+  }
+
+  .blog-card-description {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .blog-carousel-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    display: inline-block;
+    width: auto;
+  }
+
+  .btn-xl {
+    padding: 0.8rem 1.6rem;
+    font-size: 0.95rem;
+  }
+
+  .btn-primary {
+    width: auto;
+  }
+
+  /* Images */
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .img-fluid {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Footer */
+  .footer-section {
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .footer-title {
+    font-size: 1rem;
+  }
+
+  .footer-heading {
+    font-size: 0.95rem;
+  }
+
+  .footer-links,
+  .footer-contact {
+    text-align: center;
+  }
+
+  .footer-links li,
+  .footer-contact li {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .footer-social {
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .footer-bottom {
+    text-align: center;
+  }
+
+  /* Remove tap highlight */
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Flexbox adjustments */
+  .d-flex {
+    flex-wrap: wrap;
+  }
+
+  .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+/* Tablet adjustments (640px to 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .masthead {
+    padding: 6rem 1.5rem 4rem;
+  }
+
+  .masthead-heading {
+    font-size: 2.2rem;
+  }
+
+  .page-section {
+    padding: 4rem 1.5rem;
+  }
+
+  .section-heading {
+    font-size: 1.75rem;
+  }
+
+  .blog-card {
+    min-width: 300px;
+  }
+}
+
+/* Ensure no overflow on all widths */
+* {
+  box-sizing: border-box;
+}
+
+/* Fix for potential overflow issues */
+body {
+  word-break: break-word;
+  word-wrap: break-word;
+}
+
+table {
+  table-layout: auto;
+  max-width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+/* Prevent images from overflowing */
+img,
+video,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
