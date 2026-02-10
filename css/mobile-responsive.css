@@ -307,3 +307,292 @@ iframe {
   max-width: 100%;
   height: auto;
 }
+
+/* === BLOG.HTML SPECIFIC MOBILE FIXES === */
+
+@media (max-width: 640px) {
+  
+  /* Fix member description box (pink box with member description) */
+  .member-description-box {
+    padding: 16px !important;
+    min-height: 280px !important;
+    border-radius: 16px !important;
+  }
+
+  .description-content {
+    top: 16px !important;
+    left: 16px !important;
+    right: 16px !important;
+  }
+
+  .description-content h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .description-content p {
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  /* Fix team carousel on mobile */
+  .team-carousel-container {
+    padding: 0 8px;
+  }
+
+  .team-card {
+    min-width: 180px;
+    max-width: 200px;
+  }
+
+  .member-photo {
+    width: 100px;
+    height: 100px;
+  }
+
+  .member-name {
+    font-size: 0.9rem;
+  }
+
+  .member-department {
+    font-size: 0.75rem;
+  }
+
+  /* Fix season folders grid */
+  .season-grid {
+    grid-template-columns: 1fr !important;
+    gap: 30px;
+    padding: 10px;
+  }
+
+  .folder-item {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .folder-wrapper {
+    width: 100%;
+    max-width: 260px;
+    height: 200px;
+    margin: 0 auto;
+  }
+
+  .folder-year {
+    font-size: 1.3rem;
+  }
+
+  .folder-icon {
+    font-size: 2.5rem;
+  }
+
+  /* Fix modal (seasons popup) */
+  .modal-window {
+    width: 96%;
+    height: 92vh;
+    border-radius: 16px;
+    max-width: none;
+  }
+
+  .modal-header {
+    padding: 16px 14px;
+  }
+
+  .modal-title {
+    font-size: 1.2rem;
+  }
+
+  .modal-close {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  /* Fix modal tabs (Proba, Robot, Activitati, Meeturi buttons) */
+  .modal-tabs {
+    padding: 8px 10px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .modal-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-btn {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    margin-right: 4px;
+    flex-shrink: 0;
+    min-width: fit-content;
+  }
+
+  .tab-btn.active {
+    border: 1px solid #eee;
+    border-bottom-color: white;
+  }
+
+  .modal-body {
+    padding: 20px 14px;
+  }
+
+  /* Fix robot section layout */
+  .robot-section {
+    padding: 14px 16px;
+    border-radius: 12px;
+    gap: 16px;
+  }
+
+  .robot-media {
+    width: 100%;
+  }
+
+  .robot-viewer,
+  .robot-image {
+    height: 280px;
+    border-radius: 8px;
+  }
+
+  .robot-title {
+    font-size: 1.1rem;
+  }
+
+  .robot-content p {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+
+  /* Fix file grid (robot features cards) */
+  .file-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+
+  .file-card {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .file-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+  }
+
+  .file-name {
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+
+  .file-desc {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  /* Fix activity grid */
+  .activity-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  .activity-card {
+    border-radius: 14px;
+  }
+
+  .activity-title {
+    font-size: 0.95rem;
+  }
+
+  .activity-text,
+  .activity-meta {
+    font-size: 0.85rem;
+  }
+
+  .activity-body {
+    padding: 12px 14px 14px;
+  }
+
+  /* Fix accordion/cards in meeturi section */
+  .card {
+    border-radius: 14px !important;
+    margin-bottom: 12px;
+  }
+
+  .card-header {
+    padding: 12px 14px !important;
+  }
+
+  .card-header h5 {
+    font-size: 0.95rem;
+  }
+
+  .card-body {
+    padding: 14px !important;
+  }
+
+  .card-body p {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  .badge {
+    font-size: 0.75rem !important;
+    padding: 6px 12px !important;
+  }
+}
+
+/* Tablet fixes for blog elements */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .member-description-box {
+    padding: 30px !important;
+    min-height: 380px !important;
+  }
+
+  .modal-window {
+    width: 95%;
+    max-width: 800px;
+  }
+
+  .modal-tabs {
+    padding: 12px 20px 0;
+  }
+
+  .tab-btn {
+    padding: 12px 22px;
+    font-size: 0.95rem;
+  }
+
+  .season-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+  }
+
+  .robot-viewer {
+    height: 350px;
+  }
+
+  .activity-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Small phone landscape fixes */
+@media (max-width: 640px) and (orientation: landscape) {
+  .modal-window {
+    height: 96vh;
+  }
+
+  .robot-viewer,
+  .robot-image {
+    height: 220px;
+  }
+
+  .member-description-box {
+    min-height: 200px !important;
+  }
+}
+
