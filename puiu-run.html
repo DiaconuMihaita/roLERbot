@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puiu Run - FTC Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sky-color: #87CEEB;
+            --ground-color: #F4A460;
+            --brand-pink: #f9056c;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #2c3e50;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 800px;
+            max-width: 100%;
+            height: 500px;
+            background-color: var(--sky-color);
+            border: 4px solid #fff;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            image-rendering: pixelated;
+            /* Key for retro look */
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .score-board {
+            font-size: 20px;
+            color: white;
+            text-shadow: 4px 4px 0 #000;
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        /* Overlay Screens */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            z-index: 100;
+            transition: opacity 0.2s;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1 {
+            font-size: 40px;
+            color: var(--brand-pink);
+            text-shadow: 4px 4px 0 #fff;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .big-text {
+            font-size: 60px;
+            color: #ffff00;
+            text-shadow: 5px 5px 0 #000;
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from {
+                transform: scale(1);
+            }
+
+            to {
+                transform: scale(1.1);
+            }
+        }
+
+        .btn-retro {
+            padding: 20px 30px;
+            font-size: 20px;
+            font-family: 'Press Start 2P', cursive;
+            color: #2c3e50;
+            background-color: #fff;
+            border: 4px solid #2c3e50;
+            box-shadow: 6px 6px 0 #000;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.1s;
+        }
+
+        .btn-retro:active {
+            transform: translate(4px, 4px);
+            box-shadow: 2px 2px 0 #000;
+        }
+
+        .btn-retro:hover {
+            background-color: var(--brand-pink);
+            color: white;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            text-decoration: none;
+            color: white;
+            font-size: 12px;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 200;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="game-container">
+        <a href="blog.html" class="back-link">← INAPOI</a>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="ui-layer">
+            <div class="score-board">SCORE: <span id="score">0</span></div>
+        </div>
+
+        <!-- Start Screen -->
+        <div class="overlay-screen" id="startScreen">
+            <h1>PUIU RUN<br>RETRO FTC</h1>
+            <p style="font-size: 12px; margin-bottom: 40px;">PRESS SPACE TO JUMP</p>
+            <button class="btn-retro" onclick="initMatchSequence()">START MATCH</button>
+        </div>
+
+        <!-- Countdown Screen -->
+        <div class="overlay-screen hidden" id="countdownScreen">
+            <div id="countdownText" class="big-text"></div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div class="overlay-screen hidden" id="gameOverScreen">
+            <h1>GAME OVER</h1>
+            <h2>SCORE: <span id="finalScore">0</span></h2>
+            <div id="newHighScore" class="hidden" style="margin: 20px 0;">
+                <p style="font-size: 14px; color: #4cd137;">🏆 NEW HIGH SCORE! 🏆</p>
+                <input type="text" id="playerNameInput" placeholder="ENTER NAME" maxlength="15" 
+                       style="font-family: 'Press Start 2P'; padding: 10px; font-size: 12px; margin: 10px 0; text-align: center;">
+                <button class="btn-retro" onclick="saveScore()" style="margin: 10px; padding: 15px 20px; font-size: 14px;">SAVE</button>
+            </div>
+            <button class="btn-retro" onclick="initMatchSequence()">RESTART</button>
+            <button class="btn-retro" onclick="showLeaderboard()" style="margin-top: 10px; font-size: 16px;">VIEW LEADERBOARD</button>
+        </div>
+
+        <!-- Leaderboard Screen -->
+        <div class="overlay-screen hidden" id="leaderboardScreen" style="overflow-y: auto;">
+            <h1>🏆 LEADERBOARD 🏆</h1>
+            <div id="leaderboardList" style="margin: 20px 0; max-width: 600px;">
+                <!-- Dynamic content -->
+            </div>
+            <button class="btn-retro" onclick="closeLeaderboard()" style="font-size: 16px;">BACK</button>
+            <button class="btn-retro" onclick="clearLeaderboard()" style="margin-top: 10px; font-size: 12px; background: #e74c3c;">CLEAR DATA</button>
+        </div>
+    </div>
+
+    <script>
+        // Low resolution for pixel art style
+        const GAME_WIDTH = 320;
+        const GAME_HEIGHT = 200;
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Match CSS Aspect Ratio
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+
+        // Context Setup for Pixel Art
+        ctx.mozImageSmoothingEnabled = false;
+        ctx.webkitImageSmoothingEnabled = false;
+        ctx.msImageSmoothingEnabled = false;
+        ctx.imageSmoothingEnabled = false;
+
+        // UI Elements
+        const startScreen = document.getElementById('startScreen');
+        const countdownScreen = document.getElementById('countdownScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const countdownText = document.getElementById('countdownText');
+        const scoreEl = document.getElementById('score');
+        const finalScoreEl = document.getElementById('finalScore');
+        const leaderboardScreen = document.getElementById('leaderboardScreen');
+        const newHighScoreDiv = document.getElementById('newHighScore');
+        const playerNameInput = document.getElementById('playerNameInput');
+
+        // Audio Context
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playTone(freq, duration) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.pitch = 0.8; // Lower pitch for announcer vibe
+                utterance.rate = 1.1;
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Game State
+        let gameRunning = false;
+        let score = 0;
+        let frames = 0;
+        let gameSpeed = 3;
+
+        const groundY = GAME_HEIGHT - 20;
+        const gravity = 0.5;
+
+        const player = {
+            x: 20,
+            y: groundY - 16,
+            width: 16, // 16x16 sprite size
+            height: 16,
+            dy: 0,
+            jumpForce: -7,
+            grounded: true,
+            draw() {
+                // Pixelated Chicken
+                ctx.fillStyle = '#FFD700'; // Body
+                ctx.fillRect(this.x, this.y, 14, 14);
+
+                ctx.fillStyle = '#FFA500'; // Beak/Feet
+                ctx.fillRect(this.x + 12, this.y + 4, 4, 3); // Beak
+                ctx.fillRect(this.x + 2, this.y + 14, 3, 2); // Feet
+                ctx.fillRect(this.x + 8, this.y + 14, 3, 2);
+
+                ctx.fillStyle = '#000'; // Eye
+                ctx.fillRect(this.x + 8, this.y + 3, 2, 2);
+
+                ctx.fillStyle = '#FF0000'; // Comb
+                ctx.fillRect(this.x + 4, this.y - 2, 4, 2);
+            },
+            update() {
+                /* Physics */
+                if (gameRunning) {
+                    this.dy += gravity;
+                    this.y += this.dy;
+
+                    if (this.y + this.height > groundY) {
+                        this.y = groundY - this.height;
+                        this.dy = 0;
+                        this.grounded = true;
+                    } else {
+                        this.grounded = false;
+                    }
+                }
+            },
+            jump() {
+                if (this.grounded && gameRunning) {
+                    this.dy = this.jumpForce;
+                    // Jump Sound
+                    playTone(400, 0.1);
+                }
+            }
+        };
+
+        let obstacles = [];
+
+        function spawnObstacle() {
+            // Random cactus
+            let height = Math.random() > 0.5 ? 24 : 16;
+            obstacles.push({
+                x: GAME_WIDTH,
+                y: groundY - height,
+                width: 10,
+                height: height,
+                active: true
+            });
+        }
+
+        // Match Sequence
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        let isStarting = false;
+        let animationFrameId; // To track and cancel loops
+
+        async function initMatchSequence() {
+            if (isStarting) return;
+            isStarting = true;
+
+            try {
+                // Ensure game is stopped and loops are killed
+                gameRunning = false;
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+                // Clear speech
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+
+                // UI Reset
+                startScreen.classList.add('hidden');
+                gameOverScreen.classList.add('hidden');
+                countdownScreen.classList.remove('hidden');
+
+                // Allow audio context
+                if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+                // Sequence: 3, 2, 1
+                countdownText.style.fontSize = "60px";
+
+                countdownText.innerText = "3";
+                playTone(800, 0.2);
+                await sleep(1000);
+
+                countdownText.innerText = "2";
+                playTone(800, 0.2);
+                await sleep(1000);
+
+                countdownText.innerText = "1";
+                playTone(800, 0.2);
+                await sleep(1000);
+
+                // Drivers Announcement
+                countdownText.style.fontSize = "20px";
+                countdownText.innerText = "DRIVERS,\nPICK UP YOUR CONTROLLERS";
+                speak("Drivers, pick up your controllers");
+                await sleep(2500);
+
+                // GO!
+                countdownText.style.fontSize = "60px";
+                countdownText.innerText = "GO!";
+                playTone(1200, 0.6);
+                await sleep(500);
+
+                // Start
+                countdownScreen.classList.add('hidden');
+                startGame();
+
+            } catch (err) {
+                console.error("Sequence error:", err);
+                // Fallback if something explodes
+                countdownScreen.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+            } finally {
+                isStarting = false;
+            }
+        }
+
+        function startGame() {
+            // Kill any existing loop just in case
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            gameRunning = true;
+            score = 0;
+            frames = 0;
+            gameSpeed = 3;
+            obstacles = [];
+            player.y = groundY - 16;
+            player.dy = 0;
+
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            // Clear
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            // Draw Ground
+            ctx.fillStyle = '#F4A460';
+            ctx.fillRect(0, groundY, GAME_WIDTH, GAME_HEIGHT - groundY);
+            ctx.fillStyle = '#228B22'; // Grass top
+            ctx.fillRect(0, groundY, GAME_WIDTH, 4);
+
+            // Player
+            player.update();
+            player.draw();
+
+            // Obstacles
+            if (frames % Math.floor(100 / (gameSpeed / 2)) === 0) {
+                spawnObstacle();
+            }
+
+            obstacles.forEach(obs => {
+                obs.x -= gameSpeed;
+
+                // Draw Cactus (Pixel art style)
+                ctx.fillStyle = '#006400';
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                // Highlight
+                ctx.fillStyle = '#32CD32';
+                ctx.fillRect(obs.x + 2, obs.y + 2, 2, obs.height - 4);
+
+                // Collision
+                if (
+                    player.x < obs.x + obs.width &&
+                    player.x + player.width > obs.x &&
+                    player.y < obs.y + obs.height &&
+                    player.y + player.height > obs.y
+                ) {
+                    gameOver();
+                }
+            });
+
+            // Cleanup off-screen
+            obstacles = obstacles.filter(obs => obs.x + obs.width > 0);
+
+            // Score
+            frames++;
+            if (frames % 10 === 0) score++;
+            scoreEl.innerText = score;
+
+            // Speed up
+            if (score % 200 === 0) gameSpeed += 0.2;
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            finalScoreEl.innerText = score;
+            
+            // Check if high score
+            if (isHighScore(score)) {
+                newHighScoreDiv.classList.remove('hidden');
+                playerNameInput.value = '';
+                playerNameInput.focus();
+            } else {
+                newHighScoreDiv.classList.add('hidden');
+            }
+            
+            gameOverScreen.classList.remove('hidden');
+            playTone(150, 0.5); // Die sound
+        }
+
+        // Leaderboard Functions
+        const LEADERBOARD_KEY = 'puiuRunLeaderboard';
+        const MAX_ENTRIES = 10;
+
+        function getLeaderboard() {
+            const data = localStorage.getItem(LEADERBOARD_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveLeaderboard(leaderboard) {
+            localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
+        }
+
+        function isHighScore(newScore) {
+            const leaderboard = getLeaderboard();
+            if (leaderboard.length < MAX_ENTRIES) return true;
+            return newScore > leaderboard[leaderboard.length - 1].score;
+        }
+
+        function saveScore() {
+            const name = playerNameInput.value.trim() || 'ANONYMOUS';
+            const leaderboard = getLeaderboard();
+            const upperName = name.toUpperCase();
+            
+            // Check if name exists
+            const existingIndex = leaderboard.findIndex(entry => entry.name === upperName);
+            
+            if (existingIndex !== -1) {
+                // Name exists - update only if new score is better
+                if (score > leaderboard[existingIndex].score) {
+                    leaderboard[existingIndex].score = score;
+                    leaderboard[existingIndex].date = new Date().toLocaleDateString('ro-RO');
+                } else {
+                    // New score is not better, don't update
+                    newHighScoreDiv.classList.add('hidden');
+                    return;
+                }
+            } else {
+                // New name - add entry
+                leaderboard.push({
+                    name: upperName,
+                    score: score,
+                    date: new Date().toLocaleDateString('ro-RO')
+                });
+            }
+            
+            // Sort by score descending
+            leaderboard.sort((a, b) => b.score - a.score);
+            
+            // Keep top MAX_ENTRIES
+            if (leaderboard.length > MAX_ENTRIES) {
+                leaderboard.length = MAX_ENTRIES;
+            }
+            
+            saveLeaderboard(leaderboard);
+            newHighScoreDiv.classList.add('hidden');
+            playTone(1000, 0.2);
+        }
+
+        function showLeaderboard() {
+            gameOverScreen.classList.add('hidden');
+            startScreen.classList.add('hidden');
+            
+            const leaderboard = getLeaderboard();
+            const listDiv = document.getElementById('leaderboardList');
+            
+            if (leaderboard.length === 0) {
+                listDiv.innerHTML = '<p style="font-size: 14px;">NO SCORES YET</p>';
+            } else {
+                let html = '<div style="text-align: left; font-size: 12px; line-height: 24px;">';
+                leaderboard.forEach((entry, index) => {
+                    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                    html += `<div style="padding: 10px; margin: 8px 0; background: rgba(255,255,255,0.1); border-radius: 5px;">`;
+                    html += `${medal} ${entry.name} - ${entry.score} pts`;
+                    html += `<br><span style="font-size: 10px; color: #aaa;">${entry.date}</span>`;
+                    html += `</div>`;
+                });
+                html += '</div>';
+                listDiv.innerHTML = html;
+            }
+            
+            leaderboardScreen.classList.remove('hidden');
+        }
+
+        function closeLeaderboard() {
+            leaderboardScreen.classList.add('hidden');
+            if (gameRunning) {
+                // Just close
+            } else {
+                gameOverScreen.classList.remove('hidden');
+            }
+        }
+
+        function clearLeaderboard() {
+            if (confirm('Are you sure you want to clear all leaderboard data?')) {
+                localStorage.removeItem(LEADERBOARD_KEY);
+                showLeaderboard(); // Refresh display
+                playTone(200, 0.3);
+            }
+        }
+
+        // Inputs
+        window.addEventListener('keydown', e => {
+            if (e.code === 'Space') {
+                if (gameRunning) player.jump();
+                // If on start screen, maybe start? (Optional, button handles it)
+            }
+        });
+
+        canvas.addEventListener('mousedown', () => {
+            if (gameRunning) player.jump();
+        });
+
+        // Touch support
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameRunning) player.jump();
+        }, { passive: false });
+
+        // Save score on Enter key
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') saveScore();
+        });
+
+    </script>
+</body>
+
+</html>

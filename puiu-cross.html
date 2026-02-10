@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puiu Cross - FTC Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sky-color: #87CEEB;
+            --road-color: #555555;
+            --grass-color: #228B22;
+            --safe-color: #aaaaaa;
+            --brand-pink: #f9056c;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #2c3e50;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+            /* Prevent scroll on some devices */
+        }
+
+        .main-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .game-container {
+            position: relative;
+            width: 480px;
+            height: 640px;
+            max-width: 95vw;
+            max-height: 70vh;
+            /* Leave room for controls */
+            background-color: var(--grass-color);
+            border: 4px solid #fff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            image-rendering: pixelated;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .score-board {
+            font-size: 20px;
+            color: white;
+            text-shadow: 2px 2px 0 #000;
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        .lives-board {
+            font-size: 20px;
+            color: var(--brand-pink);
+            text-shadow: 2px 2px 0 #000;
+            text-align: left;
+            position: absolute;
+            top: 30px;
+            left: 20px;
+        }
+
+        /* Overlay Screens */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            z-index: 1000;
+            /* High z-index to be on top */
+            transition: opacity 0.2s;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: var(--brand-pink);
+            text-shadow: 4px 4px 0 #fff;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .btn-retro {
+            padding: 15px 20px;
+            /* Slightly smaller for mobile */
+            font-size: 14px;
+            font-family: 'Press Start 2P', cursive;
+            color: #2c3e50;
+            background-color: #fff;
+            border: 4px solid #2c3e50;
+            box-shadow: 6px 6px 0 #000;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.1s;
+            margin-top: 20px;
+            pointer-events: auto;
+            /* Ensure clickable */
+        }
+
+        .btn-retro:active {
+            transform: translate(4px, 4px);
+            box-shadow: 2px 2px 0 #000;
+        }
+
+        .btn-retro:hover {
+            background-color: var(--brand-pink);
+            color: white;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            /* Move slightly */
+            text-decoration: none;
+            color: white;
+            font-size: 10px;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 2000;
+            /* Highest */
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        /* Mobile controls for touch */
+        .mobile-controls {
+            display: flex;
+            /* Always flex on modern */
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            z-index: 50;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+        }
+
+        .d-pad {
+            display: grid;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px;
+            gap: 10px;
+        }
+
+        .d-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            user-select: none;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .d-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 rgba(0, 0, 0, 0.4);
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .d-up {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .d-left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .d-down {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .d-right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        .big-text {
+            font-size: 40px;
+            color: #ffff00;
+            text-shadow: 5px 5px 0 #000;
+            animation: pulse 0.5s infinite alternate;
+            text-align: center;
+        }
+
+        @keyframes pulse {
+            from {
+                transform: scale(1);
+            }
+
+            to {
+                transform: scale(1.1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-wrapper">
+        <div class="game-container">
+            <a href="index.html" class="back-link">← INAPOI</a>
+
+            <canvas id="gameCanvas"></canvas>
+
+            <div class="ui-layer">
+                <div class="lives-board">❤️ <span id="lives">3</span></div>
+                <div class="score-board">SCORE: <span id="score">0</span></div>
+            </div>
+
+            <!-- Start Screen -->
+            <div class="overlay-screen" id="startScreen">
+                <h1>PUIU CROSS<br>STREET</h1>
+                <p style="font-size: 12px; margin-bottom: 40px; line-height: 20px;">
+                    AJUTA-L PE PUIU SA TREACA STRADA!<br>
+                    FERESTE-TE DE MASINI.<br>
+                    FOLOSESTE SAGETILE PENTRU A TE MISCA.
+                </p>
+                <button class="btn-retro" onclick="initMatchSequence()">START GAME</button>
+            </div>
+
+            <!-- Countdown Screen -->
+            <div class="overlay-screen hidden" id="countdownScreen">
+                <div id="countdownText" class="big-text"></div>
+            </div>
+
+            <!-- Game Over Screen -->
+            <div class="overlay-screen hidden" id="gameOverScreen">
+                <h1>GAME OVER</h1>
+                <h2>OBTAINED SCORE: <span id="finalScore">0</span></h2>
+                <div id="newHighScore" class="hidden" style="margin: 20px 0;">
+                    <p style="font-size: 14px; color: #4cd137;">🏆 NEW HIGH SCORE! 🏆</p>
+                    <input type="text" id="playerNameInput" placeholder="ENTER NAME" maxlength="15" 
+                           style="font-family: 'Press Start 2P'; padding: 10px; font-size: 12px; margin: 10px 0; text-align: center;">
+                    <button class="btn-retro" onclick="saveScore()" style="margin: 10px; padding: 10px 15px; font-size: 12px;">SAVE</button>
+                </div>
+                <button class="btn-retro" onclick="initMatchSequence()">TRY AGAIN</button>
+                <button class="btn-retro" onclick="showLeaderboard()" style="margin-top: 10px; font-size: 12px;">VIEW LEADERBOARD</button>
+            </div>
+
+            <!-- Win Level Screen -->
+            <div class="overlay-screen hidden" id="winScreen">
+                <h1 style="color: #4cd137;">LEVEL UP!</h1>
+                <p>Ready for faster cars?</p>
+                <button class="btn-retro" onclick="nextLevel()">NEXT LEVEL</button>
+            </div>
+
+            <!-- Leaderboard Screen -->
+            <div class="overlay-screen hidden" id="leaderboardScreen" style="overflow-y: auto;">
+                <h1 style="font-size: 24px;">🏆 LEADERBOARD 🏆</h1>
+                <div id="leaderboardList" style="margin: 20px 0; max-width: 400px;">
+                    <!-- Dynamic content -->
+                </div>
+                <button class="btn-retro" onclick="closeLeaderboard()" style="font-size: 12px;">BACK</button>
+                <button class="btn-retro" onclick="clearLeaderboard()" style="margin-top: 10px; font-size: 10px; background: #e74c3c;">CLEAR DATA</button>
+            </div>
+        </div>
+
+        <div class="mobile-controls">
+            <div class="d-pad">
+                <div class="d-btn d-up" id="btnUp">⬆️</div>
+                <div class="d-btn d-left" id="btnLeft">⬅️</div>
+                <div class="d-btn d-down" id="btnDown">⬇️</div>
+                <div class="d-btn d-right" id="btnRight">➡️</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Logic Dimensions (Pixel Art scale)
+        const GAME_WIDTH = 240;
+        const GAME_HEIGHT = 320;
+        const GRID_SIZE = 16;
+
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+
+        ctx.imageSmoothingEnabled = false;
+
+        // Elements
+        const scoreEl = document.getElementById('score');
+        const livesEl = document.getElementById('lives');
+        const finalScoreEl = document.getElementById('finalScore');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const winScreen = document.getElementById('winScreen');
+        const countdownScreen = document.getElementById('countdownScreen');
+        const countdownText = document.getElementById('countdownText');
+        const leaderboardScreen = document.getElementById('leaderboardScreen');
+        const newHighScoreDiv = document.getElementById('newHighScore');
+        const playerNameInput = document.getElementById('playerNameInput');
+
+        // Audio
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playTone(freq, type, duration) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.pitch = 0.8;
+                utterance.rate = 1.1;
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        let isStarting = false;
+
+        async function initMatchSequence() {
+            if (isStarting) return;
+            isStarting = true;
+
+            try {
+                // Ensure game is stopped
+                gameRunning = false;
+                if (animationId) cancelAnimationFrame(animationId);
+
+                // Clear speech
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+
+                // UI Reset
+                startScreen.classList.add('hidden');
+                gameOverScreen.classList.add('hidden');
+                winScreen.classList.add('hidden');
+                countdownScreen.classList.remove('hidden');
+
+                // Allow audio context (browser policy)
+                if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+                // Sequence: 3, 2, 1
+                countdownText.style.fontSize = "60px";
+
+                countdownText.innerText = "3";
+                playTone(800, 'square', 0.2);
+                await sleep(1000);
+
+                countdownText.innerText = "2";
+                playTone(800, 'square', 0.2);
+                await sleep(1000);
+
+                countdownText.innerText = "1";
+                playTone(800, 'square', 0.2);
+                await sleep(1000);
+
+                // Drivers Announcement
+                countdownText.style.fontSize = "20px";
+                countdownText.innerHTML = "DRIVERS,<br>PICK UP YOUR<br>CONTROLLERS";
+                speak("Drivers, pick up your controllers");
+                await sleep(2500);
+
+                // GO!
+                countdownText.style.fontSize = "60px";
+                countdownText.innerText = "GO!";
+                playTone(1200, 'square', 0.6);
+                await sleep(500);
+
+                // Start
+                countdownScreen.classList.add('hidden');
+                startGame();
+
+            } catch (err) {
+                console.error("Sequence error:", err);
+                countdownScreen.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+            } finally {
+                isStarting = false;
+            }
+        }
+
+        // Game State
+        let gameRunning = false;
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let animationId;
+
+        // Player
+        const player = {
+            gridX: 7, // Center
+            gridY: 19, // Bottom
+            w: 14,
+            h: 14,
+            color: '#FFD700',
+            move(dx, dy) {
+                if (!gameRunning) return;
+
+                let nextX = this.gridX + dx;
+                let nextY = this.gridY + dy;
+
+                // Bounds
+                if (nextX < 0) nextX = 0;
+                if (nextX >= GAME_WIDTH / GRID_SIZE) nextX = (GAME_WIDTH / GRID_SIZE) - 1;
+                if (nextY < 0) nextY = 0; // Win condition handled in update
+                if (nextY >= GAME_HEIGHT / GRID_SIZE) nextY = (GAME_HEIGHT / GRID_SIZE) - 1;
+
+                if (nextX !== this.gridX || nextY !== this.gridY) {
+                    this.gridX = nextX;
+                    this.gridY = nextY;
+                    playTone(200, 'square', 0.05); // Step sound
+
+                    // Score for moving up (only max height counts usually, but simple increment is fun)
+                    if (dy < 0) score += 10;
+                    scoreEl.innerText = score;
+                }
+            },
+            draw() {
+                let x = this.gridX * GRID_SIZE + 1;
+                let y = this.gridY * GRID_SIZE + 1;
+
+                // Body
+                ctx.fillStyle = this.color;
+                ctx.fillRect(x, y, this.w, this.h);
+                // Eyes
+                ctx.fillStyle = '#000';
+                ctx.fillRect(x + this.w - 4, y + 3, 2, 2);
+                ctx.fillRect(x + 2, y + 3, 2, 2);
+                // Beak
+                ctx.fillStyle = '#FFA500';
+                ctx.fillRect(x + 5, y + 6, 4, 3);
+                // Comb
+                ctx.fillStyle = '#FF0000';
+                ctx.fillRect(x + 5, y - 2, 4, 3);
+            }
+        };
+
+        // Lanes
+        // Types: 'grass', 'road', 'water' (future)
+        // Road: has cars
+        let lanes = [];
+
+        function generateLevel(lvl) {
+            lanes = [];
+            // Bottom safe zone
+            for (let i = 18; i < 20; i++) lanes.push({ type: 'grass', y: i * GRID_SIZE });
+
+            // Random generation going up
+            for (let i = 17; i >= 1; i--) {
+                let r = Math.random();
+                if (i === 10) { // Rest stop
+                    lanes.push({ type: 'grass', y: i * GRID_SIZE });
+                } else if (r > 0.3) {
+                    // Road
+                    let speed = (0.5 + Math.random() * (lvl * 0.5)) * (Math.random() > 0.5 ? 1 : -1);
+                    lanes.push({
+                        type: 'road',
+                        y: i * GRID_SIZE,
+                        speed: speed,
+                        cars: [],
+                        nextSpawn: 0
+                    });
+                } else {
+                    // Grass
+                    lanes.push({ type: 'grass', y: i * GRID_SIZE });
+                }
+            }
+
+            // Top goal
+            lanes.push({ type: 'goal', y: 0 });
+        }
+
+        function updateLanes() {
+            lanes.forEach(lane => {
+                if (lane.type === 'road') {
+                    // Spawn logic
+                    if (lane.nextSpawn <= 0) {
+                        // Spawn car
+                        let carWidth = Math.floor(Math.random() * 2 + 2) * GRID_SIZE; // 2 or 3 grids wide
+                        let startX = lane.speed > 0 ? -carWidth : GAME_WIDTH;
+
+                        // Random color
+                        const carColors = ['#e74c3c', '#3498db', '#9b59b6', '#f1c40f', '#e67e22'];
+                        let color = carColors[Math.floor(Math.random() * carColors.length)];
+
+                        lane.cars.push({
+                            x: startX,
+                            width: carWidth,
+                            color: color
+                        });
+
+                        // Next spawn delay (random based on speed)
+                        lane.nextSpawn = (100 / Math.abs(lane.speed)) + Math.random() * 100;
+                    } else {
+                        lane.nextSpawn--;
+                    }
+
+                    // Move cars
+                    lane.cars.forEach(car => {
+                        car.x += lane.speed;
+                    });
+
+                    // Remove off-screen
+                    lane.cars = lane.cars.filter(car => {
+                        if (lane.speed > 0) return car.x < GAME_WIDTH + 50;
+                        else return car.x > -50;
+                    });
+                }
+            });
+        }
+
+        function drawLanes() {
+            lanes.forEach(lane => {
+                // Background
+                if (lane.type === 'grass') {
+                    ctx.fillStyle = '#228B22';
+                    ctx.fillRect(0, lane.y, GAME_WIDTH, GRID_SIZE);
+                    // Decals
+                    ctx.fillStyle = '#1e7c1e';
+                    ctx.fillRect(10, lane.y + 2, 4, 4);
+                    ctx.fillRect(50, lane.y + 8, 4, 4);
+                } else if (lane.type === 'road') {
+                    ctx.fillStyle = '#555';
+                    ctx.fillRect(0, lane.y, GAME_WIDTH, GRID_SIZE);
+                    // Lane markers
+                    ctx.fillStyle = '#777';
+                    for (let i = 0; i < GAME_WIDTH; i += 40) {
+                        ctx.fillRect(i, lane.y + 7, 20, 2);
+                    }
+                } else if (lane.type === 'goal') {
+                    ctx.fillStyle = '#f9ca24'; // Trophy gold
+                    ctx.fillRect(0, lane.y, GAME_WIDTH, GRID_SIZE);
+                    // Checkers
+                    ctx.fillStyle = '#000';
+                    for (let i = 0; i < GAME_WIDTH; i += 16) {
+                        if ((i / 16) % 2 === 0) ctx.fillRect(i, lane.y, 8, 8);
+                        else ctx.fillRect(i + 8, lane.y + 8, 8, 8);
+                    }
+                }
+
+                // Cars
+                if (lane.type === 'road') {
+                    lane.cars.forEach(car => {
+                        // Car body
+                        ctx.fillStyle = car.color;
+                        ctx.fillRect(car.x, lane.y + 2, car.width, GRID_SIZE - 4);
+
+                        // Windows
+                        ctx.fillStyle = '#ccffff';
+                        if (lane.speed > 0) {
+                            ctx.fillRect(car.x + car.width - 6, lane.y + 3, 4, GRID_SIZE - 6);
+                        } else {
+                            ctx.fillRect(car.x + 2, lane.y + 3, 4, GRID_SIZE - 6);
+                        }
+
+                        // Wheels
+                        ctx.fillStyle = '#000';
+                        ctx.fillRect(car.x + 4, lane.y + 1, 4, 1);
+                        ctx.fillRect(car.x + car.width - 8, lane.y + 1, 4, 1);
+                        ctx.fillRect(car.x + 4, lane.y + GRID_SIZE - 2, 4, 1);
+                        ctx.fillRect(car.x + car.width - 8, lane.y + GRID_SIZE - 2, 4, 1);
+                    });
+                }
+            });
+        }
+
+        function checkCollisions() {
+            // Player box
+            const px = player.gridX * GRID_SIZE + 2;
+            const py = player.gridY * GRID_SIZE + 2;
+            const pw = GRID_SIZE - 4;
+            const ph = GRID_SIZE - 4;
+
+            // Find lane
+            const currentLane = lanes.find(l => l.y === player.gridY * GRID_SIZE);
+            if (!currentLane) return;
+
+            if (currentLane.type === 'road') {
+                for (let car of currentLane.cars) {
+                    if (px < car.x + car.width &&
+                        px + pw > car.x &&
+                        py < currentLane.y + GRID_SIZE - 2 && // Approximate Y collision since lanes are grid aligned
+                        py + ph > currentLane.y + 2) {
+
+                        handleDeath();
+                        return;
+                    }
+                }
+            } else if (currentLane.type === 'goal') {
+                handleLevelComplete();
+            }
+        }
+
+        function handleDeath() {
+            playTone(100, 'sawtooth', 0.5);
+            lives--;
+            livesEl.innerText = lives;
+
+            if (lives <= 0) {
+                gameOver();
+            } else {
+                resetPlayer();
+            }
+        }
+
+        function resetPlayer() {
+            player.gridX = 7;
+            player.gridY = 19;
+        }
+
+        function handleLevelComplete() {
+            gameRunning = false;
+            playTone(800, 'sine', 0.1);
+            setTimeout(() => playTone(1200, 'sine', 0.2), 100);
+
+            score += 100 * level;
+            scoreEl.innerText = score;
+
+            winScreen.classList.remove('hidden');
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            finalScoreEl.innerText = score;
+            
+            // Check if high score
+            if (isHighScore(score)) {
+                newHighScoreDiv.classList.remove('hidden');
+                playerNameInput.value = '';
+                playerNameInput.focus();
+            } else {
+                newHighScoreDiv.classList.add('hidden');
+            }
+            
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        // Leaderboard Functions
+        const LEADERBOARD_KEY = 'puiuCrossLeaderboard';
+        const MAX_ENTRIES = 10;
+
+        function getLeaderboard() {
+            const data = localStorage.getItem(LEADERBOARD_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveLeaderboard(leaderboard) {
+            localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
+        }
+
+        function isHighScore(newScore) {
+            const leaderboard = getLeaderboard();
+            if (leaderboard.length < MAX_ENTRIES) return true;
+            return newScore > leaderboard[leaderboard.length - 1].score;
+        }
+
+        function saveScore() {
+            const name = playerNameInput.value.trim() || 'ANONYMOUS';
+            const leaderboard = getLeaderboard();
+            const upperName = name.toUpperCase();
+            
+            // Check if name exists
+            const existingIndex = leaderboard.findIndex(entry => entry.name === upperName);
+            
+            if (existingIndex !== -1) {
+                // Name exists - update only if new score is better
+                if (score > leaderboard[existingIndex].score) {
+                    leaderboard[existingIndex].score = score;
+                    leaderboard[existingIndex].level = level;
+                    leaderboard[existingIndex].date = new Date().toLocaleDateString('ro-RO');
+                } else {
+                    // New score is not better, don't update
+                    newHighScoreDiv.classList.add('hidden');
+                    return;
+                }
+            } else {
+                // New name - add entry
+                leaderboard.push({
+                    name: upperName,
+                    score: score,
+                    level: level,
+                    date: new Date().toLocaleDateString('ro-RO')
+                });
+            }
+            
+            // Sort by score descending
+            leaderboard.sort((a, b) => b.score - a.score);
+            
+            // Keep top MAX_ENTRIES
+            if (leaderboard.length > MAX_ENTRIES) {
+                leaderboard.length = MAX_ENTRIES;
+            }
+            
+            saveLeaderboard(leaderboard);
+            newHighScoreDiv.classList.add('hidden');
+            playTone(1000, 'sine', 0.2);
+        }
+
+        function showLeaderboard() {
+            gameOverScreen.classList.add('hidden');
+            startScreen.classList.add('hidden');
+            
+            const leaderboard = getLeaderboard();
+            const listDiv = document.getElementById('leaderboardList');
+            
+            if (leaderboard.length === 0) {
+                listDiv.innerHTML = '<p style="font-size: 12px;">NO SCORES YET</p>';
+            } else {
+                let html = '<div style="text-align: left; font-size: 10px; line-height: 20px;">';
+                leaderboard.forEach((entry, index) => {
+                    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                    html += `<div style="padding: 8px; margin: 5px 0; background: rgba(255,255,255,0.1); border-radius: 5px;">`;
+                    html += `${medal} ${entry.name} - ${entry.score} pts (Lvl ${entry.level})`;
+                    html += `<br><span style="font-size: 8px; color: #aaa;">${entry.date}</span>`;
+                    html += `</div>`;
+                });
+                html += '</div>';
+                listDiv.innerHTML = html;
+            }
+            
+            leaderboardScreen.classList.remove('hidden');
+        }
+
+        function closeLeaderboard() {
+            leaderboardScreen.classList.add('hidden');
+            if (gameRunning) {
+                // Just close
+            } else {
+                gameOverScreen.classList.remove('hidden');
+            }
+        }
+
+        function clearLeaderboard() {
+            if (confirm('Are you sure you want to clear all leaderboard data?')) {
+                localStorage.removeItem(LEADERBOARD_KEY);
+                showLeaderboard(); // Refresh display
+                playTone(200, 'sawtooth', 0.3);
+            }
+        }
+
+        function startGame() {
+            score = 0;
+            lives = 3;
+            level = 1;
+            scoreEl.innerText = score;
+            livesEl.innerText = lives;
+
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+
+            startLevel();
+        }
+
+        function nextLevel() {
+            level++;
+            winScreen.classList.add('hidden');
+            startLevel();
+        }
+
+        function startLevel() {
+            generateLevel(level);
+            resetPlayer();
+            gameRunning = true;
+            if (animationId) cancelAnimationFrame(animationId);
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            updateLanes();
+            drawLanes();
+
+            player.draw();
+            checkCollisions();
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // Input
+        window.addEventListener('keydown', e => {
+            switch (e.key) {
+                case 'ArrowUp': player.move(0, -1); break;
+                case 'ArrowDown': player.move(0, 1); break;
+                case 'ArrowLeft': player.move(-1, 0); break;
+                case 'ArrowRight': player.move(1, 0); break;
+            }
+        });
+
+        // Touch
+        document.getElementById('btnUp').addEventListener('mousedown', () => player.move(0, -1));
+        document.getElementById('btnDown').addEventListener('mousedown', () => player.move(0, 1));
+        document.getElementById('btnLeft').addEventListener('mousedown', () => player.move(-1, 0));
+        document.getElementById('btnRight').addEventListener('mousedown', () => player.move(1, 0));
+
+        // Prevent default touch scrolling
+        document.body.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
+
+        // Mobile touch (touchstart to avoid delay)
+        document.getElementById('btnUp').addEventListener('touchstart', (e) => { e.preventDefault(); player.move(0, -1); });
+        document.getElementById('btnDown').addEventListener('touchstart', (e) => { e.preventDefault(); player.move(0, 1); });
+        document.getElementById('btnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); player.move(-1, 0); });
+        document.getElementById('btnRight').addEventListener('touchstart', (e) => { e.preventDefault(); player.move(1, 0); });
+
+        // Save score on Enter key
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') saveScore();
+        });
+
+    </script>
+</body>
+
+</html>
