@@ -13922,13 +13922,13 @@ img:hover {
 .blog-carousel-btn:hover {
   background: linear-gradient(135deg, #f9056c, #ff3488);
   color: white;
-  transform: scale(1.15) rotate(360deg);
+  transform: translateY(-50%) scale(1.15) rotate(360deg);
   box-shadow: 0 20px 50px rgba(249, 5, 108, 0.4);
   border-color: #f9056c;
 }
 
 .blog-carousel-btn:active {
-  transform: scale(1.05);
+  transform: translateY(-50%) scale(1.05);
 }
 
 .blog-carousel-indicators {
