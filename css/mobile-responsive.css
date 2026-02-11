@@ -31,6 +31,15 @@ html, body {
   /* Navbar fixes */
   #mainNav {
     padding: 0.5rem 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
+  #mainNav.navbar-shrink {
+    background: linear-gradient(135deg, #94003f, #f9056c) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
   }
 
   .navbar-brand {
@@ -38,8 +47,9 @@ html, body {
   }
 
   .logo-img {
-    max-width: 40px;
+    max-width: 100px;
     height: auto;
+    transition: none;
   }
 
   .nav-link {

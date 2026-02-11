@@ -46,6 +46,7 @@
   background-color: transparent;
   transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   box-shadow: none;
+  padding: 1rem 0 !important;
 }
 #mainNav.navbar-shrink {
   background: linear-gradient(135deg, #94003f, #f9056c);
@@ -11313,7 +11314,7 @@ p {
   text-transform: uppercase;
 }
 #mainNav .navbar-brand img {
-  height: 1.5rem;
+  height: 4rem;
 }
 #mainNav .navbar-nav .nav-item .nav-link {
   font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
@@ -11327,8 +11328,8 @@ p {
 
 @media (min-width: 992px) {
   #mainNav {
-    padding-top: 1.5rem;
-    padding-bottom: 1.5rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
     border: none;
     background-color: transparent;
     transition: padding-top 0.3s ease-in-out, padding-bottom 0.3s ease-in-out;
@@ -11338,8 +11339,8 @@ p {
     transition: font-size 0.3s ease-in-out;
   }
   #mainNav .navbar-brand img {
-    height: 2rem;
-    transition: height 0.3s ease-in-out;
+    height: 4.5rem;
+    transition: none;
   }
   #mainNav.navbar-shrink {
     padding-top: 1rem;
@@ -11351,7 +11352,7 @@ p {
   }
   #mainNav.navbar-shrink .navbar-brand svg,
 #mainNav.navbar-shrink .navbar-brand img {
-    height: 1.5rem;
+    height: 3.5rem;
   }
   #mainNav .navbar-nav .nav-item {
     margin-right: 1rem;
@@ -12562,8 +12563,9 @@ section#contact form#contactForm :-ms-input-placeholder {
   padding-right: 3rem;       /* un spațiu frumos față de margine */
 }
 .logo-img {
-  transform: scale(4); /* de 2 ori mai mare */
-  transform-origin: left center; /* să nu se decaleze aiurea */
+  display: block;
+  transition: none;
+  transform: none;
 }
 .portfolio-caption {
   background-color: #f9056c; /* Rozul deja definit */
