@@ -33,15 +33,16 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
+            padding: 10px;
         }
 
         .game-container {
             position: relative;
-            width: 480px;
-            height: 640px;
+            width: 600px;
+            height: 800px;
             max-width: 95vw;
-            max-height: 70vh;
+            max-height: 80vh;
             /* Leave room for controls */
             background-color: var(--grass-color);
             border: 4px solid #fff;
@@ -175,18 +176,18 @@
             /* Always flex on modern */
             justify-content: center;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             z-index: 50;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 20px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
         }
 
         .d-pad {
             display: grid;
-            grid-template-columns: 60px 60px 60px;
-            grid-template-rows: 60px 60px;
-            gap: 10px;
+            grid-template-columns: 50px 50px 50px;
+            grid-template-rows: 50px 50px;
+            gap: 8px;
         }
 
         .d-btn {
@@ -246,6 +247,34 @@
                 transform: scale(1.1);
             }
         }
+
+        /* Team Logo Display */
+        .team-logo-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .team-logo-img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border: 3px solid #f9056c;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transition: transform 0.2s;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        .team-logo-img:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px #f9056c;
+        }
     </style>
 <link href="css/mobile-responsive.css" rel="stylesheet" />`n</head>
 
@@ -264,12 +293,25 @@
             <!-- Start Screen -->
             <div class="overlay-screen" id="startScreen">
                 <h1>PUIU CROSS<br>STREET</h1>
-                <p style="font-size: 12px; margin-bottom: 40px; line-height: 20px;">
+                <p style="font-size: 12px; margin-bottom: 20px; line-height: 20px;">
                     AJUTA-L PE PUIU SA TREACA STRADA!<br>
                     FERESTE-TE DE MASINI.<br>
                     FOLOSESTE SAGETILE PENTRU A TE MISCA.
                 </p>
+                
+                <div style="margin: 20px 0;">
+                    <label style="font-size: 10px; color: #f9056c; margin-bottom: 10px; display: block;">SELECT YOUR TEAM:</label>
+                    <select id="teamSelect" style="font-family: 'Press Start 2P'; padding: 10px; font-size: 10px; background: #2c3e50; color: white; border: 2px solid #f9056c; width: 400px; max-width: 90%;">
+                        <option value="">-- Choose Team --</option>
+                    </select>
+                    <div class="team-logo-container">
+                        <img id="selectedTeamLogo" class="team-logo-img" src="echipe/default.png" alt="Team Logo" style="display: none;">
+                    </div>
+                    <div id="selectedTeamDisplay" style="font-size: 10px; margin-top: 10px; color: #4cd137;"></div>
+                </div>
+                
                 <button class="btn-retro" onclick="initMatchSequence()">START GAME</button>
+                <button class="btn-retro" onclick="showLeaderboard()" style="margin-top: 10px; font-size: 12px; background: #9b59b6;">VIEW LEADERBOARD</button>
             </div>
 
             <!-- Countdown Screen -->
@@ -279,13 +321,12 @@
 
             <!-- Game Over Screen -->
             <div class="overlay-screen hidden" id="gameOverScreen">
+                <img id="gameOverTeamLogo" class="team-logo-img" src="echipe/default.png" alt="Team Logo" style="width: 100px; height: 100px; margin-bottom: 20px;">
                 <h1>GAME OVER</h1>
                 <h2>OBTAINED SCORE: <span id="finalScore">0</span></h2>
                 <div id="newHighScore" class="hidden" style="margin: 20px 0;">
                     <p style="font-size: 14px; color: #4cd137;">🏆 NEW HIGH SCORE! 🏆</p>
-                    <input type="text" id="playerNameInput" placeholder="ENTER NAME" maxlength="15" 
-                           style="font-family: 'Press Start 2P'; padding: 10px; font-size: 12px; margin: 10px 0; text-align: center;">
-                    <button class="btn-retro" onclick="saveScore()" style="margin: 10px; padding: 10px 15px; font-size: 12px;">SAVE</button>
+                    <p id="yourTeamDisplay" style="font-size: 10px; margin: 10px 0;"></p>
                 </div>
                 <button class="btn-retro" onclick="initMatchSequence()">TRY AGAIN</button>
                 <button class="btn-retro" onclick="showLeaderboard()" style="margin-top: 10px; font-size: 12px;">VIEW LEADERBOARD</button>
@@ -299,13 +340,18 @@
             </div>
 
             <!-- Leaderboard Screen -->
-            <div class="overlay-screen hidden" id="leaderboardScreen" style="overflow-y: auto;">
-                <h1 style="font-size: 24px;">🏆 LEADERBOARD 🏆</h1>
-                <div id="leaderboardList" style="margin: 20px 0; max-width: 400px;">
+            <div class="overlay-screen hidden" id="leaderboardScreen" style="overflow-y: auto; display: flex; flex-direction: column;">
+                <div style="flex-shrink: 0; text-align: center;">
+                    <img id="leaderboardTeamLogo" class="team-logo-img" src="echipe/default.png" alt="Team Logo" style="width: 80px; height: 80px; margin: 0 auto 15px auto; display: block;">
+                    <h1 style="font-size: 24px; margin-top: 0;">🏆 LEADERBOARD 🏆</h1>
+                </div>
+                <div id="leaderboardList" style="margin: 20px 0; max-width: 400px; overflow-y: auto; flex: 1;">
                     <!-- Dynamic content -->
                 </div>
-                <button class="btn-retro" onclick="closeLeaderboard()" style="font-size: 12px;">BACK</button>
-                <button class="btn-retro" onclick="clearLeaderboard()" style="margin-top: 10px; font-size: 10px; background: #e74c3c;">CLEAR DATA</button>
+                <div style="flex-shrink: 0; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn-retro" onclick="closeLeaderboard()" style="font-size: 12px;">BACK</button>
+                    <button class="btn-retro" onclick="clearLeaderboard()" style="font-size: 10px; background: #e74c3c;">CLEAR DATA</button>
+                </div>
             </div>
         </div>
 
@@ -320,6 +366,44 @@
     </div>
 
     <script>
+        // FTC Teams Database
+        const ftcTeams = [
+            { number: 19066, name: "AiCitizens" },
+            { number: 21028, name: "The Eagles RO143" },
+            { number: 19061, name: "Boogeybots" },
+            { number: 15996, name: "BrickBot" },
+            { number: 19139, name: "SnakeTech" },
+            { number: 22998, name: "CYB3RG0DS" },
+            { number: 21031, name: "roLERbot" },
+            { number: 23161, name: "CyberLIS76" },
+            { number: 24928, name: "HYPERION" },
+            { number: 19097, name: "Quasar.Robotics" },
+            { number: 22017, name: "Eu codez" },
+            { number: 19071, name: "SmartCluster" },
+            { number: 19044, name: "Peppers" },
+            { number: 17871, name: "Thobor" },
+            { number: 19043, name: "CyLiis" },
+            { number: 20954, name: "STIM DC" },
+            { number: 19053, name: "Homosapiens" },
+            { number: 22590, name: "MechaByte" },
+            { number: 22697, name: "CreativityR" },
+            { number: 24308, name: "BrightCluster" },
+            { number: 19211, name: "Virtual Wolves" },
+            { number: 21097, name: "Dragonfly" },
+            { number: 19065, name: "Inorog Team RO 152" },
+            { number: 32762, name: "NightWings" },
+            { number: 23800, name: "Robozzi" },
+            { number: 23576, name: "ORION" },
+            { number: 24554, name: "AVOCADO ROBOTICS" },
+            { number: 19087, name: "MironoBot" },
+            { number: 19147, name: "Blizzard Eye" },
+            { number: 27660, name: "R0b0Ryders" },
+            { number: 32838, name: "CEMEKANIKS25" },
+            { number: 32442, name: "Iron Minds LTTC" }
+        ];
+
+        let selectedTeam = JSON.parse(localStorage.getItem('puiu_cross_selected_team')) || null;
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
@@ -344,7 +428,49 @@
         const countdownText = document.getElementById('countdownText');
         const leaderboardScreen = document.getElementById('leaderboardScreen');
         const newHighScoreDiv = document.getElementById('newHighScore');
-        const playerNameInput = document.getElementById('playerNameInput');
+        const teamSelect = document.getElementById('teamSelect');
+        const selectedTeamDisplay = document.getElementById('selectedTeamDisplay');
+        const yourTeamDisplay = document.getElementById('yourTeamDisplay');
+        const selectedTeamLogo = document.getElementById('selectedTeamLogo');
+
+        // Populate team selector
+        ftcTeams.forEach(team => {
+            const option = document.createElement('option');
+            option.value = team.number;
+            option.textContent = `#${team.number} - ${team.name}`;
+            teamSelect.appendChild(option);
+        });
+
+        if (selectedTeam) {
+            teamSelect.value = selectedTeam.number;
+            selectedTeamDisplay.textContent = `Playing as: #${selectedTeam.number} - ${selectedTeam.name}`;
+            // Show saved team logo
+            selectedTeamLogo.src = `echipe/${selectedTeam.number}.png`;
+            selectedTeamLogo.onerror = function() {
+                this.src = 'echipe/default.png';
+            };
+            selectedTeamLogo.style.display = 'block';
+        }
+
+        teamSelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                const teamNumber = parseInt(e.target.value);
+                selectedTeam = ftcTeams.find(t => t.number === teamNumber);
+                localStorage.setItem('puiu_cross_selected_team', JSON.stringify(selectedTeam));
+                selectedTeamDisplay.textContent = `Playing as: #${selectedTeam.number} - ${selectedTeam.name}`;
+                
+                // Show team logo
+                selectedTeamLogo.src = `echipe/${selectedTeam.number}.png`;
+                selectedTeamLogo.onerror = function() {
+                    this.src = 'echipe/default.png';
+                };
+                selectedTeamLogo.style.display = 'block';
+            } else {
+                selectedTeam = null;
+                selectedTeamDisplay.textContent = '';
+                selectedTeamLogo.style.display = 'none';
+            }
+        });
 
         // Audio
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -382,6 +508,13 @@
 
         async function initMatchSequence() {
             if (isStarting) return;
+            
+            // Validate team selection
+            if (!selectedTeam) {
+                alert('Please select a team first!');
+                return;
+            }
+            
             isStarting = true;
 
             try {
@@ -687,11 +820,51 @@
             gameRunning = false;
             finalScoreEl.innerText = score;
             
+            // Display team logo
+            const gameOverTeamLogo = document.getElementById('gameOverTeamLogo');
+            if (selectedTeam) {
+                gameOverTeamLogo.src = `echipe/${selectedTeam.number}.png`;
+                gameOverTeamLogo.onerror = function() {
+                    this.src = 'echipe/default.png';
+                };
+                gameOverTeamLogo.style.display = 'block';
+            } else {
+                gameOverTeamLogo.style.display = 'none';
+            }
+            
             // Check if high score
-            if (isHighScore(score)) {
+            if (isHighScore(score) && selectedTeam) {
                 newHighScoreDiv.classList.remove('hidden');
-                playerNameInput.value = '';
-                playerNameInput.focus();
+                yourTeamDisplay.innerText = `#${selectedTeam.number} - ${selectedTeam.name}`;
+                
+                // Auto-save the score
+                const leaderboard = getLeaderboard();
+                const existingIndex = leaderboard.findIndex(entry => entry.teamNumber === selectedTeam.number);
+                
+                if (existingIndex !== -1) {
+                    // Update if better
+                    if (score > leaderboard[existingIndex].score) {
+                        leaderboard[existingIndex].score = score;
+                        leaderboard[existingIndex].level = level;
+                        leaderboard[existingIndex].date = new Date().toLocaleDateString('ro-RO');
+                    }
+                } else {
+                    // Add new team entry
+                    leaderboard.push({
+                        teamNumber: selectedTeam.number,
+                        teamName: selectedTeam.name,
+                        score: score,
+                        level: level,
+                        date: new Date().toLocaleDateString('ro-RO')
+                    });
+                }
+                
+                // Sort and save
+                leaderboard.sort((a, b) => b.score - a.score);
+                if (leaderboard.length > MAX_ENTRIES) {
+                    leaderboard.length = MAX_ENTRIES;
+                }
+                saveLeaderboard(leaderboard);
             } else {
                 newHighScoreDiv.classList.add('hidden');
             }
@@ -713,34 +886,43 @@
         }
 
         function isHighScore(newScore) {
+            if (!selectedTeam) return false;
+            
             const leaderboard = getLeaderboard();
-            if (leaderboard.length < MAX_ENTRIES) return true;
-            return newScore > leaderboard[leaderboard.length - 1].score;
+            const existingEntry = leaderboard.find(entry => entry.teamNumber === selectedTeam.number);
+            
+            // If team not in leaderboard yet
+            if (!existingEntry) {
+                return leaderboard.length < MAX_ENTRIES || newScore > leaderboard[leaderboard.length - 1].score;
+            }
+            
+            // If team exists, check if new score is better
+            return newScore > existingEntry.score;
         }
 
         function saveScore() {
-            const name = playerNameInput.value.trim() || 'ANONYMOUS';
-            const leaderboard = getLeaderboard();
-            const upperName = name.toUpperCase();
+            if (!selectedTeam) {
+                alert('Please select a team first!');
+                return;
+            }
             
-            // Check if name exists
-            const existingIndex = leaderboard.findIndex(entry => entry.name === upperName);
+            const leaderboard = getLeaderboard();
+            
+            // Check if team exists
+            const existingIndex = leaderboard.findIndex(entry => entry.teamNumber === selectedTeam.number);
             
             if (existingIndex !== -1) {
-                // Name exists - update only if new score is better
+                // Team exists - update only if new score is better
                 if (score > leaderboard[existingIndex].score) {
                     leaderboard[existingIndex].score = score;
                     leaderboard[existingIndex].level = level;
                     leaderboard[existingIndex].date = new Date().toLocaleDateString('ro-RO');
-                } else {
-                    // New score is not better, don't update
-                    newHighScoreDiv.classList.add('hidden');
-                    return;
                 }
             } else {
-                // New name - add entry
+                // New team - add entry
                 leaderboard.push({
-                    name: upperName,
+                    teamNumber: selectedTeam.number,
+                    teamName: selectedTeam.name,
                     score: score,
                     level: level,
                     date: new Date().toLocaleDateString('ro-RO')
@@ -764,6 +946,18 @@
             gameOverScreen.classList.add('hidden');
             startScreen.classList.add('hidden');
             
+            // Display team logo
+            const leaderboardTeamLogo = document.getElementById('leaderboardTeamLogo');
+            if (selectedTeam) {
+                leaderboardTeamLogo.src = `echipe/${selectedTeam.number}.png`;
+                leaderboardTeamLogo.onerror = function() {
+                    this.src = 'echipe/default.png';
+                };
+                leaderboardTeamLogo.style.display = 'block';
+            } else {
+                leaderboardTeamLogo.style.display = 'none';
+            }
+            
             const leaderboard = getLeaderboard();
             const listDiv = document.getElementById('leaderboardList');
             
@@ -774,7 +968,8 @@
                 leaderboard.forEach((entry, index) => {
                     const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
                     html += `<div style="padding: 8px; margin: 5px 0; background: rgba(255,255,255,0.1); border-radius: 5px;">`;
-                    html += `${medal} ${entry.name} - ${entry.score} pts (Lvl ${entry.level})`;
+                    html += `${medal} #${entry.teamNumber} - ${entry.teamName}`;
+                    html += `<br><span style="font-size: 12px; color: #f9056c;">${entry.score} pts (Lvl ${entry.level})</span>`;
                     html += `<br><span style="font-size: 8px; color: #aaa;">${entry.date}</span>`;
                     html += `</div>`;
                 });
@@ -789,7 +984,11 @@
             leaderboardScreen.classList.add('hidden');
             if (gameRunning) {
                 // Just close
+            } else if (gameOverScreen.classList.contains('hidden')) {
+                // Came from start screen
+                startScreen.classList.remove('hidden');
             } else {
+                // Came from game over
                 gameOverScreen.classList.remove('hidden');
             }
         }
@@ -867,11 +1066,6 @@
         document.getElementById('btnDown').addEventListener('touchstart', (e) => { e.preventDefault(); player.move(0, 1); });
         document.getElementById('btnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); player.move(-1, 0); });
         document.getElementById('btnRight').addEventListener('touchstart', (e) => { e.preventDefault(); player.move(1, 0); });
-
-        // Save score on Enter key
-        playerNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') saveScore();
-        });
 
     </script>
     

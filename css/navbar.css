@@ -1,0 +1,74 @@
+/* ===== NAVBAR STYLES ===== */
+
+#mainNav {
+  background-color: transparent;
+  transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  box-shadow: none;
+  padding: 0.6rem 0 !important;
+}
+
+#mainNav.navbar-shrink {
+  background: linear-gradient(135deg, #94003f, #f9056c) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+#mainNav .navbar-brand {
+  display: flex;
+  align-items: center;
+  padding: 0.2rem 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#mainNav .navbar-brand:hover {
+  transform: none;
+}
+
+#mainNav .navbar-brand img {
+  height: 3rem;
+  object-fit: contain;
+  filter: none;
+  transition: all 0.3s ease;
+}
+
+#mainNav .nav-link {
+  color: white !important;
+  transition: transform 0.3s ease, color 0.3s ease;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.75rem 1rem;
+}
+
+#mainNav .nav-link:hover,
+#mainNav .nav-link.active {
+  transform: scale(1.1);
+  color: white !important;
+}
+
+#mainNav .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.5);
+  padding: 0.5rem 0.75rem;
+}
+
+#mainNav .navbar-toggler:focus {
+  box-shadow: 0 0 0 0.25rem rgba(249, 5, 108, 0.25);
+}
+
+#mainNav .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Mobile responsive */
+@media (max-width: 992px) {
+  #mainNav .navbar-collapse {
+    background: rgba(10, 10, 10, 0.95);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+  }
+  
+  #mainNav .nav-link {
+    padding: 0.75rem 1rem;
+  }
+}

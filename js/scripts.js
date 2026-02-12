@@ -447,6 +447,43 @@ document.querySelectorAll('.toggle-section').forEach(button => {
 });
 
 // ===== DINO GAME SIMPLE =====
+
+// FTC Teams Database
+const ftcTeams = [
+  { number: 19066, name: "AiCitizens" },
+  { number: 21028, name: "The Eagles RO143" },
+  { number: 19061, name: "Boogeybots" },
+  { number: 15996, name: "BrickBot" },
+  { number: 19139, name: "SnakeTech" },
+  { number: 22998, name: "CYB3RG0DS" },
+  { number: 21031, name: "roLERbot" },
+  { number: 23161, name: "CyberLIS76" },
+  { number: 24928, name: "HYPERION" },
+  { number: 19097, name: "Quasar.Robotics" },
+  { number: 22017, name: "Eu codez" },
+  { number: 19071, name: "SmartCluster" },
+  { number: 19044, name: "Peppers" },
+  { number: 17871, name: "Thobor" },
+  { number: 19043, name: "CyLiis" },
+  { number: 20954, name: "STIM DC" },
+  { number: 19053, name: "Homosapiens" },
+  { number: 22590, name: "MechaByte" },
+  { number: 22697, name: "CreativityR" },
+  { number: 24308, name: "BrightCluster" },
+  { number: 19211, name: "Virtual Wolves" },
+  { number: 21097, name: "Dragonfly" },
+  { number: 19065, name: "Inorog Team RO 152" },
+  { number: 32762, name: "NightWings" },
+  { number: 23800, name: "Robozzi" },
+  { number: 23576, name: "ORION" },
+  { number: 24554, name: "AVOCADO ROBOTICS" },
+  { number: 19087, name: "MironoBot" },
+  { number: 19147, name: "Blizzard Eye" },
+  { number: 27660, name: "R0b0Ryders" },
+  { number: 32838, name: "CEMEKANIKS25" },
+  { number: 32442, name: "Iron Minds LTTC" }
+];
+
 let dinoGameState = {
   running: false,
   started: false,
@@ -455,7 +492,8 @@ let dinoGameState = {
   speed: 5,
   jumping: false,
   jumpVel: 0,
-  jumpHeight: 0
+  jumpHeight: 0,
+  selectedTeam: JSON.parse(localStorage.getItem('dino_selected_team')) || ftcTeams.find(t => t.number === 21031)
 };
 
 // Game elements
@@ -476,11 +514,41 @@ function initDinoGame() {
     status: document.getElementById('game-status'),
     notStarted: document.getElementById('game-not-started'),
     finalScore: document.getElementById('final-score-val'),
-    btn: document.getElementById('start-btn')
+    btn: document.getElementById('start-btn'),
+    teamSelect: document.getElementById('team-select'),
+    selectedTeamDisplay: document.getElementById('selected-team')
   };
   
   if (dinoElements.best) {
     dinoElements.best.textContent = dinoGameState.bestScore;
+  }
+  
+  // Populate team selector
+  if (dinoElements.teamSelect) {
+    ftcTeams.forEach(team => {
+      const option = document.createElement('option');
+      option.value = team.number;
+      option.textContent = `#${team.number} - ${team.name}`;
+      if (dinoGameState.selectedTeam && team.number === dinoGameState.selectedTeam.number) {
+        option.selected = true;
+      }
+      dinoElements.teamSelect.appendChild(option);
+    });
+    
+    dinoElements.teamSelect.addEventListener('change', (e) => {
+      const teamNumber = parseInt(e.target.value);
+      dinoGameState.selectedTeam = ftcTeams.find(t => t.number === teamNumber);
+      localStorage.setItem('dino_selected_team', JSON.stringify(dinoGameState.selectedTeam));
+      updateSelectedTeamDisplay();
+    });
+  }
+  
+  updateSelectedTeamDisplay();
+}
+
+function updateSelectedTeamDisplay() {
+  if (dinoElements.selectedTeamDisplay && dinoGameState.selectedTeam) {
+    dinoElements.selectedTeamDisplay.textContent = `Playing as: #${dinoGameState.selectedTeam.number} - ${dinoGameState.selectedTeam.name}`;
   }
 }
 
