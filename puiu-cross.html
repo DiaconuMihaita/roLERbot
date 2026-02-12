@@ -275,6 +275,126 @@
             transform: scale(1.1);
             box-shadow: 0 0 10px #f9056c;
         }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .main-wrapper {
+                gap: 8px;
+                padding: 5px;
+            }
+
+            .game-container {
+                width: 100%;
+                max-width: 95vw;
+                max-height: 60vh;
+                border: 3px solid #fff;
+            }
+
+            .d-pad {
+                grid-template-columns: 40px 40px 40px;
+                grid-template-rows: 40px 40px;
+                gap: 6px;
+            }
+
+            .d-btn {
+                font-size: 20px;
+                border-radius: 8px;
+            }
+
+            .mobile-controls {
+                gap: 8px;
+                padding: 6px;
+                border-radius: 12px;
+            }
+
+            h1 {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+
+            h2 {
+                font-size: 14px;
+                margin-bottom: 20px;
+            }
+
+            .btn-retro {
+                padding: 12px 15px;
+                font-size: 11px;
+                margin-top: 10px;
+            }
+
+            .score-board {
+                font-size: 16px;
+            }
+
+            .lives-board {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                max-height: 50vh;
+                border: 2px solid #fff;
+            }
+
+            .d-pad {
+                grid-template-columns: 35px 35px 35px;
+                grid-template-rows: 35px 35px;
+                gap: 5px;
+            }
+
+            .d-btn {
+                font-size: 18px;
+                border-radius: 6px;
+            }
+
+            .mobile-controls {
+                gap: 6px;
+                padding: 5px;
+            }
+
+            h1 {
+                font-size: 18px;
+            }
+
+            h2 {
+                font-size: 12px;
+            }
+
+            .btn-retro {
+                padding: 10px 12px;
+                font-size: 10px;
+            }
+
+            p {
+                font-size: 10px !important;
+            }
+
+            .team-logo-img {
+                width: 60px;
+                height: 60px;
+            }
+
+            #gameOverTeamLogo {
+                width: 80px !important;
+                height: 80px !important;
+            }
+
+            #leaderboardTeamLogo {
+                width: 60px !important;
+                height: 60px !important;
+            }
+
+            select {
+                width: 95% !important;
+                font-size: 10px !important;
+            }
+        }
     </style>
 <link href="css/mobile-responsive.css" rel="stylesheet" />`n</head>
 
