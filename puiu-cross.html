@@ -25,16 +25,19 @@
             min-height: 100vh;
             background-color: #2c3e50;
             font-family: 'Press Start 2P', cursive;
-            overflow: hidden;
-            /* Prevent scroll on some devices */
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         .main-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 10px;
             padding: 10px;
+            width: 100%;
+            min-height: 100vh;
         }
 
         .game-container {
@@ -279,19 +282,27 @@
         /* Mobile Responsive */
         @media (max-width: 768px) {
             body {
-                padding: 5px;
+                padding: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
             }
 
             .main-wrapper {
-                gap: 8px;
-                padding: 5px;
+                gap: 6px;
+                padding: 8px;
+                min-height: auto;
+                justify-content: flex-start;
+                padding-top: 15px;
+                padding-bottom: 15px;
             }
 
             .game-container {
-                width: 100%;
-                max-width: 95vw;
-                max-height: 60vh;
+                width: 90vw;
+                height: 55vh;
+                max-width: 500px;
+                max-height: 55vh;
                 border: 3px solid #fff;
+                flex-shrink: 0;
             }
 
             .d-pad {
@@ -337,9 +348,28 @@
         }
 
         @media (max-width: 480px) {
+            .main-wrapper {
+                gap: 5px;
+                padding: 6px;
+                padding-top: 10px;
+                padding-bottom: 10px;
+            }
+
             .game-container {
+                width: 95vw;
+                height: 50vh;
+                max-width: 100%;
                 max-height: 50vh;
                 border: 2px solid #fff;
+                flex-shrink: 0;
+            }
+
+            .mobile-controls {
+                gap: 5px;
+                padding: 5px;
+                width: 95vw;
+                flex-shrink: 0;
+                margin-top: 8px;
             }
 
             .d-pad {
@@ -351,11 +381,6 @@
             .d-btn {
                 font-size: 18px;
                 border-radius: 6px;
-            }
-
-            .mobile-controls {
-                gap: 6px;
-                padding: 5px;
             }
 
             h1 {
