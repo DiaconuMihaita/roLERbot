@@ -858,6 +858,10 @@ legend {
 @media (max-width: 767px) {
   .masthead {
     padding: 3rem 0;
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    min-height: 50vh;
   }
 
   .carousel-slide {
