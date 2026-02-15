@@ -1,0 +1,460 @@
+/* =================================
+   Vertical Wavy Timeline - Polished Edition
+   ================================= */
+
+.timeline-container-curved {
+    position: relative;
+    padding: 80px 0 100px;
+    overflow: visible;
+    /* Add a subtle top/bottom fade mask or just padding */
+}
+
+/* Timeline Base */
+.timeline {
+    position: relative;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Wavy Center Line */
+@media (min-width: 992px) {
+    .timeline:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0px;
+        /* Ensure full height */
+        left: 50%;
+        width: 20px;
+        /* Width for subtle curve */
+        margin-left: -10px;
+        /* Center perfectly */
+
+        /* Continuous Subtle Curve SVG - Larger Wavelength (Less Frequent) */
+        /* Height increased to 200px (was 100px) for longer, more relaxed waves */
+        /* Path stretches from 0 to 200. Curve amplitude (X) stays pronounced at 1/19 */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='200' viewBox='0 0 20 200'%3E%3Cpath d='M10 0 Q 1 50 10 100 T 10 200' fill='none' stroke='%23f9056c' stroke-width='4' stroke-linecap='square' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+        background-repeat: repeat-y;
+        background-size: 20px 200px;
+        /* IMPORTANT: Matches new height for larger waves */
+        opacity: 0.8;
+        z-index: 0;
+        /* Behind everything (li has relative, so acts as layer) */
+        /* No shadow on line itself to keep it clean, maybe slight one */
+        filter: drop-shadow(0 0 2px rgba(249, 5, 108, 0.3));
+    }
+}
+
+/* Timeline Items */
+.timeline>li {
+    position: relative;
+    z-index: 2;
+    /* Ensure items (images/panels) sit ABOVE the line (z-index: 0) */
+    margin-bottom: 120px;
+    /* Spacious */
+    min-height: 220px;
+}
+
+/* Clearfix */
+.timeline>li:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* =================================
+   Timeline Images (Center Circles)
+   ================================= */
+.timeline>li .timeline-image {
+    position: absolute;
+    z-index: 100;
+    left: 50%;
+    width: 180px;
+    height: 180px;
+    margin-left: -90px;
+
+    /* Styling */
+    background-color: #fff;
+    border: 8px solid #fff;
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 5px #f9056c,
+        0 15px 35px rgba(249, 5, 108, 0.3);
+
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Bouncy transition */
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline>li .timeline-image:hover {
+    transform: scale(1.15) rotate(3deg);
+    box-shadow:
+        0 0 0 6px #ff346d,
+        0 25px 50px rgba(249, 5, 108, 0.5);
+    cursor: pointer;
+}
+
+.timeline>li .timeline-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.timeline>li .timeline-image:hover img {
+    transform: scale(1.1);
+    /* Zoom image inside */
+}
+
+/* =================================
+   Timeline Panels (Cards) - Optimised
+   ================================= */
+.timeline>li .timeline-panel {
+    position: relative;
+    width: 41%;
+    /* Reduced to 41% to preventing overlap with images */
+    padding: 40px;
+    /* More breathing room (was 35px) */
+    background: #fff;
+    border-radius: 24px;
+    /* Softer corners */
+
+    /* Beautiful Shadow */
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(249, 5, 108, 0.08);
+    /* Fainter border */
+    transition: all 0.3s ease;
+    z-index: 10;
+
+    /* Text Formatting Improvement */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* Center content vertically if panel has height */
+}
+
+.timeline>li .timeline-panel:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 50px rgba(249, 5, 108, 0.15);
+    border-color: rgba(249, 5, 108, 0.3);
+}
+
+/* Connector Lines (The line from circle to text) */
+@media (min-width: 992px) {
+    .timeline>li .timeline-panel:before {
+        content: '';
+        position: absolute;
+        top: 60px;
+        /* Adjusted to align with new padding/content flow */
+        width: 50px;
+        /* Slightly shorter connector */
+        height: 3px;
+        background: linear-gradient(90deg, #f9056c, rgba(249, 5, 108, 0));
+        opacity: 0.4;
+        pointer-events: none;
+        border-radius: 2px;
+    }
+}
+
+/* Left Side (Odd) */
+.timeline>li:nth-child(odd) .timeline-panel {
+    float: left;
+    text-align: right;
+    margin-right: 0;
+}
+
+/* Ensure headings inside are RIGHT aligned too */
+.timeline>li:nth-child(odd) .timeline-heading h4,
+.timeline>li:nth-child(odd) .timeline-heading .subheading {
+    text-align: right !important;
+    width: 100%;
+}
+
+/* Connector for Left */
+@media (min-width: 992px) {
+    .timeline>li:nth-child(odd) .timeline-panel:before {
+        right: -50px;
+        left: auto;
+        background: linear-gradient(-90deg, #f9056c, rgba(249, 5, 108, 0));
+    }
+}
+
+
+/* Right Side (Even) */
+.timeline>li:nth-child(even) .timeline-panel {
+    float: right;
+    text-align: left;
+    margin-left: 0;
+}
+
+/* Connector for Right */
+@media (min-width: 992px) {
+    .timeline>li:nth-child(even) .timeline-panel:before {
+        left: -50px;
+        right: auto;
+    }
+}
+
+
+/* Inverted Override */
+@media (min-width: 992px) {
+    .timeline>li.timeline-inverted .timeline-panel {
+        float: right;
+        text-align: left;
+    }
+
+    .timeline>li.timeline-inverted .timeline-panel:before {
+        left: -50px;
+        right: auto;
+        background: linear-gradient(90deg, #f9056c, rgba(249, 5, 108, 0));
+    }
+}
+
+/* Text Styling - Enhanced */
+.timeline-heading h4 {
+    margin-top: 0;
+    color: #212529;
+    font-weight: 800;
+    margin-bottom: 12px;
+    font-size: 1.35rem;
+    /* Larger Title */
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+.timeline-heading .subheading {
+    display: block;
+    margin-bottom: 25px;
+    /* More space before body text */
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #f9056c;
+    letter-spacing: 2px;
+    position: relative;
+    display: inline-block;
+}
+
+/* Decorative underline */
+.timeline-heading .subheading:after {
+    content: '';
+    display: block;
+    width: 60px;
+    /* Longer line */
+    height: 3px;
+    background: #f9056c;
+    /* Solid color */
+    margin-top: 10px;
+    border-radius: 2px;
+    opacity: 0.7;
+}
+
+/* Right align line for right aligned text */
+.timeline>li:nth-child(odd) .timeline-heading .subheading:after {
+    margin-left: auto;
+}
+
+.timeline-body p {
+    margin-bottom: 0;
+    font-size: 1.05rem;
+    /* Slightly larger text */
+    line-height: 1.8;
+    /* Better readability */
+    color: #555;
+    font-weight: 400;
+}
+
+
+/* =================================
+   Final Circle Styling (Pulsing) - Refined Centering
+   ================================= */
+.timeline-end-marker {
+    text-align: center;
+    margin-bottom: 0;
+    position: relative;
+    clear: both;
+    height: auto;
+    min-height: 300px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 50px;
+    /* Space from last item */
+}
+
+/* Pulse Animation Keyframes */
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(249, 5, 108, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 20px rgba(249, 5, 108, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(249, 5, 108, 0);
+    }
+}
+
+/* Ensure the image is centered relative to the whole timeline container */
+.timeline-image-final {
+    /* Use relative positioning within the flex container */
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    margin: 0 auto !important;
+
+    width: 240px !important;
+    height: 240px !important;
+
+    /* Gradient Background */
+    background: linear-gradient(135deg, #ff346d 0%, #f9056c 100%);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 50%;
+    border: 10px solid #fff !important;
+
+    /* Initial Shadow */
+    box-shadow: 0 15px 40px rgba(249, 5, 108, 0.5);
+
+    /* Animation */
+    animation: pulse-glow 2s infinite;
+
+    z-index: 101;
+    cursor: pointer;
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.timeline-image-final:hover {
+    transform: scale(1.1) rotate(5deg) !important;
+    background: linear-gradient(135deg, #f9056c 0%, #ff0f5b 100%);
+}
+
+.timeline-final-text {
+    color: white;
+    font-weight: 900;
+    text-align: center;
+    font-size: 22px;
+    line-height: 1.3;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+
+/* =================================
+   Responsive Mobile Styles
+   ================================= */
+@media (max-width: 991px) {
+    .timeline-container-curved {
+        padding: 40px 15px;
+    }
+
+    /* Hide the line */
+    .timeline:before {
+        display: none;
+    }
+
+    .timeline>li {
+        margin-bottom: 60px;
+        min-height: auto;
+    }
+
+    /* Image: Centered & Smaller */
+    .timeline>li .timeline-image {
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 160px;
+        height: 160px;
+        margin-left: 0;
+        margin-bottom: 30px;
+        border-width: 6px;
+    }
+
+    .timeline>li .timeline-image:hover {
+        transform: translateX(-50%) scale(1.05);
+        /* Gentle hover */
+    }
+
+    /* Panels: Full Width & Centered */
+    .timeline>li .timeline-panel {
+        width: 100%;
+        float: none;
+        text-align: center;
+        padding: 30px 20px;
+        margin: 0 auto;
+    }
+
+    /* Hide connectors on mobile */
+    .timeline>li .timeline-panel:before {
+        display: none;
+    }
+
+    /* Reset Specifics */
+    .timeline>li:nth-child(odd) .timeline-panel,
+    .timeline>li:nth-child(even) .timeline-panel {
+        float: none;
+        text-align: center;
+    }
+
+    /* Force Center Alignment for Headings on Mobile (Override Desktop !important & any other specificity) */
+    .timeline>li .timeline-heading h4,
+    .timeline>li .timeline-heading .subheading,
+    .timeline>li:nth-child(odd) .timeline-heading h4,
+    .timeline>li:nth-child(odd) .timeline-heading .subheading,
+    .timeline>li:nth-child(even) .timeline-heading h4,
+    .timeline>li:nth-child(even) .timeline-heading .subheading {
+        text-align: center !important;
+        width: 100% !important;
+    }
+
+    /* Re-center the decorative line under subheading */
+    .timeline-heading .subheading:after,
+    .timeline>li:nth-child(odd) .timeline-heading .subheading:after {
+        margin: 10px auto 0 auto !important;
+        /* Center it */
+    }
+
+    .timeline-body p {
+        text-align: center;
+        /* Center text on mobile often looks cleaner for short blurbs */
+        /* Or justify if text is long */
+    }
+
+    /* Final Circle Mobile */
+    .timeline-end-marker {
+        height: auto;
+        margin-top: 50px;
+        display: block;
+    }
+
+    .timeline-image-final {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        margin: 0 auto !important;
+        width: 200px !important;
+        height: 200px !important;
+        border-width: 8px !important;
+    }
+
+    .timeline-image-final:hover {
+        transform: scale(1.05) !important;
+    }
+
+    .timeline-final-text {
+        font-size: 18px;
+    }
+}

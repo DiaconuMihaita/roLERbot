@@ -17,6 +17,8 @@
   align-items: center;
   padding: 0.2rem 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1000;
 }
 
 #mainNav .navbar-brand:hover {
@@ -24,10 +26,12 @@
 }
 
 #mainNav .navbar-brand img {
-  height: 3rem;
+  height: 90px;
   object-fit: contain;
   filter: none;
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 1001;
 }
 
 #mainNav .nav-link {
@@ -41,9 +45,17 @@
 }
 
 #mainNav .nav-link:hover,
-#mainNav .nav-link.active {
+#mainNav .nav-link.active,
+#mainNav .nav-link.is-active {
   transform: scale(1.1);
   color: white !important;
+}
+
+#mainNav .nav-link.active,
+#mainNav .nav-link.is-active {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
 }
 
 #mainNav .navbar-toggler {

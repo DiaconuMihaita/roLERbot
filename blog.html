@@ -33,32 +33,29 @@
   <nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav">
     <div class="container">
       <a class="navbar-brand" href="#page-top">
-        <img src="assets/img/Design fără titlu (40).png" alt="Logo" class="logo-img d-inline-block align-text-top"
-          loading="lazy">
+        <img src="assets/img/Design fără titlu (41).png" alt="Logo">
       </a>
 
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive"
         aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-        Menu <i class="fas fa-bars ms-1"></i>
+        Menu
+        <i class="fas fa-bars ms-1"></i>
       </button>
       <div class="collapse navbar-collapse" id="navbarResponsive">
         <ul class="navbar-nav text-uppercase ms-auto py-4 py-lg-0">
           <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="#portfolio">Sponsori</a></li>
-          <li class="nav-item"><a class="nav-link" href="#about">2023</a></li>
-          <li class="nav-item"><a class="nav-link" href="#about">2024</a></li>
-          <li class="nav-item"><a class="nav-link" href="#team">2025</a></li>
-          <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
-          <li class="nav-item"><a class="nav-link" href="#team">Inscrie-te</a></li>
+          <li class="nav-item"><a class="nav-link" href="#team-members">Echipa</a></li>
+          <li class="nav-item"><a class="nav-link" href="#activities-section">Activitati</a></li>
+          <li class="nav-item"><a class="nav-link" href="#footer">Contact</a></li>
           <li class="nav-item">
-            <button id="rain-button" class="nav-link theme-button" type="button" aria-label="Toggle theme">🐥</button>
+            <button id="rain-button" class="nav-link" style="background: none; border: none; cursor: pointer;">🐥</button>
           </li>
         </ul>
       </div>
     </div>
   </nav>
 
-  <header class="masthead">
+  <header class="masthead masthead-blog">
     <div class="container d-flex flex-column align-items-start">
       <div class="masthead-heading text-uppercase text-start text-white animate-on-scroll">Bloguri</div>
       <a class="btn btn-xl btn-start-hero btn-primary text-uppercase mt-3 animate-on-scroll" href="#team-members">Afla
@@ -74,30 +71,29 @@
         <h3 class="section-subheading text-muted">Membrii roLERbot</h3>
       </div>
 
-      <div class="row team-carousel-section">
-        <!-- Carusel membri în stânga -->
-        <div class="col-lg-5 col-md-12 mb-4 mb-lg-0">
+      <div class="row justify-content-center">
+        <div class="col-12">
           <div class="team-carousel-container">
             <button class="carousel-btn prev-btn" onclick="changeSlide(-1)"><i class="fas fa-chevron-left"></i></button>
 
             <div class="carousel-cards-wrapper">
               <div class="team-card side-card left-card" data-member="8">
                 <div class="card-pink-bg">
-                  <img src="assets/img/team/member8.jpg" alt="Membru 8" class="member-photo">
+                  <img src="memb/8.png" alt="Membru 8" class="member-photo">
                   <h4 class="member-name">Nume Prenume</h4>
                   <p class="member-department">Departamentul Business</p>
                 </div>
               </div>
               <div class="team-card center-card active" data-member="1">
                 <div class="card-pink-bg">
-                  <img src="assets/img/team/member1.jpg" alt="Membru 1" class="member-photo">
+                  <img src="memb/1.png" alt="Membru 1" class="member-photo">
                   <h4 class="member-name">Nume Prenume</h4>
                   <p class="member-department">Departamentul Programare</p>
                 </div>
               </div>
               <div class="team-card side-card right-card" data-member="2">
                 <div class="card-pink-bg">
-                  <img src="assets/img/team/member2.jpg" alt="Membru 2" class="member-photo">
+                  <img src="memb/2.png" alt="Membru 2" class="member-photo">
                   <h4 class="member-name">Nume Prenume</h4>
                   <p class="member-department">Departamentul Design</p>
                 </div>
@@ -115,49 +111,8 @@
               <span class="indicator" onclick="goToSlide(5)"></span>
               <span class="indicator" onclick="goToSlide(6)"></span>
               <span class="indicator" onclick="goToSlide(7)"></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Descriere în dreapta -->
-        <div class="col-lg-7 col-md-12">
-          <div class="member-description-box">
-            <div class="description-content active" data-description="0">
-              <h3>Despre Membru 1</h3>
-              <p>Pasionat de programare și robotică, Membru 1 este responsabil cu dezvoltarea software-ului și
-                implementarea algoritmilor pentru robotul echipei.</p>
-              <div class="member-stats">
-                <div class="stat-item"><i class="fas fa-trophy"></i><span>3+ competiții</span></div>
-                <div class="stat-item"><i class="fas fa-code"></i><span>Java, Python</span></div>
-              </div>
-            </div>
-            <div class="description-content" data-description="1">
-              <h3>Despre Membru 2</h3>
-              <p>Specializat în design grafic...</p>
-            </div>
-            <div class="description-content" data-description="2">
-              <h3>Despre Membru 3</h3>
-              <p>Expert în hardware...</p>
-            </div>
-            <div class="description-content" data-description="3">
-              <h3>Despre Membru 4</h3>
-              <p>Marketing...</p>
-            </div>
-            <div class="description-content" data-description="4">
-              <h3>Despre Membru 5</h3>
-              <p>Inginer mecanic...</p>
-            </div>
-            <div class="description-content" data-description="5">
-              <h3>Despre Membru 6</h3>
-              <p>Automatizare...</p>
-            </div>
-            <div class="description-content" data-description="6">
-              <h3>Despre Membru 7</h3>
-              <p>Logistică...</p>
-            </div>
-            <div class="description-content" data-description="7">
-              <h3>Despre Membru 8</h3>
-              <p>Business...</p>
+              <span class="indicator" onclick="goToSlide(8)"></span>
+              <span class="indicator" onclick="goToSlide(9)"></span>
             </div>
           </div>
         </div>
@@ -266,11 +221,9 @@
                         </div>
                     </div>
                     <div class="col-md-6 text-center">
-                        <img src="assets/img/ftc-challenge.png" class="img-fluid rounded shadow-lg mb-4 animate-on-scroll" alt="CenterStage Field">
-                        <div class="row g-2">
-                             <div class="col-6"><img src="assets/img/activitate1.jpg" class="img-fluid rounded shadow-sm" alt="Detaliu Joc 1"></div>
-                             <div class="col-6"><img src="assets/img/activitate2.jpg" class="img-fluid rounded shadow-sm" alt="Detaliu Joc 2"></div>
-                        </div>
+                        <img src="assets/img/ftc-challenge.png" class="img-fluid rounded shadow-lg mb-3 animate-on-scroll" alt="CenterStage Field">
+                        <img src="teren/20241.png" class="img-fluid rounded shadow-sm mb-2" alt="Detaliu Joc 1">
+                        <img src="teren/20242.png" class="img-fluid rounded shadow-sm" alt="Detaliu Joc 2">
                     </div>
                  </div>
               `,
@@ -428,11 +381,9 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
                         </div>
                     </div>
                     <div class="col-md-6 text-center">
-                        <img src="assets/img/2024/meet/field-2024.jpg" class="img-fluid rounded shadow-lg mb-4 animate-on-scroll" alt="Into The Deep Field">
-                        <div class="row g-2">
-                             <div class="col-6"><img src="assets/img/2024/activitati/game-detail1.jpg" class="img-fluid rounded shadow-sm" alt="Detaliu Joc 1"></div>
-                             <div class="col-6"><img src="assets/img/2024/activitati/game-detail2.jpg" class="img-fluid rounded shadow-sm" alt="Detaliu Joc 2"></div>
-                        </div>
+                        <img src="assets/img/2024/meet/field-2024.jpg" class="img-fluid rounded shadow-lg mb-3 animate-on-scroll" alt="Into The Deep Field">
+                        <img src="teren/20251.png" class="img-fluid rounded shadow-sm mb-2" alt="Detaliu Joc 1">
+                        <img src="teren/20252.png" class="img-fluid rounded shadow-sm" alt="Detaliu Joc 2">
                     </div>
                  </div>
               `,
@@ -573,7 +524,7 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
                    <div class="card mb-4 border-0 shadow-sm">
                      <div class="card-header bg-white text-primary p-3">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">� Xmas Robo Stone - Piatra Neamt</h5>
+                            <h5 class="mb-0">Xmas Robo Stone - Piatra Neamt</h5>
                             <span class="badge bg-primary rounded-pill px-3 py-2">21 decembrie</span>
                         </div>
                      </div>
@@ -588,7 +539,7 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
                    <div class="card mb-4 border-0 shadow-sm">
                      <div class="card-header bg-white text-primary p-3">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">🧊 Frozen Depths Meet - Suceava</h5>
+                            <h5 class="mb-0">Frozen Depths Meet - Suceava</h5>
                             <span class="badge bg-success rounded-pill px-3 py-2">4 ianuarie</span>
                         </div>
                      </div>
@@ -602,7 +553,7 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
                    <div class="card mb-4 border-0 shadow-sm">
                      <div class="card-header bg-white text-primary p-3">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">🏙️ League Meet of Iasi</h5>
+                            <h5 class="mb-0">League Meet of Iasi</h5>
                             <span class="badge bg-warning text-dark rounded-pill px-3 py-2">11 ianuarie</span>
                         </div>
                      </div>
@@ -642,11 +593,9 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
                 </div>
                     </div>
                     <div class="col-md-6 text-center">
-                        <img src="assets/img/2025/meet/field-concept.jpg" class="img-fluid rounded shadow-lg mb-4 animate-on-scroll" alt="Reefscape Field">
-                        <div class="row g-2">
-                             <div class="col-6"><img src="assets/img/2025/meet/coral-detail.jpg" class="img-fluid rounded shadow-sm" alt="Coral Detail"></div>
-                             <div class="col-6"><img src="assets/img/2025/meet/sanctuary.jpg" class="img-fluid rounded shadow-sm" alt="Sanctuary Zone"></div>
-                        </div>
+                        <img src="assets/img/2025/meet/field-concept.jpg" class="img-fluid rounded shadow-lg mb-3 animate-on-scroll" alt="Reefscape Field">
+                        <img src="teren/20261.png" class="img-fluid rounded shadow-sm mb-2" alt="Coral Detail">
+                        <img src="teren/20262.png" class="img-fluid rounded shadow-sm" alt="Sanctuary Zone">
                     </div>
                  </div>
               `,
@@ -967,7 +916,7 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
   </script>
 
   <!-- Footer-->
-  <footer class="modern-footer">
+  <footer class="modern-footer" id="footer">
     <div class="footer-waves">
       <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
         <defs>
@@ -989,7 +938,7 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
           <div class="col-lg-4 col-md-6">
             <div class="footer-section">
               <h3 class="footer-title">
-                <i class="fas fa-robot me-2"></i>
+                <img src="assets/img/Design fără titlu (40).png" alt="roLERbot Logo" class="footer-logo">
                 roLERbot
               </h3>
               <p class="footer-description">
@@ -1088,14 +1037,16 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
       if (window.changeSlide && window.goToSlide && window.changeSlide.toString().includes('updateCarousel')) return;
 
       const teamMembers = [
-        { id: 1, image: "assets/img/team/member1.jpg", name: "Nume Prenume", dept: "Departamentul Programare" },
-        { id: 2, image: "assets/img/team/member2.jpg", name: "Nume Prenume", dept: "Departamentul Design" },
-        { id: 3, image: "assets/img/team/member3.jpg", name: "Nume Prenume", dept: "Departamentul Hardware" },
-        { id: 4, image: "assets/img/team/member4.jpg", name: "Nume Prenume", dept: "Departamentul Marketing" },
-        { id: 5, image: "assets/img/team/member5.jpg", name: "Nume Prenume", dept: "Departamentul Mecanic" },
-        { id: 6, image: "assets/img/team/member6.jpg", name: "Nume Prenume", dept: "Departamentul Programare" },
-        { id: 7, image: "assets/img/team/member7.jpg", name: "Nume Prenume", dept: "Departamentul Logistică" },
-        { id: 8, image: "assets/img/team/member8.jpg", name: "Nume Prenume", dept: "Departamentul Business" }
+        { id: 1, image: "memb/1.png", name: "Ina Cioata", dept: "Departamentul Hardware" },
+        { id: 2, image: "memb/2.png", name: "Ahire Simona", dept: "Departamentul Marketing&PR" },
+        { id: 3, image: "memb/3.png", name: "Tocariuc Nicoleta", dept: "Departamentul Marketing&PR" },
+        { id: 4, image: "memb/4.png", name: "Diaconu Mihaita", dept: "Departamentul Hardware" },
+        { id: 5, image: "memb/5.png", name: "Gospodin Rares", dept: "Departamentul Hardware" },
+        { id: 6, image: "memb/6.png", name: "Padurarau Natalia", dept: "Departamentul Software" },
+        { id: 7, image: "memb/7.png", name: "Mandru Stefan", dept: "Departamentul Hardware" },
+        { id: 8, image: "memb/8.png", name: "Arnaut  Crina", dept: "Departamentul Hardware" },
+        { id: 9, image: "memb/9.png", name: "Averchi Radu", dept: "Departamentul Marketing&PR" },
+        { id: 10, image: "memb/10.png", name: "Rascanu Maria", dept: "Departamentul Marketing&PR" },
       ];
 
       let currentSlide = 0;
@@ -1142,14 +1093,9 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
             updateCard(rightCard, rightMember);
           }
 
-          // Update descriptions and indicators
+          // Update indicators
           const section = container.closest('.team-members-section');
           if (section) {
-            const descriptions = section.querySelectorAll('.description-content');
-            descriptions.forEach((desc, index) => {
-              desc.classList.toggle('active', index === currentSlide);
-            });
-
             const indicators = section.querySelectorAll('.indicator');
             indicators.forEach((indicator, index) => {
               indicator.classList.toggle('active', index === currentSlide);
