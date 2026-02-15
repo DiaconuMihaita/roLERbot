@@ -34,9 +34,10 @@
   z-index: 2;
 }
 
-/* Mobile - fix background */
+/* Mobile - use 4:3 aspect ratio image */
 @media (max-width: 767px) {
   .masthead-blog {
+    background: url('../assets/bgtelefon1.png') center center / cover no-repeat !important;
     background-attachment: fixed !important;
     background-size: cover !important;
     background-position: center !important;

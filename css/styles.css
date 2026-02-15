@@ -858,10 +858,11 @@ legend {
 @media (max-width: 767px) {
   .masthead {
     padding: 3rem 0;
+    background: url('../assets/bgtelefon.png') center center / cover no-repeat;
     background-attachment: fixed;
     background-size: cover;
     background-position: center;
-    min-height: 50vh;
+    min-height: 60vh;
   }
 
   .carousel-slide {
