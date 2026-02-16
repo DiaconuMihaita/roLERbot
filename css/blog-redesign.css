@@ -18,6 +18,12 @@
   position: relative;
 }
 
+@media (max-width: 768px) {
+  header.masthead.masthead-blog {
+    background: url('../assets/bgtel3.png') center center / cover no-repeat !important;
+  }
+}
+
 .masthead-blog::before {
   content: "";
   position: absolute;
@@ -25,7 +31,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0.3), rgba(0,0,0,0.5));
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5));
   z-index: 1;
 }
 
@@ -37,11 +43,11 @@
 /* Mobile - use 4:3 aspect ratio image */
 @media (max-width: 767px) {
   .masthead-blog {
-    background: url('../assets/bgtelefon1.png') center center / cover no-repeat !important;
-    background-attachment: fixed !important;
+    background: url('../assets/bgtel3.png') center top / cover no-repeat !important;
+    background-attachment: scroll !important;
     background-size: cover !important;
-    background-position: center !important;
-    min-height: 60vh !important;
+    background-position: center top !important;
+    min-height: 110vh !important;
   }
 }
 
@@ -411,11 +417,11 @@ body {
   .team-members-section .carousel-cards-wrapper {
     padding: 40px 20px;
   }
-  
+
   .team-members-section .team-card.center-card {
     transform: scale(1);
   }
-  
+
   .team-members-section .team-card.center-card .member-photo {
     width: 160px;
     height: 160px;
@@ -440,7 +446,7 @@ body {
   .team-members-section .prev-btn {
     left: -20px;
   }
-  
+
   .team-members-section .next-btn {
     right: -20px;
   }
@@ -450,11 +456,11 @@ body {
   .team-members-section .prev-btn {
     left: 5px;
   }
-  
+
   .team-members-section .next-btn {
     right: 5px;
   }
-  
+
   .team-members-section .carousel-btn {
     width: 45px;
     height: 45px;
@@ -919,12 +925,10 @@ body {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: linear-gradient(
-    45deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.8) 50%,
-    transparent 70%
-  );
+  background: linear-gradient(45deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.8) 50%,
+      transparent 70%);
   transform: rotate(45deg);
   animation: shimmer 3s infinite;
   pointer-events: none;
@@ -935,6 +939,7 @@ body {
   0% {
     transform: translateX(-100%) translateY(-100%) rotate(45deg);
   }
+
   100% {
     transform: translateX(100%) translateY(100%) rotate(45deg);
   }
@@ -954,12 +959,12 @@ body {
   right: 0;
   bottom: 0;
   background: radial-gradient(circle at 20% 50%, rgba(249, 5, 108, 0.03) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(255, 52, 136, 0.03) 0%, transparent 50%);
+    radial-gradient(circle at 80% 80%, rgba(255, 52, 136, 0.03) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
 }
 
-.page-section > .container {
+.page-section>.container {
   position: relative;
   z-index: 1;
 }
@@ -988,9 +993,12 @@ body {
 }
 
 @keyframes badgeGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translate(-50%, -50%) scale(1);
   }
+
   50% {
     transform: translate(-50%, -50%) scale(1.2);
   }
@@ -998,9 +1006,12 @@ body {
 
 /* Floating Animation for Important Elements */
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -1043,14 +1054,17 @@ body {
 }
 
 /* Pulsing Dots for Timeline */
-.timeline > div::before {
+.timeline>div::before {
   animation: pulse 2s infinite, glowPulse 2s infinite;
 }
 
 @keyframes glowPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     filter: drop-shadow(0 0 3px var(--brand-pink));
   }
+
   50% {
     filter: drop-shadow(0 0 8px var(--brand-pink));
   }
@@ -1086,12 +1100,12 @@ body {
   left: 100%;
 }
 
-.timeline > div {
+.timeline>div {
   position: relative;
   padding-left: 25px;
 }
 
-.timeline > div::before {
+.timeline>div::before {
   content: "●";
   position: absolute;
   left: -8px;
@@ -1101,10 +1115,13 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.7;
     transform: scale(1.1);
@@ -1206,7 +1223,8 @@ model-viewer[alt]:after {
   }
 }
 
-/* Container for model-viewer */
+
+
 .model-viewer-container {
   width: 100%;
   height: 400px;

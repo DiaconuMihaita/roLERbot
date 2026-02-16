@@ -116,8 +116,8 @@
    ================================= */
 .timeline>li .timeline-panel {
     position: relative;
-    width: 41%;
-    /* Reduced to 41% to preventing overlap with images */
+    width: 44%;
+    /* Slightly wider (was 41%) for better text fit */
     padding: 40px;
     /* More breathing room (was 35px) */
     background: #fff;

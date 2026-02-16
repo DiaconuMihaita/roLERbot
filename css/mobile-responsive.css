@@ -136,6 +136,12 @@ body {
     line-height: 1.4;
   }
 
+  /* Mobile Header Background - uncomment when puiu-mobile.png exists */
+  /* header.masthead {
+    background-image: url("../assets/img/puiu-mobile.png") !important;
+    background-position: center bottom;
+  } */
+
   /* Page sections */
   .page-section {
     padding: 3.5rem 0;
