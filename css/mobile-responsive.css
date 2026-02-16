@@ -120,7 +120,11 @@ body {
 
   /* Hero section */
   .masthead {
-    padding: 5rem 1.2rem 3rem;
+    padding: 2rem 1.2rem 1.5rem;
+  }
+
+  .masthead .container {
+    align-items: center !important;
   }
 
   .masthead-heading {
@@ -129,11 +133,19 @@ body {
     white-space: nowrap;
     overflow: visible;
     font-weight: 700;
+    text-align: center !important;
   }
 
   .masthead-subheading {
     font-size: 0.95rem;
     line-height: 1.4;
+    text-align: center !important;
+  }
+
+  .btn-start-hero {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   /* Mobile Header Background - uncomment when puiu-mobile.png exists */
