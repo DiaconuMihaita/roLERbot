@@ -131,13 +131,19 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener('DOMContentLoaded', () => {
     // disable existing anchor modal triggers gracefully
     document.querySelectorAll('a.portfolio-link').forEach(a => {
+      const href = a.getAttribute('href');
+      const isPlaceholder = !href || href === '#' || href === '#!';
       a.addEventListener('click', (e) => {
-        e.preventDefault();
-        a.classList.add('no-modal');
+        if (isPlaceholder) {
+          e.preventDefault();
+          a.classList.add('no-modal');
+        }
       });
-      // make them tabbable/accessible if they weren't
-      a.setAttribute('role','button');
-      a.setAttribute('tabindex','0');
+      // make placeholders tabbable/accessible if they weren't
+      if (isPlaceholder) {
+        a.setAttribute('role', 'button');
+        a.setAttribute('tabindex', '0');
+      }
     });
 
     // ensure portfolio-items animate on scroll
