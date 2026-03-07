@@ -1,87 +1,87 @@
 window.addEventListener('DOMContentLoaded', event => {
 
-    // Navbar shrink function
-    var navbarShrink = function () {
-        const navbarCollapsible = document.body.querySelector('#mainNav');
-        if (!navbarCollapsible) {
-            return;
-        }
-        if (window.scrollY === 0) {
-            navbarCollapsible.classList.remove('navbar-shrink')
-        } else {
-            navbarCollapsible.classList.add('navbar-shrink')
-        }
-
-    };
-    
-    // Shrink the navbar 
-    navbarShrink();
-
-    // Shrink the navbar when page is scrolled
-    document.addEventListener('scroll', navbarShrink);
-
-    // Activate Bootstrap scrollspy on the main nav element
-    const mainNav = document.body.querySelector('#mainNav');
-    if (mainNav) {
-      new bootstrap.ScrollSpy(document.body, {
-        target: '#mainNav',
-        offset: 74,
-      });
-    };
-
-    const blogNavLink = document.querySelector('#navbarResponsive .nav-link[data-section]');
-    const blogSectionId = blogNavLink ? blogNavLink.getAttribute('data-section') : null;
-    const blogSection = blogSectionId ? document.getElementById(blogSectionId) : null;
-    if (blogNavLink && blogSection) {
-      const blogObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          blogNavLink.classList.toggle('is-active', entry.isIntersecting);
-        });
-      }, { threshold: 0.5 });
-      blogObserver.observe(blogSection);
+  // Navbar shrink function
+  var navbarShrink = function () {
+    const navbarCollapsible = document.body.querySelector('#mainNav');
+    if (!navbarCollapsible) {
+      return;
+    }
+    if (window.scrollY === 0) {
+      navbarCollapsible.classList.remove('navbar-shrink')
+    } else {
+      navbarCollapsible.classList.add('navbar-shrink')
     }
 
-    // Collapse responsive navbar when toggler is visible
-    const navbarToggler = document.body.querySelector('.navbar-toggler');
-    const responsiveNavItems = [].slice.call(
-        document.querySelectorAll('#navbarResponsive .nav-link')
-    );
-    responsiveNavItems.map(function (responsiveNavItem) {
-        responsiveNavItem.addEventListener('click', () => {
-            if (window.getComputedStyle(navbarToggler).display !== 'none') {
-                navbarToggler.click();
-            }
-        });
+  };
+
+  // Shrink the navbar 
+  navbarShrink();
+
+  // Shrink the navbar when page is scrolled
+  document.addEventListener('scroll', navbarShrink);
+
+  // Activate Bootstrap scrollspy on the main nav element
+  const mainNav = document.body.querySelector('#mainNav');
+  if (mainNav) {
+    new bootstrap.ScrollSpy(document.body, {
+      target: '#mainNav',
+      offset: 74,
     });
+  };
+
+  const blogNavLink = document.querySelector('#navbarResponsive .nav-link[data-section]');
+  const blogSectionId = blogNavLink ? blogNavLink.getAttribute('data-section') : null;
+  const blogSection = blogSectionId ? document.getElementById(blogSectionId) : null;
+  if (blogNavLink && blogSection) {
+    const blogObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        blogNavLink.classList.toggle('is-active', entry.isIntersecting);
+      });
+    }, { threshold: 0.5 });
+    blogObserver.observe(blogSection);
+  }
+
+  // Collapse responsive navbar when toggler is visible
+  const navbarToggler = document.body.querySelector('.navbar-toggler');
+  const responsiveNavItems = [].slice.call(
+    document.querySelectorAll('#navbarResponsive .nav-link')
+  );
+  responsiveNavItems.map(function (responsiveNavItem) {
+    responsiveNavItem.addEventListener('click', () => {
+      if (window.getComputedStyle(navbarToggler).display !== 'none') {
+        navbarToggler.click();
+      }
+    });
+  });
 
 });
 ///PLOAIE CU PUI
 document.addEventListener("DOMContentLoaded", () => {
-    const rainButton = document.getElementById("rain-button");
+  const rainButton = document.getElementById("rain-button");
 
-    rainButton.addEventListener("click", () => {
-        const rainContainer = document.createElement("div");
-        rainContainer.classList.add("chicken-rain");
-        document.body.appendChild(rainContainer);
+  rainButton.addEventListener("click", () => {
+    const rainContainer = document.createElement("div");
+    rainContainer.classList.add("chicken-rain");
+    document.body.appendChild(rainContainer);
 
-        for (let i = 0; i < 60; i++) {
-            const chicken = document.createElement("div");
-            chicken.classList.add("chicken");
-            chicken.textContent = "🐥";
-            chicken.style.left = `${Math.random() * 100}vw`;
-            chicken.style.animationDuration = `${3 + Math.random() * 2}s`;
-            chicken.style.animationDelay = `${Math.random()}s`;
-            rainContainer.appendChild(chicken);
-        }
+    for (let i = 0; i < 60; i++) {
+      const chicken = document.createElement("div");
+      chicken.classList.add("chicken");
+      chicken.textContent = "🐥";
+      chicken.style.left = `${Math.random() * 100}vw`;
+      chicken.style.animationDuration = `${3 + Math.random() * 2}s`;
+      chicken.style.animationDelay = `${Math.random()}s`;
+      rainContainer.appendChild(chicken);
+    }
 
-        setTimeout(() => {
-            rainContainer.remove();
-        }, 8000);
-    });
+    setTimeout(() => {
+      rainContainer.remove();
+    }, 8000);
+  });
 });
 
 
-  document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
   const slides = document.querySelectorAll(".carousel-slide");
   const btnLeft = document.querySelector(".carousel-btn.left");
   const btnRight = document.querySelector(".carousel-btn.right");
@@ -126,160 +126,485 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-  
-  // --- Additional behaviors: autoplay carousel, disable portfolio modal links, animate on scroll ---
-  document.addEventListener('DOMContentLoaded', () => {
-    // disable existing anchor modal triggers gracefully
-    document.querySelectorAll('a.portfolio-link').forEach(a => {
-      const href = a.getAttribute('href');
-      const isPlaceholder = !href || href === '#' || href === '#!';
-      a.addEventListener('click', (e) => {
-        if (isPlaceholder) {
-          e.preventDefault();
-          a.classList.add('no-modal');
-        }
-      });
-      // make placeholders tabbable/accessible if they weren't
+
+// --- Additional behaviors: autoplay carousel, disable portfolio modal links, animate on scroll ---
+document.addEventListener('DOMContentLoaded', () => {
+  // disable existing anchor modal triggers gracefully
+  document.querySelectorAll('a.portfolio-link').forEach(a => {
+    const href = a.getAttribute('href');
+    const isPlaceholder = !href || href === '#' || href === '#!';
+    a.addEventListener('click', (e) => {
       if (isPlaceholder) {
-        a.setAttribute('role', 'button');
-        a.setAttribute('tabindex', '0');
+        e.preventDefault();
+        a.classList.add('no-modal');
       }
     });
+    // make placeholders tabbable/accessible if they weren't
+    if (isPlaceholder) {
+      a.setAttribute('role', 'button');
+      a.setAttribute('tabindex', '0');
+    }
+  });
 
-    // ensure portfolio-items animate on scroll
-    document.querySelectorAll('.portfolio-item').forEach(item => item.classList.add('animate-on-scroll'));
+  // ensure portfolio-items animate on scroll
+  document.querySelectorAll('.portfolio-item').forEach(item => item.classList.add('animate-on-scroll'));
 
-    // IntersectionObserver to toggle in-view
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) entry.target.classList.add('in-view');
-        else if (!entry.target.classList.contains('keep-visible')) entry.target.classList.remove('in-view');
+  // IntersectionObserver to toggle in-view
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('in-view');
+      else if (!entry.target.classList.contains('keep-visible')) entry.target.classList.remove('in-view');
+    });
+  }, { threshold: 0.05 });
+
+  document.querySelectorAll('.animate-on-scroll').forEach(el => io.observe(el));
+
+  // Blog carousel - Single slide with fancy transitions
+  const carouselWrapper = document.querySelector('.carousel-wrapper');
+  const track = document.querySelector('.carousel-track');
+  const slides = track ? Array.from(track.querySelectorAll('.carousel-slide')) : [];
+  const leftBtn = document.querySelector('.carousel-btn.left');
+  const rightBtn = document.querySelector('.carousel-btn.right');
+  const dots = Array.from(document.querySelectorAll('.carousel-dots .dot'));
+
+  if (carouselWrapper && slides.length) {
+    let currentIndex = 0;
+
+    const updateCarousel = (direction = 'next') => {
+      // Remove all classes
+      slides.forEach(slide => {
+        slide.classList.remove('active', 'prev', 'next');
       });
-    }, { threshold: 0.05 });
 
-    document.querySelectorAll('.animate-on-scroll').forEach(el => io.observe(el));
+      // Set current slide as active
+      slides[currentIndex].classList.add('active');
 
-    // Blog carousel - Single slide with fancy transitions
-    const carouselWrapper = document.querySelector('.carousel-wrapper');
-    const track = document.querySelector('.carousel-track');
-    const slides = track ? Array.from(track.querySelectorAll('.carousel-slide')) : [];
-    const leftBtn = document.querySelector('.carousel-btn.left');
-    const rightBtn = document.querySelector('.carousel-btn.right');
-    const dots = Array.from(document.querySelectorAll('.carousel-dots .dot'));
-    
-    if (carouselWrapper && slides.length) {
-      let currentIndex = 0;
-      
-      const updateCarousel = (direction = 'next') => {
-        // Remove all classes
-        slides.forEach(slide => {
-          slide.classList.remove('active', 'prev', 'next');
-        });
-        
-        // Set current slide as active
-        slides[currentIndex].classList.add('active');
-        
-        // Set previous slide
-        const prevIndex = (currentIndex - 1 + slides.length) % slides.length;
-        slides[prevIndex].classList.add('prev');
-        
-        // Set next slide
-        const nextIndex = (currentIndex + 1) % slides.length;
-        slides[nextIndex].classList.add('next');
-        
-        // Update dots
-        dots.forEach((dot, index) => {
-          dot.classList.toggle('active', index === currentIndex);
-        });
-      };
-      
-      leftBtn?.addEventListener('click', () => {
-        currentIndex = (currentIndex - 1 + slides.length) % slides.length;
-        updateCarousel('prev');
-      });
-      
-      rightBtn?.addEventListener('click', () => {
-        currentIndex = (currentIndex + 1) % slides.length;
-        updateCarousel('next');
-      });
-      
+      // Set previous slide
+      const prevIndex = (currentIndex - 1 + slides.length) % slides.length;
+      slides[prevIndex].classList.add('prev');
+
+      // Set next slide
+      const nextIndex = (currentIndex + 1) % slides.length;
+      slides[nextIndex].classList.add('next');
+
+      // Update dots
       dots.forEach((dot, index) => {
-        dot.addEventListener('click', () => {
-          if (index !== currentIndex) {
-            currentIndex = index;
-            updateCarousel();
-          }
-        });
+        dot.classList.toggle('active', index === currentIndex);
       });
-      
-      // Autoplay
-      let autoplayTimer = setInterval(() => {
+    };
+
+    leftBtn?.addEventListener('click', () => {
+      currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+      updateCarousel('prev');
+    });
+
+    rightBtn?.addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % slides.length;
+      updateCarousel('next');
+    });
+
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        if (index !== currentIndex) {
+          currentIndex = index;
+          updateCarousel();
+        }
+      });
+    });
+
+    // Autoplay
+    let autoplayTimer = setInterval(() => {
+      currentIndex = (currentIndex + 1) % slides.length;
+      updateCarousel('next');
+    }, 5000);
+
+    carouselWrapper.addEventListener('mouseenter', () => {
+      clearInterval(autoplayTimer);
+    });
+
+    carouselWrapper.addEventListener('mouseleave', () => {
+      autoplayTimer = setInterval(() => {
         currentIndex = (currentIndex + 1) % slides.length;
         updateCarousel('next');
       }, 5000);
-      
-      carouselWrapper.addEventListener('mouseenter', () => {
-        clearInterval(autoplayTimer);
-      });
-      
-      carouselWrapper.addEventListener('mouseleave', () => {
-        autoplayTimer = setInterval(() => {
-          currentIndex = (currentIndex + 1) % slides.length;
-          updateCarousel('next');
-        }, 5000);
-      });
-      
-      // Initialize
-      updateCarousel();
-    }
-  });
-  var navbarShrink = function () {
-    const navbarCollapsible = document.body.querySelector('#mainNav');
-    if (!navbarCollapsible) {
-        return;
-    }
-    if (window.scrollY === 0) {
-        navbarCollapsible.classList.remove('navbar-shrink')
-    } else {
-        navbarCollapsible.classList.add('navbar-shrink')
-    }
+    });
+
+    // Initialize
+    updateCarousel();
+  }
+});
+var navbarShrink = function () {
+  const navbarCollapsible = document.body.querySelector('#mainNav');
+  if (!navbarCollapsible) {
+    return;
+  }
+  if (window.scrollY === 0) {
+    navbarCollapsible.classList.remove('navbar-shrink')
+  } else {
+    navbarCollapsible.classList.add('navbar-shrink')
+  }
 };
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.toggle-section').forEach(button => {
-      button.addEventListener('click', function () {
-        const targetSelector = this.getAttribute('data-target');
-        const target = document.querySelector(targetSelector);
-        const icon = document.querySelector(`.card-header[data-target='${targetSelector}'] .toggle-icon`);
+  document.querySelectorAll('.toggle-section').forEach(button => {
+    button.addEventListener('click', function () {
+      const targetSelector = this.getAttribute('data-target');
+      const target = document.querySelector(targetSelector);
+      const icon = document.querySelector(`.card-header[data-target='${targetSelector}'] .toggle-icon`);
 
-        if (!target) return;
+      if (!target) return;
 
-        const isVisible = window.getComputedStyle(target).display !== 'none';
+      const isVisible = window.getComputedStyle(target).display !== 'none';
 
-        if (isVisible) {
+      if (isVisible) {
+        target.style.transition = 'opacity 0.4s ease, height 0.4s ease';
+        target.style.opacity = '0';
+        target.style.height = '0';
+        if (icon) icon.classList.remove('fa-chevron-up'), icon.classList.add('fa-chevron-down');
+        setTimeout(() => {
+          target.style.display = 'none';
+          target.style.height = '';
+        }, 400);
+      } else {
+        target.style.display = 'block';
+        const fullHeight = target.scrollHeight + 'px';
+        target.style.height = '0';
+        target.style.opacity = '0';
+        if (icon) icon.classList.remove('fa-chevron-down'), icon.classList.add('fa-chevron-up');
+        setTimeout(() => {
           target.style.transition = 'opacity 0.4s ease, height 0.4s ease';
-          target.style.opacity = '0';
-          target.style.height = '0';
-          if (icon) icon.classList.remove('fa-chevron-up'), icon.classList.add('fa-chevron-down');
-          setTimeout(() => {
-            target.style.display = 'none';
-            target.style.height = '';
-          }, 400);
-        } else {
-          target.style.display = 'block';
-          const fullHeight = target.scrollHeight + 'px';
-          target.style.height = '0';
-          target.style.opacity = '0';
-          if (icon) icon.classList.remove('fa-chevron-down'), icon.classList.add('fa-chevron-up');
-          setTimeout(() => {
-            target.style.transition = 'opacity 0.4s ease, height 0.4s ease';
-            target.style.height = fullHeight;
-            target.style.opacity = '1';
-          }, 10);
-        }
-      });
+          target.style.height = fullHeight;
+          target.style.opacity = '1';
+        }, 10);
+      }
     });
   });
-  const generateCard = (id, title, descriere, imagine, type = 'metul') => `
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const mainNav = document.getElementById('mainNav');
+  const toggle = document.getElementById('morphMenuToggle');
+  const menuPanel = document.getElementById('navbarResponsive');
+
+  if (!mainNav || !toggle || !menuPanel) {
+    return;
+  }
+
+  const closeMenu = () => {
+    mainNav.classList.remove('menu-open');
+    document.body.classList.remove('morph-menu-open');
+    toggle.setAttribute('aria-expanded', 'false');
+  };
+
+  const openMenu = () => {
+    mainNav.classList.add('menu-open');
+    document.body.classList.add('morph-menu-open');
+    toggle.setAttribute('aria-expanded', 'true');
+  };
+
+  toggle.addEventListener('click', (event) => {
+    event.preventDefault();
+    const isOpen = mainNav.classList.contains('menu-open');
+    if (isOpen) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!mainNav.classList.contains('menu-open')) {
+      return;
+    }
+
+    if (mainNav.contains(event.target)) {
+      return;
+    }
+
+    closeMenu();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeMenu();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (mainNav.classList.contains('menu-open')) {
+      closeMenu();
+    }
+  });
+
+  window.addEventListener('scroll', () => {
+    if (mainNav.classList.contains('menu-open')) {
+      closeMenu();
+    }
+  }, { passive: true });
+
+  menuPanel.querySelectorAll('.nav-link').forEach((link) => {
+    link.addEventListener('click', () => {
+      closeMenu();
+    });
+  });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const hero = document.querySelector('header.masthead.has-video');
+
+  if (!hero) {
+    return;
+  }
+
+  let rafId = 0;
+  let introUnlocked = false;
+  let introProgress = 0;
+  let touchStartY = null;
+
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+  document.body.classList.remove('intro-writing-complete');
+  document.body.classList.remove('intro-scroll-started');
+
+  // Bug fix: Check if intro was already unlocked in this session
+  if (sessionStorage.getItem('intro_unlocked') === 'true') {
+    introUnlocked = true;
+    introProgress = 1;
+    document.body.classList.remove('intro-locked');
+    document.body.classList.add('intro-writing-complete');
+    document.documentElement.style.setProperty('--hero-shrink', '0.7800');
+    document.documentElement.style.setProperty('--hero-radius', '34.00px');
+    document.documentElement.style.setProperty('--hero-opacity', '0.4200');
+    document.documentElement.style.setProperty('--handwrite-progress', '1.0000');
+  } else {
+    document.body.classList.add('intro-locked');
+    window.scrollTo(0, 0);
+  }
+
+  const unlockIntro = () => {
+    if (introUnlocked) {
+      return;
+    }
+
+    introUnlocked = true;
+    sessionStorage.setItem('intro_unlocked', 'true');
+    document.body.classList.remove('intro-locked');
+    document.body.classList.add('intro-writing-complete');
+  };
+
+  const applyIntroFrame = () => {
+    if (introUnlocked) {
+      const y = window.scrollY || window.pageYOffset;
+      const heroProgress = clamp(y / (window.innerHeight * 0.85), 0, 1);
+      const handwritingProgress = clamp((heroProgress - 0.04) / 0.86, 0, 1);
+      const heroScale = 1 - heroProgress * 0.22;
+      const heroRadius = heroProgress * 34;
+      const heroOpacity = 1 - heroProgress * 0.58;
+
+      document.documentElement.style.setProperty('--hero-shrink', heroScale.toFixed(4));
+      document.documentElement.style.setProperty('--hero-radius', `${heroRadius.toFixed(2)}px`);
+      document.documentElement.style.setProperty('--hero-opacity', heroOpacity.toFixed(4));
+      document.documentElement.style.setProperty('--handwrite-progress', handwritingProgress.toFixed(4));
+
+      if (y > 8) {
+        document.body.classList.add('intro-scroll-started');
+      } else {
+        document.body.classList.remove('intro-scroll-started');
+      }
+
+      rafId = 0;
+      return;
+    }
+
+    const heroScale = 1 - introProgress * 0.22;
+    const heroRadius = introProgress * 34;
+    const heroOpacity = 1 - introProgress * 0.58;
+
+    document.documentElement.style.setProperty('--hero-shrink', heroScale.toFixed(4));
+    document.documentElement.style.setProperty('--hero-radius', `${heroRadius.toFixed(2)}px`);
+    document.documentElement.style.setProperty('--hero-opacity', heroOpacity.toFixed(4));
+    document.documentElement.style.setProperty('--handwrite-progress', introProgress.toFixed(4));
+
+    if (introProgress > 0.03) {
+      document.body.classList.add('intro-scroll-started');
+    } else {
+      document.body.classList.remove('intro-scroll-started');
+    }
+
+    if (introProgress >= 0.995) {
+      unlockIntro();
+    }
+
+    rafId = 0;
+  };
+
+  const requestFrame = () => {
+    if (rafId) {
+      return;
+    }
+
+    rafId = window.requestAnimationFrame(applyIntroFrame);
+  };
+
+  const nudgeProgress = (deltaY) => {
+    if (introUnlocked) {
+      return;
+    }
+
+    const delta = Number.isFinite(deltaY) ? deltaY : 0;
+    if (delta === 0) {
+      return;
+    }
+
+    // Smoother increments
+    if (delta > 0) {
+      const step = Math.min(Math.abs(delta) / 800, 0.1);
+      introProgress = clamp(introProgress + step, 0, 1);
+    } else {
+      const step = Math.min(Math.abs(delta) / 1500, 0.05);
+      introProgress = clamp(introProgress - step, 0, 1);
+    }
+
+    requestFrame();
+  };
+
+  const onWheel = (event) => {
+    if (introUnlocked) {
+      return;
+    }
+
+    event.preventDefault();
+    nudgeProgress(event.deltaY);
+  };
+
+  const onScroll = () => {
+    if (!introUnlocked && (window.scrollY || window.pageYOffset) !== 0) {
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    requestFrame();
+  };
+
+  const onTouchStart = (event) => {
+    if (introUnlocked) {
+      return;
+    }
+
+    if (event.touches && event.touches.length > 0) {
+      touchStartY = event.touches[0].clientY;
+    }
+  };
+
+  const onTouchMove = (event) => {
+    if (introUnlocked) {
+      return;
+    }
+
+    if (!event.touches || event.touches.length === 0 || touchStartY === null) {
+      return;
+    }
+
+    event.preventDefault();
+    const currentY = event.touches[0].clientY;
+    const delta = touchStartY - currentY;
+    touchStartY = currentY;
+    nudgeProgress(delta);
+  };
+
+  const onKeyDown = (event) => {
+    if (introUnlocked) {
+      return;
+    }
+
+    const key = event.key;
+    const downKeys = ['ArrowDown', 'PageDown', ' ', 'Spacebar'];
+    const upKeys = ['ArrowUp', 'PageUp'];
+
+    if (downKeys.includes(key)) {
+      event.preventDefault();
+      nudgeProgress(260);
+      return;
+    }
+
+    if (upKeys.includes(key)) {
+      event.preventDefault();
+      nudgeProgress(-160);
+    }
+  };
+
+  window.addEventListener('wheel', onWheel, { passive: false });
+  window.addEventListener('touchstart', onTouchStart, { passive: true });
+  window.addEventListener('touchmove', onTouchMove, { passive: false });
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', requestFrame);
+
+  requestFrame();
+});
+
+// ===== TOPOGRAPHIC BACKGROUND =====
+class TopographicBackground {
+  constructor() {
+    this.canvas = document.createElement('canvas');
+    this.canvas.id = 'topo-bg';
+    this.ctx = this.canvas.getContext('2d');
+    this.lines = [];
+    this.numLines = 15;
+    this.offset = 0;
+    this.speed = 0.002;
+
+    document.body.prepend(this.canvas);
+    this.resize();
+
+    window.addEventListener('resize', () => this.resize());
+    this.animate();
+  }
+
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+
+  drawCurve(yOffset) {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+
+    ctx.beginPath();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(249, 5, 108, 0.15)'; // Roz transparent
+
+    for (let x = 0; x <= w; x += 10) {
+      // Simulare zgomot topografic folosind sinusuri multiple
+      const noise = Math.sin(x * 0.002 + this.offset) * 30 +
+        Math.sin(x * 0.005 + this.offset * 0.5) * 15 +
+        Math.sin(x * 0.001 + yOffset * 0.01) * 20;
+
+      const y = (yOffset + noise);
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  animate() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.offset += this.speed;
+
+    const spacing = this.canvas.height / this.numLines;
+    for (let i = -2; i < this.numLines + 2; i++) {
+      this.drawCurve(i * spacing);
+    }
+
+    requestAnimationFrame(() => this.animate());
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  new TopographicBackground();
+});
+
+const generateCard = (id, title, descriere, imagine, type = 'metul') => `
   <div class="card mb-4 shadow border-0 hover-effect card-glow">
     <div class="card-header bg-pink-glow text-white d-flex justify-content-between align-items-center rounded-top py-3 px-4 toggle-section" data-target="#${type}${id}">
       <span class="fw-bold fs-5">${title}</span>
@@ -304,61 +629,61 @@ const meturiContainer = document.getElementById('meturiAccordion');
 const activitatiContainer = document.getElementById('activitatiAccordion');
 
 const meturi = [
-    {
-      titlu: "Piatra Neamț ~ 21 decembrie",
-      descriere: "Primul meet din sezonul 9, Xmas Robo Stone , ne-a arătat atât punctele forte, cât și minusurile echipei. Am câștigat două meciuri, începând și terminând cu victorie. Meet-ul de la Piatra Neamț a fost important nu doar competițional, dar și moral, iar, deși am avut înfrângeri, am continuat să ne încurajăm reciproc, demonstrând că suntem o echipă unită.",
-      imagine: "assets/meet11.jpg"
-    },
-    {
-      titlu: "Suceava ~ 4 ianuarie",
-      descriere: "La meet-ul Frozen Depths, am susținut evenimentul prin aportul logistic, aducând un teren de antrenament și sample-uri. În timpul competiției, am înregistrat un progres semnificativ, câștigând 4 meciuri. La final, am fost recunoscuți pentru designul inovativ al robotului nostru.",
-      imagine: "assets/meet2.jpg"
-    },
-    {
-      titlu: "Iaşi ~ 11 ianuarie ",
-      descriere: "La “League Meet of Iași”, după primul meci, robotul s-a defectat din cauza unui bug al Control Hub-ului, care a șters configurația. Rescrierea acesteia a durat două ore, timp în care am realizat reverse engineering pentru a ajunge la setările inițiale. Acest proces ne-a costat 3 meciuri, dar ne-a învățat importanța backup-ului. În pauza de masă, am reparat robotul și am câștigat ultimele două meciuri. Mentorii Ionuț Boicu și Ionuț Toma ne-au ghidat și ajutat să rezolvăm problemele tehnice și să colaborăm mai eficient",
-      imagine: "assets/meet3.jpg"
-    },
-    {
-      titlu: "Regionala",
-      descriere: "Am lucrat împreună pentru a ne susține ideile și pentru a integra contribuțiile fiecărui membru.",
-      imagine: "assets/img/colaborare.jpg"
-    }
-  ];
-  
-  const activitati = [
-    {
-      titlu: "Târgul Educațional 11-12 aprilie",
-      descriere: "Am participat la a XXV-a ediție a Târgului Educațional organizat de CJRAE Vaslui, unde am reprezentat Liceul Teoretic “Emil Racoviță” și echipa roLERbot, promovând oferta educațională, robotul și competiția FIRST Tech Challenge. Prezența noastră a consolidat legătura cu comunitatea educațională locală și a inspirat alți tineri să urmeze calea tehnologiei și inovației. Pentru mulți membri și alumni, întâlnirea cu echipa la târg a fost decisivă în alegerea liceului și implicarea în proiect. Ne mândrim să fim ambasadori ai educației STEAM și ai programului FIRST, contribuind la formarea noii generații de lideri și inovatori.",
-      imagine: "assets/ac1.jpg"
-    },
-    {
-      titlu: "Ziua Mondială a Educației 5 Octombrie",
-      descriere: "Cu ocazia Zilei Mondiale a Educației, am participat la „Sesiunea județeană de comunicări științifice, metodice și culturale”, organizată în parteneriat cu Casa Corpului Didactic Vaslui. Ca ambasadori FIRST, am prezentat activitatea din Sezonul FIRST Tech Challenge 2023-2024, inspirând tinerii să exploreze domeniul STEAM și să își dezvolte abilitățile prin experiențe practice.",
-      imagine: "assets/ac2.jpg"
-    },
-    {
-      titlu: "Gala Tânărului Vasluian",
-      descriere: "Echipa roLERbot a fost premiată la Gala Tânărului Vasluian la categoria Implicare și Solidaritate, un premiu acordat inițiativelor care promovează schimbarea și acțiunea. Gala, organizată de Federația Tinerilor din Vaslui, Vaslui Capitala Tineretului și Primăria Vaslui, a recunoscut eforturile noastre de a aduce educația STEAM mai aproape de comunitate și de a inspira tinerii să își urmeze pasiunile.",
-      imagine: "assets/ac3.jpg"
-    },
-    {
-      titlu: "Târgul de hobby-uri ",
-      descriere: "Pe 13 și 14 decembrie, am participat cu entuziasm la târgul de hobby-uri pentru a arăta vizitatorilor că robotica nu înseamnă doar asamblarea unor piese sau scrierea de cod. Pentru noi, robotica este o combinație între tehnic și non-tehnic, funcțional și estetic, precum și între colaborare și perseverență. Fiecare piesă montată și fiecare linie de cod scrisă prind viață datorită pasiunii și dedicației echipei noastre.",
-      imagine: "assets/ac4.png"
-    },
-    {
-      titlu: "Proiectul Puiu:Eco-Clean",
-      descriere: "Am editat materialul video filmat pentru a-l transforma într-un produs final clar și dinamic.",
-      imagine: "assets/img/editare.jpg"
-    },
-    {
-      titlu: "Print(re) elevi",
-      descriere: "Am pregătit o prezentare convingătoare pentru a transmite clar mesajul proiectului nostru.",
-      imagine: "assets/img/prezentare.jpg"
-    }
-  ];
-  const meturi2025 = [
+  {
+    titlu: "Piatra Neamț ~ 21 decembrie",
+    descriere: "Primul meet din sezonul 9, Xmas Robo Stone , ne-a arătat atât punctele forte, cât și minusurile echipei. Am câștigat două meciuri, începând și terminând cu victorie. Meet-ul de la Piatra Neamț a fost important nu doar competițional, dar și moral, iar, deși am avut înfrângeri, am continuat să ne încurajăm reciproc, demonstrând că suntem o echipă unită.",
+    imagine: "assets/meet11.jpg"
+  },
+  {
+    titlu: "Suceava ~ 4 ianuarie",
+    descriere: "La meet-ul Frozen Depths, am susținut evenimentul prin aportul logistic, aducând un teren de antrenament și sample-uri. În timpul competiției, am înregistrat un progres semnificativ, câștigând 4 meciuri. La final, am fost recunoscuți pentru designul inovativ al robotului nostru.",
+    imagine: "assets/meet2.jpg"
+  },
+  {
+    titlu: "Iaşi ~ 11 ianuarie ",
+    descriere: "La “League Meet of Iași”, după primul meci, robotul s-a defectat din cauza unui bug al Control Hub-ului, care a șters configurația. Rescrierea acesteia a durat două ore, timp în care am realizat reverse engineering pentru a ajunge la setările inițiale. Acest proces ne-a costat 3 meciuri, dar ne-a învățat importanța backup-ului. În pauza de masă, am reparat robotul și am câștigat ultimele două meciuri. Mentorii Ionuț Boicu și Ionuț Toma ne-au ghidat și ajutat să rezolvăm problemele tehnice și să colaborăm mai eficient",
+    imagine: "assets/meet3.jpg"
+  },
+  {
+    titlu: "Regionala",
+    descriere: "Am lucrat împreună pentru a ne susține ideile și pentru a integra contribuțiile fiecărui membru.",
+    imagine: "assets/img/colaborare.jpg"
+  }
+];
+
+const activitati = [
+  {
+    titlu: "Târgul Educațional 11-12 aprilie",
+    descriere: "Am participat la a XXV-a ediție a Târgului Educațional organizat de CJRAE Vaslui, unde am reprezentat Liceul Teoretic “Emil Racoviță” și echipa roLERbot, promovând oferta educațională, robotul și competiția FIRST Tech Challenge. Prezența noastră a consolidat legătura cu comunitatea educațională locală și a inspirat alți tineri să urmeze calea tehnologiei și inovației. Pentru mulți membri și alumni, întâlnirea cu echipa la târg a fost decisivă în alegerea liceului și implicarea în proiect. Ne mândrim să fim ambasadori ai educației STEAM și ai programului FIRST, contribuind la formarea noii generații de lideri și inovatori.",
+    imagine: "assets/ac1.jpg"
+  },
+  {
+    titlu: "Ziua Mondială a Educației 5 Octombrie",
+    descriere: "Cu ocazia Zilei Mondiale a Educației, am participat la „Sesiunea județeană de comunicări științifice, metodice și culturale”, organizată în parteneriat cu Casa Corpului Didactic Vaslui. Ca ambasadori FIRST, am prezentat activitatea din Sezonul FIRST Tech Challenge 2023-2024, inspirând tinerii să exploreze domeniul STEAM și să își dezvolte abilitățile prin experiențe practice.",
+    imagine: "assets/ac2.jpg"
+  },
+  {
+    titlu: "Gala Tânărului Vasluian",
+    descriere: "Echipa roLERbot a fost premiată la Gala Tânărului Vasluian la categoria Implicare și Solidaritate, un premiu acordat inițiativelor care promovează schimbarea și acțiunea. Gala, organizată de Federația Tinerilor din Vaslui, Vaslui Capitala Tineretului și Primăria Vaslui, a recunoscut eforturile noastre de a aduce educația STEAM mai aproape de comunitate și de a inspira tinerii să își urmeze pasiunile.",
+    imagine: "assets/ac3.jpg"
+  },
+  {
+    titlu: "Târgul de hobby-uri ",
+    descriere: "Pe 13 și 14 decembrie, am participat cu entuziasm la târgul de hobby-uri pentru a arăta vizitatorilor că robotica nu înseamnă doar asamblarea unor piese sau scrierea de cod. Pentru noi, robotica este o combinație între tehnic și non-tehnic, funcțional și estetic, precum și între colaborare și perseverență. Fiecare piesă montată și fiecare linie de cod scrisă prind viață datorită pasiunii și dedicației echipei noastre.",
+    imagine: "assets/ac4.png"
+  },
+  {
+    titlu: "Proiectul Puiu:Eco-Clean",
+    descriere: "Am editat materialul video filmat pentru a-l transforma într-un produs final clar și dinamic.",
+    imagine: "assets/img/editare.jpg"
+  },
+  {
+    titlu: "Print(re) elevi",
+    descriere: "Am pregătit o prezentare convingătoare pentru a transmite clar mesajul proiectului nostru.",
+    imagine: "assets/img/prezentare.jpg"
+  }
+];
+const meturi2025 = [
   {
     titlu: "Braila ~ 13 ianuarie",
     descriere: "Echipa roLERbot a participat la primul FTC Meet al anului cu un robot a cărui construcție inițială avea probleme: brațul și barele erau prea înalte, cleștele nu prindea decât câte un pixel, iar codul avea dificultăți. Deși nu am obținut victorii, experiența ne-a permis să învățăm din greșeli și să demarăm o etapă de îmbunătățiri hardware și software pentru robotul nostru, Puiu.",
@@ -399,14 +724,14 @@ const activitati2025 = [
   }
 ];
 
-  meturi.forEach((met, index) => {
-    meturiContainer.innerHTML += generateCard(index, met.titlu, met.descriere, met.imagine);
-  });
-  
-  
-  activitati.forEach((act, index) => {
-    activitatiContainer.innerHTML += generateCard(index, act.titlu, act.descriere, act.imagine, 'activitate');
-  });
+meturi.forEach((met, index) => {
+  meturiContainer.innerHTML += generateCard(index, met.titlu, met.descriere, met.imagine);
+});
+
+
+activitati.forEach((act, index) => {
+  activitatiContainer.innerHTML += generateCard(index, act.titlu, act.descriere, act.imagine, 'activitate');
+});
 const meturiContainer2025 = document.getElementById('meturiAccordion2025');
 const activitatiContainer2025 = document.getElementById('activitatiAccordion2025');
 
@@ -536,11 +861,11 @@ function initDinoGame() {
     teamSelect: document.getElementById('team-select'),
     selectedTeamDisplay: document.getElementById('selected-team')
   };
-  
+
   if (dinoElements.best) {
     dinoElements.best.textContent = dinoGameState.bestScore;
   }
-  
+
   // Populate team selector
   if (dinoElements.teamSelect) {
     ftcTeams.forEach(team => {
@@ -552,7 +877,7 @@ function initDinoGame() {
       }
       dinoElements.teamSelect.appendChild(option);
     });
-    
+
     dinoElements.teamSelect.addEventListener('change', (e) => {
       const teamNumber = parseInt(e.target.value);
       dinoGameState.selectedTeam = ftcTeams.find(t => t.number === teamNumber);
@@ -560,7 +885,7 @@ function initDinoGame() {
       updateSelectedTeamDisplay();
     });
   }
-  
+
   updateSelectedTeamDisplay();
 }
 
@@ -577,12 +902,12 @@ if (document.readyState === 'loading') {
   initDinoGame();
 }
 
-window.startGame = function() {
+window.startGame = function () {
   initDinoGame();
   if (!dinoElements || !dinoElements.container) return;
-  
+
   if (dinoGameState.started) return;
-  
+
   dinoGameState.started = true;
   dinoGameState.running = true;
   dinoGameState.score = 0;
@@ -590,19 +915,19 @@ window.startGame = function() {
   dinoGameState.jumping = false;
   dinoGameState.jumpVel = 0;
   dinoGameState.jumpHeight = 0;
-  
+
   dinoElements.score.textContent = '0';
   dinoElements.btn.style.opacity = '0.5';
   dinoElements.notStarted.style.display = 'none';
   dinoElements.status.style.display = 'none';
   dinoElements.dino.style.bottom = '110px';
   dinoElements.obstacle.style.right = '-60px';
-  
+
   updateDinoSpeed();
   dinoGameLoop();
 };
 
-window.resetGame = function() {
+window.resetGame = function () {
   if (!dinoElements || !dinoElements.container) return;
   dinoGameState.started = false;
   dinoGameState.running = false;
@@ -611,14 +936,14 @@ window.resetGame = function() {
   dinoGameState.jumping = false;
   dinoGameState.jumpVel = 0;
   dinoGameState.jumpHeight = 0;
-  
+
   dinoElements.score.textContent = '0';
   dinoElements.btn.style.opacity = '1';
   dinoElements.notStarted.style.display = 'block';
   dinoElements.status.style.display = 'none';
   dinoElements.dino.style.bottom = '110px';
   dinoElements.obstacle.style.right = '-60px';
-  
+
   updateDinoSpeed();
 };
 
@@ -636,26 +961,26 @@ function dinoJump() {
 
 function dinoGameLoop() {
   if (!dinoGameState.running) return;
-  
+
   // Jump
   if (dinoGameState.jumping) {
     dinoGameState.jumpVel -= 0.6;
     dinoGameState.jumpHeight -= dinoGameState.jumpVel;
-    
+
     if (dinoGameState.jumpHeight <= 0) {
       dinoGameState.jumpHeight = 0;
       dinoGameState.jumping = false;
       dinoGameState.jumpVel = 0;
     }
-    
+
     dinoElements.dino.style.bottom = (110 + dinoGameState.jumpHeight) + 'px';
   }
-  
+
   // Move obstacle
   let obsRight = parseInt(dinoElements.obstacle.style.right) || 0;
   obsRight -= dinoGameState.speed;
   dinoElements.obstacle.style.right = obsRight + 'px';
-  
+
   // Check if passed obstacle
   if (obsRight < -100) {
     obsRight = 0;
@@ -664,43 +989,43 @@ function dinoGameLoop() {
     dinoElements.score.textContent = dinoGameState.score;
     updateDinoSpeed();
   }
-  
+
   // Collision check
   const containerRect = dinoElements.container.getBoundingClientRect();
   const dinoRect = dinoElements.dino.getBoundingClientRect();
   const obsRect = dinoElements.obstacle.getBoundingClientRect();
-  
+
   const dinoX = dinoRect.left - containerRect.left;
   const dinoY = dinoRect.top - containerRect.top;
   const obsX = obsRect.left - containerRect.left;
   const obsY = obsRect.top - containerRect.top;
-  
+
   const pad = 8;
-  
+
   if (dinoX + dinoRect.width - pad > obsX + pad &&
-      dinoX + pad < obsX + obsRect.width - pad &&
-      dinoY + dinoRect.height - pad > obsY + pad &&
-      dinoY + pad < obsY + obsRect.height - pad) {
+    dinoX + pad < obsX + obsRect.width - pad &&
+    dinoY + dinoRect.height - pad > obsY + pad &&
+    dinoY + pad < obsY + obsRect.height - pad) {
     // Collision
     dinoGameState.running = false;
-    
+
     if (dinoGameState.score > dinoGameState.bestScore) {
       dinoGameState.bestScore = dinoGameState.score;
       localStorage.setItem('dino_best', dinoGameState.bestScore);
       dinoElements.best.textContent = dinoGameState.bestScore;
     }
-    
+
     dinoElements.finalScore.textContent = dinoGameState.score;
     dinoElements.status.style.display = 'block';
     dinoElements.btn.style.opacity = '1';
     return;
   }
-  
+
   requestAnimationFrame(dinoGameLoop);
 }
 
 // Keyboard controls
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
   if (e.code === 'Space') {
     e.preventDefault();
     if (!dinoGameState.running && !dinoGameState.started) {
@@ -712,7 +1037,7 @@ document.addEventListener('keydown', function(e) {
 });
 
 // Click controls
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
   const container = document.getElementById('dino-game-container');
   if (container && container.contains(e.target)) {
     if (!dinoGameState.running && !dinoGameState.started) {
@@ -766,7 +1091,7 @@ function updateCarousel() {
       const leftImg = leftCard.querySelector('.member-photo');
       const leftName = leftCard.querySelector('.member-name');
       const leftDept = leftCard.querySelector('.member-department');
-      
+
       if (leftImg) {
         leftImg.src = leftMember.image;
         leftImg.alt = `Membru ${leftMember.id}`;
@@ -780,7 +1105,7 @@ function updateCarousel() {
       const centerImg = centerCard.querySelector('.member-photo');
       const centerName = centerCard.querySelector('.member-name');
       const centerDept = centerCard.querySelector('.member-department');
-      
+
       if (centerImg) {
         centerImg.src = centerMember.image;
         centerImg.alt = `Membru ${centerMember.id}`;
@@ -794,7 +1119,7 @@ function updateCarousel() {
       const rightImg = rightCard.querySelector('.member-photo');
       const rightName = rightCard.querySelector('.member-name');
       const rightDept = rightCard.querySelector('.member-department');
-      
+
       if (rightImg) {
         rightImg.src = rightMember.image;
         rightImg.alt = `Membru ${rightMember.id}`;
@@ -826,19 +1151,19 @@ function updateCarousel() {
 }
 
 // Facem funcțiile accesibile global pentru onclick handlers
-window.changeSlide = function(direction) {
+window.changeSlide = function (direction) {
   currentSlide += direction;
-  
+
   if (currentSlide < 0) {
     currentSlide = totalSlides - 1;
   } else if (currentSlide >= totalSlides) {
     currentSlide = 0;
   }
-  
+
   updateCarousel();
 };
 
-window.goToSlide = function(slideIndex) {
+window.goToSlide = function (slideIndex) {
   currentSlide = slideIndex;
   updateCarousel();
 };
@@ -859,17 +1184,17 @@ function stopAutoSlide() {
 }
 
 // Inițializare la încărcarea paginii
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   const carouselContainer = document.querySelector('.team-carousel-container');
   const descriptionBox = document.querySelector('.member-description-box');
-  
+
   // Inițializare carousel
   updateCarousel();
   startAutoSlide();
-  
+
   // Click pe cardurile laterale pentru a le aduce în centru
   if (carouselContainer) {
-    carouselContainer.addEventListener('click', function(e) {
+    carouselContainer.addEventListener('click', function (e) {
       const sideCard = e.target.closest('.side-card');
       if (sideCard) {
         if (sideCard.classList.contains('left-card')) {
@@ -879,12 +1204,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
     });
-    
+
     // Pause la hover
     carouselContainer.addEventListener('mouseenter', stopAutoSlide);
     carouselContainer.addEventListener('mouseleave', startAutoSlide);
   }
-  
+
   if (descriptionBox) {
     descriptionBox.addEventListener('mouseenter', stopAutoSlide);
     descriptionBox.addEventListener('mouseleave', startAutoSlide);
@@ -892,7 +1217,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Navigare cu tastatura
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
   const teamSection = document.querySelector('.team-carousel-container');
   if (teamSection) {
     if (e.key === 'ArrowLeft') {
@@ -953,17 +1278,17 @@ document.addEventListener("DOMContentLoaded", updateTeamCards);
 window.currentBlogSlide = 0;
 window.totalBlogSlides = 5;
 
-window.updateBlogCarousel = function() {
+window.updateBlogCarousel = function () {
   const cards = document.querySelectorAll('.blog-card');
   const indicators = document.querySelectorAll('.blog-indicator');
-  
+
   cards.forEach((card, index) => {
     card.classList.remove('active');
     if (index === window.currentBlogSlide) {
       card.classList.add('active');
     }
   });
-  
+
   indicators.forEach((indicator, index) => {
     indicator.classList.remove('active');
     if (index === window.currentBlogSlide) {
@@ -972,7 +1297,7 @@ window.updateBlogCarousel = function() {
   });
 };
 
-window.changeBlogSlide = function(direction) {
+window.changeBlogSlide = function (direction) {
   window.currentBlogSlide += direction;
   if (window.currentBlogSlide < 0) {
     window.currentBlogSlide = window.totalBlogSlides - 1;
@@ -983,7 +1308,7 @@ window.changeBlogSlide = function(direction) {
   window.updateBlogCarousel();
 };
 
-window.goToBlogSlide = function(slideIndex) {
+window.goToBlogSlide = function (slideIndex) {
   window.currentBlogSlide = slideIndex;
   window.updateBlogCarousel();
 };
@@ -991,7 +1316,7 @@ window.goToBlogSlide = function(slideIndex) {
 // Initialize carousel on page load
 document.addEventListener("DOMContentLoaded", () => {
   window.updateBlogCarousel();
-  
+
   // Auto-advance blog carousel every 7 seconds
   setInterval(() => {
     window.changeBlogSlide(1);
@@ -1034,4 +1359,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+});
+
+// Timeline animation synchronized with scroll
+document.addEventListener('DOMContentLoaded', () => {
+  const section = document.querySelector('#about');
+  const timeline = section ? section.querySelector('.timeline') : null;
+  if (!timeline) return;
+
+  // Avoid :scope for broader browser compatibility on static hosting
+  const items = Array.from(timeline.children).filter(
+    (el) => el.tagName === 'LI' && !el.classList.contains('timeline-end-marker')
+  );
+  if (!items.length) return;
+
+  const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+  const updateTimelineByScroll = () => {
+    const rect = timeline.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+
+    // Global line fill progress
+    const lineProgress = clamp((viewportHeight * 0.62 - rect.top) / (rect.height || 1), 0, 1);
+    timeline.style.setProperty('--scroll-progress', lineProgress.toFixed(4));
+
+    // Per-item activation synced to viewport position
+    items.forEach((item) => {
+      const itemRect = item.getBoundingClientRect();
+      const triggerStart = viewportHeight * 0.88;
+      const triggerEnd = viewportHeight * 0.34;
+      const itemProgress = clamp((triggerStart - itemRect.top) / (triggerStart - triggerEnd), 0, 1);
+
+      item.style.setProperty('--item-progress', itemProgress.toFixed(4));
+      item.classList.toggle('timeline-sync-active', itemProgress > 0.55);
+    });
+  };
+
+  let ticking = false;
+  const onScrollOrResize = () => {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(() => {
+      updateTimelineByScroll();
+      ticking = false;
+    });
+  };
+
+  window.addEventListener('scroll', onScrollOrResize, { passive: true });
+  window.addEventListener('resize', onScrollOrResize);
+  onScrollOrResize();
 });
