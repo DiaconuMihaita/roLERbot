@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FTC DECODE 1v1 - roLERbot</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --field: #0b1220;
+      --line: #334155;
+      --accent: #f59e0b;
+      --ok: #22c55e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0%, #0f172a 55%);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: min(1020px, 100%);
+      background: rgba(15, 23, 42, 0.82);
+      border: 1px solid #334155;
+      border-radius: 18px;
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid #334155;
+      background: rgba(30, 41, 59, 0.75);
+    }
+
+    .score {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .phase {
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: var(--accent);
+    }
+
+    .timer {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .score.blue {
+      justify-content: flex-end;
+    }
+
+    .field-wrap {
+      padding: 18px;
+      display: grid;
+      place-items: center;
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 960px;
+      background: var(--field);
+      border: 1px solid #334155;
+      border-radius: 14px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      padding: 0 18px 18px;
+    }
+
+    .card {
+      border: 1px solid #334155;
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 0.95rem;
+    }
+
+    .card p {
+      margin: 4px 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .card .value {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #0b1220;
+    }
+
+    #startBtn { background: var(--ok); }
+    #resetBtn { background: #cbd5e1; }
+    #backBtn {
+      background: #f8fafc;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .winner {
+      color: #f8fafc;
+      font-weight: 700;
+      margin-top: 6px;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="score"><span class="dot" style="background: var(--red)"></span> ROȘU: <span id="redScore">0</span></div>
+      <div class="phase">
+        <div id="phaseLabel">Apasă START</div>
+        <div class="timer" id="timer">01:40</div>
+      </div>
+      <div class="score blue">ALBASTRU: <span id="blueScore">0</span> <span class="dot" style="background: var(--blue)"></span></div>
+    </div>
+
+    <div class="field-wrap">
+      <canvas id="game" width="960" height="540"></canvas>
+    </div>
+
+    <div class="controls">
+      <div class="card">
+        <h3>Control Roșu (1v1)</h3>
+        <p><span class="value">W A S D</span> = mișcare</p>
+        <p><span class="value">F</span> = ia piesă / trage</p>
+      </div>
+      <div class="card">
+        <h3>Control Albastru (1v1)</h3>
+        <p><span class="value">Săgeți</span> = mișcare</p>
+        <p><span class="value">Enter</span> = ia piesă / trage</p>
+      </div>
+      <div class="card">
+        <h3>Reguli rapide (FTC 1v1)</h3>
+        <p>Mingile apar pe <span class="value">liniile albe</span> de pe teren.</p>
+        <p>Roșu marchează în pătratul <span class="value">roșu</span>, albastru în pătratul <span class="value">albastru</span>.</p>
+        <p>AUTO: <span class="value">12p</span> / TELEOP: <span class="value">6p</span> / ENDGAME: <span class="value">10p</span></p>
+        <div class="actions">
+          <button id="startBtn">START</button>
+          <button id="resetBtn">RESET</button>
+          <a id="backBtn" href="index.html">Înapoi site</a>
+        </div>
+        <div class="winner" id="winnerText"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const redScoreEl = document.getElementById("redScore");
+    const blueScoreEl = document.getElementById("blueScore");
+    const timerEl = document.getElementById("timer");
+    const phaseLabel = document.getElementById("phaseLabel");
+    const winnerText = document.getElementById("winnerText");
+
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const FIELD = { width: 960, height: 540 };
+    const CENTER_X = FIELD.width / 2;
+
+    const WHITE_LINES = [
+      { x1: 0, y1: 0, x2: CENTER_X, y2: 270 },
+      { x1: FIELD.width, y1: 0, x2: CENTER_X, y2: 270 },
+      { x1: 320, y1: FIELD.height, x2: CENTER_X, y2: 450 },
+      { x1: 640, y1: FIELD.height, x2: CENTER_X, y2: 450 }
+    ];
+
+    const BASKETS = {
+      red: { x: FIELD.width - 280, y: 360, size: 110, color: "#dc2626" },
+      blue: { x: FIELD.width - 280, y: 135, size: 110, color: "#1d4ed8" }
+    };
+
+    const state = {
+      running: false,
+      totalTime: 100,
+      timeLeft: 100,
+      lastTick: 0,
+      redScore: 0,
+      blueScore: 0,
+      pieces: [],
+      shots: [],
+      keys: {},
+      cooldown: { red: 0, blue: 0 },
+      statusText: "",
+      statusTicks: 0,
+      red: {
+        x: 140,
+        y: FIELD.height / 2,
+        r: 18,
+        speed: 3.3,
+        color: "#ef4444",
+        carrying: false,
+        lastDx: 1,
+        lastDy: 0
+      },
+      blue: {
+        x: FIELD.width - 140,
+        y: FIELD.height / 2,
+        r: 18,
+        speed: 3.3,
+        color: "#3b82f6",
+        carrying: false,
+        lastDx: -1,
+        lastDy: 0
+      }
+    };
+
+    function pickPointOnWhiteLine(line) {
+      const t = 0.2 + Math.random() * 0.6;
+      return {
+        x: line.x1 + (line.x2 - line.x1) * t,
+        y: line.y1 + (line.y2 - line.y1) * t
+      };
+    }
+
+    function createPieces() {
+      state.pieces = [];
+      const totalPerLine = 4;
+      const palette = ["#9333ea", "#22c55e"];
+
+      WHITE_LINES.forEach((line) => {
+        for (let i = 0; i < totalPerLine; i++) {
+          const point = pickPointOnWhiteLine(line);
+          state.pieces.push({
+            x: point.x + (Math.random() * 6 - 3),
+            y: point.y + (Math.random() * 6 - 3),
+            r: 8,
+            color: palette[(i + Math.floor(Math.random() * 2)) % palette.length],
+            active: true
+          });
+        }
+      });
+    }
+
+    function resetGame() {
+      state.running = false;
+      state.timeLeft = state.totalTime;
+      state.redScore = 0;
+      state.blueScore = 0;
+      state.red.x = 120;
+      state.red.y = FIELD.height - 110;
+      state.blue.x = 120;
+      state.blue.y = 110;
+      state.red.carrying = false;
+      state.blue.carrying = false;
+      state.shots = [];
+      state.statusText = "";
+      state.statusTicks = 0;
+      state.cooldown.red = 0;
+      state.cooldown.blue = 0;
+      winnerText.textContent = "";
+      createPieces();
+      updateHud();
+      draw();
+    }
+
+    function getPhase() {
+      if (state.timeLeft > 80) {
+        return "AUTO";
+      }
+      if (state.timeLeft > 20) {
+        return "TELEOP";
+      }
+      return "ENDGAME";
+    }
+
+    function getPointsForCurrentPhase() {
+      const phase = getPhase();
+      if (phase === "AUTO") return 12;
+      if (phase === "ENDGAME") return 10;
+      return 6;
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
+    function updateHud() {
+      redScoreEl.textContent = state.redScore;
+      blueScoreEl.textContent = state.blueScore;
+      timerEl.textContent = formatTime(state.timeLeft);
+      phaseLabel.textContent = state.running ? `Faza: ${getPhase()}` : "Apasă START";
+      if (state.statusText && state.running) {
+        winnerText.textContent = state.statusText;
+      }
+    }
+
+    function clampRobot(robot) {
+      robot.x = Math.max(robot.r, Math.min(FIELD.width - robot.r, robot.x));
+      robot.y = Math.max(robot.r, Math.min(FIELD.height - robot.r, robot.y));
+    }
+
+    function moveRobots() {
+      const red = state.red;
+      const blue = state.blue;
+      let redDx = 0;
+      let redDy = 0;
+      let blueDx = 0;
+      let blueDy = 0;
+
+      if (state.keys["w"]) { red.y -= red.speed; redDy -= 1; }
+      if (state.keys["s"]) { red.y += red.speed; redDy += 1; }
+      if (state.keys["a"]) { red.x -= red.speed; redDx -= 1; }
+      if (state.keys["d"]) { red.x += red.speed; redDx += 1; }
+
+      if (state.keys["arrowup"]) { blue.y -= blue.speed; blueDy -= 1; }
+      if (state.keys["arrowdown"]) { blue.y += blue.speed; blueDy += 1; }
+      if (state.keys["arrowleft"]) { blue.x -= blue.speed; blueDx -= 1; }
+      if (state.keys["arrowright"]) { blue.x += blue.speed; blueDx += 1; }
+
+      if (redDx !== 0 || redDy !== 0) {
+        const len = Math.hypot(redDx, redDy);
+        red.lastDx = redDx / len;
+        red.lastDy = redDy / len;
+      }
+
+      if (blueDx !== 0 || blueDy !== 0) {
+        const len = Math.hypot(blueDx, blueDy);
+        blue.lastDx = blueDx / len;
+        blue.lastDy = blueDy / len;
+      }
+
+      clampRobot(red);
+      clampRobot(blue);
+    }
+
+    function distance(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function teamStatus(text) {
+      state.statusText = text;
+      state.statusTicks = 90;
+    }
+
+    function shootPiece(team) {
+      const robot = team === "red" ? state.red : state.blue;
+      const basket = BASKETS[team];
+      const targetX = basket.x + basket.size / 2;
+      const targetY = basket.y + basket.size / 2;
+
+      state.shots.push({
+        x: robot.x,
+        y: robot.y,
+        tx: targetX,
+        ty: targetY,
+        color: team === "red" ? "#fca5a5" : "#93c5fd",
+        speed: 10,
+        team,
+        scoreOnHit: true
+      });
+    }
+
+    function robotAction(team) {
+      const robot = team === "red" ? state.red : state.blue;
+
+      if (state.cooldown[team] > 0 || !state.running) return;
+      state.cooldown[team] = 16;
+
+      if (!robot.carrying) {
+        let nearest = null;
+        let nearestDistance = Infinity;
+
+        for (const piece of state.pieces) {
+          if (!piece.active) continue;
+          const d = distance(robot, piece);
+          if (d < nearestDistance) {
+            nearestDistance = d;
+            nearest = piece;
+          }
+        }
+
+        if (nearest && nearestDistance < 30) {
+          nearest.active = false;
+          robot.carrying = true;
+        } else {
+          teamStatus("Apropie-te de o piesă galbenă.");
+        }
+      } else {
+        shootPiece(team);
+        robot.carrying = false;
+
+        if (Math.random() > 0.45) {
+          const randomLine = WHITE_LINES[Math.floor(Math.random() * WHITE_LINES.length)];
+          const point = pickPointOnWhiteLine(randomLine);
+          state.pieces.push({
+            x: point.x,
+            y: point.y,
+            r: 8,
+            color: Math.random() > 0.5 ? "#9333ea" : "#22c55e",
+            active: true
+          });
+        }
+      }
+    }
+
+    function updateShots() {
+      for (let i = state.shots.length - 1; i >= 0; i--) {
+        const shot = state.shots[i];
+        const dx = shot.tx - shot.x;
+        const dy = shot.ty - shot.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < shot.speed) {
+          if (shot.scoreOnHit) {
+            const points = getPointsForCurrentPhase();
+            if (shot.team === "red") state.redScore += points;
+            else state.blueScore += points;
+          }
+          state.shots.splice(i, 1);
+          continue;
+        }
+
+        shot.x += (dx / dist) * shot.speed;
+        shot.y += (dy / dist) * shot.speed;
+      }
+    }
+
+    function tick() {
+      if (state.cooldown.red > 0) state.cooldown.red--;
+      if (state.cooldown.blue > 0) state.cooldown.blue--;
+
+      if (state.statusTicks > 0) {
+        state.statusTicks--;
+        if (state.statusTicks === 0) {
+          state.statusText = "";
+          if (state.running) winnerText.textContent = "";
+        }
+      }
+
+      if (!state.running) return;
+
+      moveRobots();
+      updateShots();
+
+      const now = performance.now();
+      if (now - state.lastTick >= 1000) {
+        state.lastTick = now;
+        state.timeLeft = Math.max(0, state.timeLeft - 1);
+        if (state.timeLeft === 0) {
+          state.running = false;
+          if (state.redScore > state.blueScore) winnerText.textContent = "Final: ROȘU câștigă!";
+          else if (state.blueScore > state.redScore) winnerText.textContent = "Final: ALBASTRU câștigă!";
+          else winnerText.textContent = "Final: Egal perfect!";
+        }
+      }
+    }
+
+    function drawField() {
+      ctx.clearRect(0, 0, FIELD.width, FIELD.height);
+
+      ctx.fillStyle = "#2f2f33";
+      ctx.fillRect(0, 0, FIELD.width, FIELD.height);
+
+      ctx.strokeStyle = "rgba(0,0,0,0.25)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= FIELD.width; x += 120) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, FIELD.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= FIELD.height; y += 90) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(FIELD.width, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "#f8fafc";
+      ctx.lineWidth = 4;
+      WHITE_LINES.forEach((line) => {
+        ctx.beginPath();
+        ctx.moveTo(line.x1, line.y1);
+        ctx.lineTo(line.x2, line.y2);
+        ctx.stroke();
+      });
+
+      ctx.strokeStyle = "#f8fafc";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(FIELD.width - 155, 0, 155, 95);
+      ctx.strokeRect(FIELD.width - 155, FIELD.height - 95, 155, 95);
+
+      ctx.fillStyle = "#2563eb";
+      ctx.fillRect(0, FIELD.height - 65, 140, 65);
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(0, 0, 140, 65);
+
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#dc2626";
+      ctx.beginPath();
+      ctx.moveTo(52, 270);
+      ctx.lineTo(52, 446);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(FIELD.width - 170, 270);
+      ctx.lineTo(FIELD.width - 170, 446);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#1d4ed8";
+      ctx.beginPath();
+      ctx.moveTo(FIELD.width - 52, 270);
+      ctx.lineTo(FIELD.width - 52, 446);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(170, 270);
+      ctx.lineTo(170, 446);
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffffff";
+      const bars = [
+        { x: 110, y: 220 },
+        { x: 110, y: 310 },
+        { x: 110, y: 400 },
+        { x: FIELD.width - 200, y: 220 },
+        { x: FIELD.width - 200, y: 310 },
+        { x: FIELD.width - 200, y: 400 }
+      ];
+      bars.forEach((bar) => {
+        ctx.fillRect(bar.x, bar.y, 66, 5);
+      });
+
+      Object.values(BASKETS).forEach((basket) => {
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = basket.color;
+        ctx.strokeRect(basket.x, basket.y, basket.size, basket.size);
+      });
+
+      ctx.fillStyle = "#facc15";
+      for (const piece of state.pieces) {
+        if (!piece.active) continue;
+        ctx.fillStyle = piece.color;
+        ctx.beginPath();
+        ctx.arc(piece.x, piece.y, piece.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (const shot of state.shots) {
+        ctx.fillStyle = shot.color;
+        ctx.beginPath();
+        ctx.arc(shot.x, shot.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawRobot(robot) {
+      ctx.fillStyle = robot.color;
+      ctx.beginPath();
+      ctx.arc(robot.x, robot.y, robot.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#0f172a";
+      ctx.beginPath();
+      ctx.arc(robot.x + 5, robot.y - 4, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (robot.carrying) {
+        ctx.fillStyle = "#fde047";
+        ctx.beginPath();
+        ctx.arc(robot.x, robot.y - robot.r - 7, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+    }
+
+    function draw() {
+      drawField();
+      drawRobot(state.red);
+      drawRobot(state.blue);
+      updateHud();
+    }
+
+    function loop() {
+      tick();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      state.keys[e.key.toLowerCase()] = true;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        robotAction("blue");
+      }
+      if (e.key.toLowerCase() === "f") {
+        robotAction("red");
+      }
+    });
+
+    document.addEventListener("keyup", (e) => {
+      state.keys[e.key.toLowerCase()] = false;
+    });
+
+    startBtn.addEventListener("click", () => {
+      state.running = true;
+      state.lastTick = performance.now();
+      winnerText.textContent = "";
+      phaseLabel.textContent = `Faza: ${getPhase()}`;
+    });
+
+    resetBtn.addEventListener("click", resetGame);
+
+    resetGame();
+    loop();
+  </script>
+</body>
+</html>

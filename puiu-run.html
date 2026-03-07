@@ -638,11 +638,15 @@
                 gameOverTeamLogo.style.display = 'none';
             }
             
-            // Auto-save score if team selected and high score
-            if (selectedTeam && isHighScore(score)) {
-                saveScore();
-                newHighScoreDiv.classList.remove('hidden');
-                yourTeamDisplay.textContent = `Team: #${selectedTeam.number} - ${selectedTeam.name}`;
+            // Auto-save score if team selected
+            if (selectedTeam) {
+                const scoreSaved = saveScore();
+                if (scoreSaved) {
+                    newHighScoreDiv.classList.remove('hidden');
+                    yourTeamDisplay.textContent = `Team: #${selectedTeam.number} - ${selectedTeam.name}`;
+                } else {
+                    newHighScoreDiv.classList.add('hidden');
+                }
             } else {
                 newHighScoreDiv.classList.add('hidden');
             }
@@ -657,7 +661,14 @@
 
         function getLeaderboard() {
             const data = localStorage.getItem(LEADERBOARD_KEY);
-            return data ? JSON.parse(data) : [];
+            if (!data) return [];
+
+            try {
+                const parsed = JSON.parse(data);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch {
+                return [];
+            }
         }
 
         function saveLeaderboard(leaderboard) {
@@ -673,10 +684,11 @@
         function saveScore() {
             if (!selectedTeam) {
                 alert('Please select a team first!');
-                return;
+                return false;
             }
             
             const leaderboard = getLeaderboard();
+            let scoreSaved = false;
             
             // Check if team exists
             const existingIndex = leaderboard.findIndex(entry => entry.teamNumber === selectedTeam.number);
@@ -686,6 +698,7 @@
                 if (score > leaderboard[existingIndex].score) {
                     leaderboard[existingIndex].score = score;
                     leaderboard[existingIndex].date = new Date().toLocaleDateString('ro-RO');
+                    scoreSaved = true;
                 }
             } else {
                 // New team - add entry
@@ -695,6 +708,7 @@
                     score: score,
                     date: new Date().toLocaleDateString('ro-RO')
                 });
+                scoreSaved = true;
             }
             
             // Sort by score descending
@@ -702,12 +716,20 @@
             
             // Keep top MAX_ENTRIES
             if (leaderboard.length > MAX_ENTRIES) {
+                if (scoreSaved) {
+                    const topSlice = leaderboard.slice(0, MAX_ENTRIES);
+                    scoreSaved = topSlice.some(entry => entry.teamNumber === selectedTeam.number);
+                }
                 leaderboard.length = MAX_ENTRIES;
             }
             
             saveLeaderboard(leaderboard);
             newHighScoreDiv.classList.add('hidden');
-            playTone(1000, 0.2);
+            if (scoreSaved) {
+                playTone(1000, 0.2);
+            }
+
+            return scoreSaved;
         }
 
         function showLeaderboard() {

@@ -997,3 +997,41 @@ document.addEventListener("DOMContentLoaded", () => {
     window.changeBlogSlide(1);
   }, 7000);
 });
+
+// Motion enhancer: staggered reveals and subtle hero parallax
+document.addEventListener('DOMContentLoaded', () => {
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReduced) return;
+
+  document.body.classList.add('motion-enhanced');
+
+  const applyStagger = (selector, step = 0.09) => {
+    document.querySelectorAll(selector).forEach((el, index) => {
+      el.classList.add('animate-on-scroll', 'stagger-card');
+      el.style.setProperty('--stagger-index', String(index));
+      el.style.setProperty('--stagger-step', `${step}s`);
+    });
+  };
+
+  applyStagger('#portfolio .portfolio-item', 0.08);
+  applyStagger('#team .blog-card', 0.1);
+  applyStagger('#about .timeline li', 0.1);
+  applyStagger('#services .team-text p', 0.08);
+
+  const hero = document.querySelector('header.masthead.has-video');
+  if (!hero) return;
+
+  let ticking = false;
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(() => {
+      const y = Math.min(window.scrollY * 0.2, 42);
+      hero.style.setProperty('--hero-offset', `${y}px`);
+      ticking = false;
+    });
+  };
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+});

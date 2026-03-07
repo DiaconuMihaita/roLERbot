@@ -980,39 +980,15 @@
                 gameOverTeamLogo.style.display = 'none';
             }
             
-            // Check if high score
-            if (isHighScore(score) && selectedTeam) {
-                newHighScoreDiv.classList.remove('hidden');
-                yourTeamDisplay.innerText = `#${selectedTeam.number} - ${selectedTeam.name}`;
-                
-                // Auto-save the score
-                const leaderboard = getLeaderboard();
-                const existingIndex = leaderboard.findIndex(entry => entry.teamNumber === selectedTeam.number);
-                
-                if (existingIndex !== -1) {
-                    // Update if better
-                    if (score > leaderboard[existingIndex].score) {
-                        leaderboard[existingIndex].score = score;
-                        leaderboard[existingIndex].level = level;
-                        leaderboard[existingIndex].date = new Date().toLocaleDateString('ro-RO');
-                    }
+            // Auto-save score if team selected
+            if (selectedTeam) {
+                const scoreSaved = saveScore();
+                if (scoreSaved) {
+                    newHighScoreDiv.classList.remove('hidden');
+                    yourTeamDisplay.innerText = `#${selectedTeam.number} - ${selectedTeam.name}`;
                 } else {
-                    // Add new team entry
-                    leaderboard.push({
-                        teamNumber: selectedTeam.number,
-                        teamName: selectedTeam.name,
-                        score: score,
-                        level: level,
-                        date: new Date().toLocaleDateString('ro-RO')
-                    });
+                    newHighScoreDiv.classList.add('hidden');
                 }
-                
-                // Sort and save
-                leaderboard.sort((a, b) => b.score - a.score);
-                if (leaderboard.length > MAX_ENTRIES) {
-                    leaderboard.length = MAX_ENTRIES;
-                }
-                saveLeaderboard(leaderboard);
             } else {
                 newHighScoreDiv.classList.add('hidden');
             }
@@ -1026,7 +1002,14 @@
 
         function getLeaderboard() {
             const data = localStorage.getItem(LEADERBOARD_KEY);
-            return data ? JSON.parse(data) : [];
+            if (!data) return [];
+
+            try {
+                const parsed = JSON.parse(data);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch {
+                return [];
+            }
         }
 
         function saveLeaderboard(leaderboard) {
@@ -1051,10 +1034,11 @@
         function saveScore() {
             if (!selectedTeam) {
                 alert('Please select a team first!');
-                return;
+                return false;
             }
             
             const leaderboard = getLeaderboard();
+            let scoreSaved = false;
             
             // Check if team exists
             const existingIndex = leaderboard.findIndex(entry => entry.teamNumber === selectedTeam.number);
@@ -1065,6 +1049,7 @@
                     leaderboard[existingIndex].score = score;
                     leaderboard[existingIndex].level = level;
                     leaderboard[existingIndex].date = new Date().toLocaleDateString('ro-RO');
+                    scoreSaved = true;
                 }
             } else {
                 // New team - add entry
@@ -1075,6 +1060,7 @@
                     level: level,
                     date: new Date().toLocaleDateString('ro-RO')
                 });
+                scoreSaved = true;
             }
             
             // Sort by score descending
@@ -1082,12 +1068,20 @@
             
             // Keep top MAX_ENTRIES
             if (leaderboard.length > MAX_ENTRIES) {
+                if (scoreSaved) {
+                    const topSlice = leaderboard.slice(0, MAX_ENTRIES);
+                    scoreSaved = topSlice.some(entry => entry.teamNumber === selectedTeam.number);
+                }
                 leaderboard.length = MAX_ENTRIES;
             }
             
             saveLeaderboard(leaderboard);
             newHighScoreDiv.classList.add('hidden');
-            playTone(1000, 'sine', 0.2);
+            if (scoreSaved) {
+                playTone(1000, 'sine', 0.2);
+            }
+
+            return scoreSaved;
         }
 
         function showLeaderboard() {

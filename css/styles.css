@@ -12559,6 +12559,40 @@ header.masthead {
   text-align: left;
 }
 
+/* Hero video background */
+header.masthead.has-video {
+  position: relative;
+  overflow: hidden;
+  background-image: none;
+}
+
+.masthead-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.masthead-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 8, 12, 0.55), rgba(8, 8, 12, 0.3));
+  z-index: 1;
+}
+
+.masthead-content {
+  position: relative;
+  z-index: 2;
+}
+
+header.masthead.has-video .masthead-heading,
+header.masthead.has-video .masthead-subheading {
+  color: #fff;
+  text-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
 header.masthead .masthead-subheading {
   font-size: 1.5rem;
   font-style: italic;
@@ -12604,6 +12638,10 @@ header.masthead .masthead-heading {
     background-size: cover !important;
     min-height: 110vh;
     height: auto;
+  }
+
+  header.masthead.has-video {
+    background-image: none !important;
   }
 }
 
@@ -15555,5 +15593,113 @@ img:hover {
     width: 40px;
     height: 40px;
     font-size: 16px;
+  }
+}
+
+/* ===== Motion Enhancer Layer ===== */
+body.motion-enhanced {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.motion-enhanced .stagger-card.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(34px) scale(0.985);
+  transition:
+    opacity 0.75s var(--ease-out-expo),
+    transform 0.75s var(--ease-out-expo);
+  transition-delay: calc(var(--stagger-index, 0) * var(--stagger-step, 0.08s));
+}
+
+body.motion-enhanced .stagger-card.animate-on-scroll.in-view {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+body.motion-enhanced header.masthead.has-video .masthead-video {
+  transform: translateY(var(--hero-offset, 0px)) scale(1.06);
+  transition: transform 0.35s linear;
+}
+
+body.motion-enhanced header.masthead.has-video .masthead-heading {
+  animation: heroHeadingEnter 1.1s var(--ease-out-expo) both;
+}
+
+body.motion-enhanced header.masthead.has-video .btn-start-hero {
+  animation: heroButtonFloat 4.5s ease-in-out 1.1s infinite;
+}
+
+body.motion-enhanced #services .team-image {
+  transition: transform 0.45s var(--ease-out-expo), filter 0.45s var(--ease-out-expo);
+}
+
+body.motion-enhanced #services .team-image:hover {
+  transform: translateY(-8px) scale(1.01);
+  filter: saturate(1.05);
+}
+
+body.motion-enhanced #portfolio .portfolio-item:hover {
+  transform: translateY(-10px) scale(1.01) !important;
+}
+
+body.motion-enhanced #team .blog-card {
+  transition: transform 0.45s var(--ease-out-expo), box-shadow 0.45s var(--ease-out-expo);
+}
+
+body.motion-enhanced #team .blog-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 22px 44px rgba(249, 5, 108, 0.22);
+}
+
+body.motion-enhanced #about .timeline li.in-view .timeline-image {
+  animation: timelinePop 0.7s var(--ease-out-expo) both;
+}
+
+@keyframes heroHeadingEnter {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes heroButtonFloat {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes timelinePop {
+  0% {
+    transform: scale(0.84);
+    opacity: 0.3;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger-card.animate-on-scroll,
+  .stagger-card.animate-on-scroll.in-view,
+  header.masthead.has-video .masthead-video,
+  header.masthead.has-video .btn-start-hero,
+  #about .timeline li.in-view .timeline-image {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }

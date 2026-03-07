@@ -84,6 +84,7 @@
           <li class="nav-item"><a class="nav-link" href="#portfolio">Sponsori</a></li>
           <li class="nav-item"><a class="nav-link" href="#about">Progres</a></li>
           <li class="nav-item"><a class="nav-link" href="blog.html" data-section="team">Blog</a></li>
+          <li class="nav-item"><a class="nav-link" href="ftc-decode-1v1.html">Joc FTC 1v1</a></li>
           <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
           <li class="nav-item">
             <button id="rain-button" class="nav-link"
@@ -94,11 +95,16 @@
     </div>
   </nav>
 
-  <header class="masthead">
-    <div class="container d-flex flex-column align-items-start">
+  <header class="masthead has-video">
+    <video class="masthead-video" autoplay muted loop playsinline preload="metadata" poster="assets/index.png" aria-hidden="true">
+      <source src="video/hero.mp4" type="video/mp4">
+      <source src="video/REGIO_2026.mov" type="video/quicktime">
+    </video>
+    <div class="masthead-overlay" aria-hidden="true"></div>
+    <div class="container masthead-content d-flex flex-column align-items-start">
       <div class="masthead-heading text-uppercase text-start text-white animate-on-scroll">Rolerbot</div>
       <!-- <div class="masthead-subheading text-start">Robotica combină tehnologia pentru acțiuni autonome.</div> -->
-      <a class="btn btn-xl btn-start-hero animate-on-scroll" class="btn btn-primary btn-xl text-uppercase mt-3"
+      <a class="btn btn-xl btn-start-hero animate-on-scroll"
         href="#services">Afla mai multe</a>
     </div>
   </header>
@@ -131,7 +137,7 @@
             </picture>
           </div>
         </div>
-      </div>
+      </div>   
     </div>
   </section>
 

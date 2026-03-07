@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FTC Field Replica 2D</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="hud">
+      <div class="score red">Scor Roșu: <span id="redScore">0</span></div>
+      <div class="title">FTC Field Replica 2D</div>
+      <div class="score blue">Scor Albastru: <span id="blueScore">0</span></div>
+    </header>
+
+    <section class="canvas-wrap">
+      <canvas id="gameCanvas" width="1000" height="1000" aria-label="FTC field simulation"></canvas>
+    </section>
+
+    <footer class="legend">
+      <p><strong>Mișcare:</strong> WASD</p>
+      <p><strong>Colectare:</strong> E (minge apropiată)</p>
+      <p><strong>Aruncare:</strong> Click mouse</p>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
