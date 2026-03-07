@@ -13096,7 +13096,7 @@ header.masthead.has-video .masthead-video {
   transform-origin: center center;
   border-radius: var(--hero-radius);
   opacity: var(--hero-opacity);
-  transition: transform 0.12s linear, border-radius 0.12s linear, opacity 0.12s linear;
+  transition: transform 0.08s linear, border-radius 0.08s linear, opacity 0.08s linear;
   will-change: transform, border-radius, opacity;
 }
 
@@ -16131,14 +16131,35 @@ body.motion-enhanced .stagger-card.animate-on-scroll {
   transition-delay: calc(var(--stagger-index, 0) * var(--stagger-step, 0.08s));
 }
 
+body.motion-enhanced .reveal-lift.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(36px) scale(0.98);
+  filter: blur(5px);
+  transition:
+    opacity 0.72s var(--ease-out-expo),
+    transform 0.72s var(--ease-out-expo),
+    filter 0.72s var(--ease-out-expo);
+}
+
 body.motion-enhanced .stagger-card.animate-on-scroll.in-view {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
 
+body.motion-enhanced .reveal-lift.animate-on-scroll.in-view {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
 body.motion-enhanced header.masthead.has-video .masthead-video {
-  transform: translateY(var(--hero-offset, 0px)) scale(1.06);
-  transition: transform 0.35s linear;
+  transform: translate3d(0, var(--hero-offset, 0px), 0) scale(var(--hero-shrink, 1));
+  border-radius: var(--hero-radius, 0px);
+  opacity: var(--hero-opacity, 1);
+  transition:
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s linear;
 }
 
 body.motion-enhanced header.masthead.has-video .masthead-heading {
@@ -16169,6 +16190,28 @@ body.motion-enhanced #team .blog-card {
 body.motion-enhanced #team .blog-card:hover {
   transform: translateY(-10px);
   box-shadow: 0 22px 44px rgba(249, 5, 108, 0.22);
+}
+
+body.motion-enhanced #portfolio .portfolio-caption {
+  transition: transform 0.35s var(--ease-out-expo), filter 0.35s var(--ease-out-expo);
+}
+
+body.motion-enhanced #portfolio .portfolio-item:hover .portfolio-caption {
+  transform: translateY(-2px);
+  filter: saturate(1.08);
+}
+
+body.motion-enhanced .modern-footer .footer-section {
+  transition: transform 0.45s var(--ease-out-expo), box-shadow 0.45s var(--ease-out-expo);
+}
+
+body.motion-enhanced .modern-footer .footer-section:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 34px rgba(249, 5, 108, 0.16);
+}
+
+body.motion-enhanced .hero-handwrite-logo {
+  animation: logoBreath 3.4s ease-in-out infinite;
 }
 
 body.motion-enhanced #about .timeline li.in-view .timeline-image {
@@ -16213,16 +16256,31 @@ body.motion-enhanced #about .timeline li.in-view .timeline-image {
   }
 }
 
+@keyframes logoBreath {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-4px) scale(1.01);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
 
   .stagger-card.animate-on-scroll,
+  .reveal-lift.animate-on-scroll,
   .stagger-card.animate-on-scroll.in-view,
+  .reveal-lift.animate-on-scroll.in-view,
   header.masthead.has-video .masthead-video,
   header.masthead.has-video .btn-start-hero,
-  #about .timeline li.in-view .timeline-image {
+  #about .timeline li.in-view .timeline-image,
+  .hero-handwrite-logo {
     animation: none !important;
     transition: none !important;
     transform: none !important;
+    filter: none !important;
   }
 }
 
@@ -16368,17 +16426,22 @@ header.masthead.has-video .hero-actions.hero-under-video-cta {
   justify-content: center !important;
 }
 
-/* Animated topographic lines on pink background */
+/* Clean background: remove decorative overlays/patterns */
 body {
-  background-color: #ffd5e5 !important;
-  background-image:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.02)),
-    url("../assets/img/topo-lines.svg") !important;
-  background-size: cover, 980px 980px !important;
-  background-repeat: no-repeat, repeat !important;
-  background-position: center center, 0 0 !important;
-  background-attachment: fixed, fixed !important;
-  animation: topoDrift 34s linear infinite !important;
+  position: relative;
+  background: #ffffff !important;
+  background-image: none !important;
+}
+
+body::before {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  animation: none !important;
+}
+
+#topo-bg {
+  display: none !important;
 }
 
 .page-section,
@@ -16389,11 +16452,11 @@ body {
 
 @keyframes topoDrift {
   0% {
-    background-position: center center, 0 0;
+    background-position: 0 0;
   }
 
   100% {
-    background-position: center center, 980px 490px;
+    background-position: 0 0;
   }
 }
 

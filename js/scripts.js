@@ -356,28 +356,76 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   let rafId = 0;
-  let introUnlocked = false;
-  let introProgress = 0;
+  let introUnlocked = true;
+
+  // Interpolation state
+  let targetIntroProgress = 0;
+  let currentIntroProgress = 0;
+  let targetHeroProgress = 0;
+  let currentHeroProgress = 0;
+
   let touchStartY = null;
+  let scrollStarted = false;
+  let lockScrollTicking = false;
 
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+  const root = document.documentElement;
+  const hasNonTopHash = !!window.location.hash && window.location.hash !== '#page-top';
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canUseIntroLock = !hasNonTopHash && !prefersReducedMotion;
+
+  // Hysteresis thresholds to prevent CTA flicker around top boundary.
+  const LOCKED_SHOW_THRESHOLD = 0.16;
+  const LOCKED_HIDE_THRESHOLD = 0.09;
+  const UNLOCKED_SHOW_THRESHOLD_PX = 56;
+  const UNLOCKED_HIDE_THRESHOLD_PX = 28;
+
+  const setCssVars = (heroProgress, handwriteProgress) => {
+    const safeHeroProgress = clamp(heroProgress, 0, 1);
+    const safeHandwrite = clamp(handwriteProgress, 0, 1);
+    const heroScale = 1 - safeHeroProgress * 0.22;
+    const heroRadius = safeHeroProgress * 34;
+    const heroOpacity = 1 - safeHeroProgress * 0.58;
+
+    root.style.setProperty('--hero-shrink', heroScale.toFixed(4));
+    root.style.setProperty('--hero-radius', `${heroRadius.toFixed(2)}px`);
+    root.style.setProperty('--hero-opacity', heroOpacity.toFixed(4));
+    root.style.setProperty('--handwrite-progress', safeHandwrite.toFixed(4));
+  };
+
+  const setScrollStarted = (started) => {
+    if (scrollStarted === started) {
+      return;
+    }
+
+    scrollStarted = started;
+    document.body.classList.toggle('intro-scroll-started', started);
+  };
 
   document.body.classList.remove('intro-writing-complete');
   document.body.classList.remove('intro-scroll-started');
 
-  // Bug fix: Check if intro was already unlocked in this session
-  if (sessionStorage.getItem('intro_unlocked') === 'true') {
+  // Lock only on fresh home entry. If user opens with a hash, start unlocked.
+  if (canUseIntroLock && window.scrollY <= 0) {
+    introUnlocked = false;
+    targetIntroProgress = 0;
+    currentIntroProgress = 0;
+    document.body.classList.add('intro-locked');
+    document.body.classList.remove('intro-writing-complete');
+  } else {
     introUnlocked = true;
-    introProgress = 1;
     document.body.classList.remove('intro-locked');
     document.body.classList.add('intro-writing-complete');
-    document.documentElement.style.setProperty('--hero-shrink', '0.7800');
-    document.documentElement.style.setProperty('--hero-radius', '34.00px');
-    document.documentElement.style.setProperty('--hero-opacity', '0.4200');
-    document.documentElement.style.setProperty('--handwrite-progress', '1.0000');
-  } else {
-    document.body.classList.add('intro-locked');
-    window.scrollTo(0, 0);
+
+    const y = window.scrollY || window.pageYOffset;
+    const heroProgress = clamp(y / (window.innerHeight * 0.85), 0, 1);
+    const handwritingProgress = clamp((heroProgress - 0.04) / 0.86, 0, 1);
+
+    targetHeroProgress = heroProgress;
+    currentHeroProgress = heroProgress;
+
+    setCssVars(heroProgress, handwritingProgress);
+    setScrollStarted(y > UNLOCKED_SHOW_THRESHOLD_PX);
   }
 
   const unlockIntro = () => {
@@ -386,55 +434,60 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     introUnlocked = true;
-    sessionStorage.setItem('intro_unlocked', 'true');
     document.body.classList.remove('intro-locked');
     document.body.classList.add('intro-writing-complete');
+    setScrollStarted(true);
   };
 
   const applyIntroFrame = () => {
+    const lerp = (start, end, amt) => start + (end - start) * amt;
+    const SMOOTHING = 0.12; // Easing factor
+
     if (introUnlocked) {
       const y = window.scrollY || window.pageYOffset;
-      const heroProgress = clamp(y / (window.innerHeight * 0.85), 0, 1);
-      const handwritingProgress = clamp((heroProgress - 0.04) / 0.86, 0, 1);
-      const heroScale = 1 - heroProgress * 0.22;
-      const heroRadius = heroProgress * 34;
-      const heroOpacity = 1 - heroProgress * 0.58;
+      targetHeroProgress = clamp(y / (window.innerHeight * 0.85), 0, 1);
 
-      document.documentElement.style.setProperty('--hero-shrink', heroScale.toFixed(4));
-      document.documentElement.style.setProperty('--hero-radius', `${heroRadius.toFixed(2)}px`);
-      document.documentElement.style.setProperty('--hero-opacity', heroOpacity.toFixed(4));
-      document.documentElement.style.setProperty('--handwrite-progress', handwritingProgress.toFixed(4));
+      // Interpolate
+      currentHeroProgress = lerp(currentHeroProgress, targetHeroProgress, SMOOTHING);
 
-      if (y > 8) {
-        document.body.classList.add('intro-scroll-started');
-      } else {
-        document.body.classList.remove('intro-scroll-started');
+      const handwritingProgress = clamp((currentHeroProgress - 0.04) / 0.86, 0, 1);
+      setCssVars(currentHeroProgress, handwritingProgress);
+
+      if (!scrollStarted && y >= UNLOCKED_SHOW_THRESHOLD_PX) {
+        setScrollStarted(true);
+      } else if (scrollStarted && y <= UNLOCKED_HIDE_THRESHOLD_PX) {
+        setScrollStarted(false);
       }
 
-      rafId = 0;
+      // Continue animation if we haven't reached target yet
+      if (Math.abs(currentHeroProgress - targetHeroProgress) > 0.0001) {
+        rafId = window.requestAnimationFrame(applyIntroFrame);
+      } else {
+        rafId = 0;
+      }
       return;
     }
 
-    const heroScale = 1 - introProgress * 0.22;
-    const heroRadius = introProgress * 34;
-    const heroOpacity = 1 - introProgress * 0.58;
+    // While intro is locked, handwriting drives most of the scene and video shrink remains subtle.
+    currentIntroProgress = lerp(currentIntroProgress, targetIntroProgress, SMOOTHING);
+    setCssVars(currentIntroProgress * 0.32, currentIntroProgress);
 
-    document.documentElement.style.setProperty('--hero-shrink', heroScale.toFixed(4));
-    document.documentElement.style.setProperty('--hero-radius', `${heroRadius.toFixed(2)}px`);
-    document.documentElement.style.setProperty('--hero-opacity', heroOpacity.toFixed(4));
-    document.documentElement.style.setProperty('--handwrite-progress', introProgress.toFixed(4));
-
-    if (introProgress > 0.03) {
-      document.body.classList.add('intro-scroll-started');
-    } else {
-      document.body.classList.remove('intro-scroll-started');
+    if (!scrollStarted && currentIntroProgress >= LOCKED_SHOW_THRESHOLD) {
+      setScrollStarted(true);
+    } else if (scrollStarted && currentIntroProgress <= LOCKED_HIDE_THRESHOLD) {
+      setScrollStarted(false);
     }
 
-    if (introProgress >= 0.995) {
+    if (currentIntroProgress >= 0.995 && targetIntroProgress >= 0.995) {
       unlockIntro();
     }
 
-    rafId = 0;
+    // Continue animation if we haven't reached target yet
+    if (Math.abs(currentIntroProgress - targetIntroProgress) > 0.0001) {
+      rafId = window.requestAnimationFrame(applyIntroFrame);
+    } else {
+      rafId = 0;
+    }
   };
 
   const requestFrame = () => {
@@ -455,13 +508,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Smoother increments
+    // Smoother increments to target
     if (delta > 0) {
-      const step = Math.min(Math.abs(delta) / 800, 0.1);
-      introProgress = clamp(introProgress + step, 0, 1);
+      const step = Math.min(Math.abs(delta) / 800, 0.12);
+      targetIntroProgress = clamp(targetIntroProgress + step, 0, 1);
     } else {
-      const step = Math.min(Math.abs(delta) / 1500, 0.05);
-      introProgress = clamp(introProgress - step, 0, 1);
+      const step = Math.min(Math.abs(delta) / 1500, 0.06);
+      targetIntroProgress = clamp(targetIntroProgress - step, 0, 1);
     }
 
     requestFrame();
@@ -477,8 +530,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const onScroll = () => {
-    if (!introUnlocked && (window.scrollY || window.pageYOffset) !== 0) {
-      window.scrollTo(0, 0);
+    const y = window.scrollY || window.pageYOffset;
+
+    // Keep viewport parked during locked intro without repeated forced scroll jumps.
+    if (!introUnlocked) {
+      if (y > 0 && !lockScrollTicking) {
+        lockScrollTicking = true;
+        window.requestAnimationFrame(() => {
+          window.scrollTo(0, 0);
+          lockScrollTicking = false;
+        });
+      }
       return;
     }
 
@@ -511,6 +573,10 @@ document.addEventListener('DOMContentLoaded', () => {
     nudgeProgress(delta);
   };
 
+  const onTouchEnd = () => {
+    touchStartY = null;
+  };
+
   const onKeyDown = (event) => {
     if (introUnlocked) {
       return;
@@ -532,57 +598,122 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  window.addEventListener('wheel', onWheel, { passive: false });
-  window.addEventListener('touchstart', onTouchStart, { passive: true });
-  window.addEventListener('touchmove', onTouchMove, { passive: false });
-  window.addEventListener('keydown', onKeyDown);
+  if (canUseIntroLock) {
+    window.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    window.addEventListener('keydown', onKeyDown);
+  }
+
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', requestFrame);
 
   requestFrame();
 });
 
-// ===== TOPOGRAPHIC BACKGROUND =====
+// ===== AUTHENTIC ISO-CONTOUR TOPOGRAPHIC BACKGROUND (MARCHING SQUARES) =====
 class TopographicBackground {
   constructor() {
     this.canvas = document.createElement('canvas');
     this.canvas.id = 'topo-bg';
     this.ctx = this.canvas.getContext('2d');
-    this.lines = [];
-    this.numLines = 15;
+
     this.offset = 0;
-    this.speed = 0.002;
+    this.speed = 0.0006; // Slower, more elegant movement
+    this.mouseX = 0.5;
+    this.mouseY = 0.5;
+    this.targetMouseX = 0.5;
+    this.targetMouseY = 0.5;
+
+    // Resolution of the grid for Marching Squares
+    this.res = 20;
 
     document.body.prepend(this.canvas);
     this.resize();
 
     window.addEventListener('resize', () => this.resize());
+    window.addEventListener('mousemove', (e) => {
+      this.targetMouseX = e.clientX / window.innerWidth;
+      this.targetMouseY = e.clientY / window.innerHeight;
+    });
+
     this.animate();
   }
 
   resize() {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
+    this.cols = Math.ceil(this.canvas.width / this.res) + 1;
+    this.rows = Math.ceil(this.canvas.height / this.res) + 1;
   }
 
-  drawCurve(yOffset) {
+  // Value function for height map - SIGNIFICANTLY LOWER FREQUENCY for bold shapes
+  val(x, y) {
+    const time = this.offset;
+    // Lower frequency values for larger, smoother organic shapes
+    let h = Math.sin(x * 0.0008 + time) * 60 +
+      Math.sin(y * 0.0006 - time * 0.4) * 50 +
+      Math.sin((x + y) * 0.0004 + time * 0.2) * 40;
+
+    // Smoother mouse influence
+    const dx = x - (this.mouseX * this.canvas.width);
+    const dy = y - (this.mouseY * this.canvas.height);
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const mouseInfl = Math.exp(-dist / 300) * 150;
+
+    return h + mouseInfl;
+  }
+
+  drawContour(threshold) {
     const ctx = this.ctx;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
+    const res = this.res;
 
     ctx.beginPath();
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = 'rgba(249, 5, 108, 0.15)'; // Roz transparent
+    // Bolder pink with higher opacity for premium look
+    const alpha = 0.08 + (Math.abs(threshold) / 150) * 0.15;
+    ctx.strokeStyle = `rgba(249, 5, 108, ${alpha.toFixed(3)})`;
+    ctx.lineWidth = 1.8 + (Math.abs(threshold) / 80);
 
-    for (let x = 0; x <= w; x += 10) {
-      // Simulare zgomot topografic folosind sinusuri multiple
-      const noise = Math.sin(x * 0.002 + this.offset) * 30 +
-        Math.sin(x * 0.005 + this.offset * 0.5) * 15 +
-        Math.sin(x * 0.001 + yOffset * 0.01) * 20;
+    for (let i = 0; i < this.cols - 1; i++) {
+      for (let j = 0; j < this.rows - 1; j++) {
+        const x = i * res;
+        const y = j * res;
 
-      const y = (yOffset + noise);
-      if (x === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+        // Grid points values
+        const v1 = this.val(x, y);
+        const v2 = this.val(x + res, y);
+        const v3 = this.val(x + res, y + res);
+        const v4 = this.val(x, y + res);
+
+        // Calculate binary state for this cell
+        let state = 0;
+        if (v1 > threshold) state += 8;
+        if (v2 > threshold) state += 4;
+        if (v3 > threshold) state += 2;
+        if (v4 > threshold) state += 1;
+
+        // Linear interpolation points
+        const lerpVal = (a, b) => (threshold - a) / (b - a);
+
+        const pA = { x: x + res * lerpVal(v1, v2), y: y };
+        const pB = { x: x + res, y: y + res * lerpVal(v2, v3) };
+        const pC = { x: x + res * lerpVal(v4, v3), y: y + res };
+        const pD = { x: x, y: y + res * lerpVal(v1, v4) };
+
+        // Draw line segment based on cell state
+        switch (state) {
+          case 1: case 14: ctx.moveTo(pC.x, pC.y); ctx.lineTo(pD.x, pD.y); break;
+          case 2: case 13: ctx.moveTo(pB.x, pB.y); ctx.lineTo(pC.x, pC.y); break;
+          case 3: case 12: ctx.moveTo(pB.x, pB.y); ctx.lineTo(pD.x, pD.y); break;
+          case 4: case 11: ctx.moveTo(pA.x, pA.y); ctx.lineTo(pB.x, pB.y); break;
+          case 5: ctx.moveTo(pA.x, pA.y); ctx.lineTo(pD.x, pD.y); ctx.moveTo(pB.x, pB.y); ctx.lineTo(pC.x, pC.y); break;
+          case 6: case 9: ctx.moveTo(pA.x, pA.y); ctx.lineTo(pC.x, pC.y); break;
+          case 7: case 8: ctx.moveTo(pA.x, pA.y); ctx.lineTo(pD.x, pD.y); break;
+          case 10: ctx.moveTo(pA.x, pA.y); ctx.lineTo(pB.x, pB.y); ctx.moveTo(pC.x, pC.y); ctx.lineTo(pD.x, pD.y); break;
+        }
+      }
     }
     ctx.stroke();
   }
@@ -591,9 +722,13 @@ class TopographicBackground {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.offset += this.speed;
 
-    const spacing = this.canvas.height / this.numLines;
-    for (let i = -2; i < this.numLines + 2; i++) {
-      this.drawCurve(i * spacing);
+    // Smooth mouse follow
+    this.mouseX += (this.targetMouseX - this.mouseX) * 0.08;
+    this.mouseY += (this.targetMouseY - this.mouseY) * 0.08;
+
+    // Draw contour levels - Spaced out for clarity
+    for (let level = -120; level <= 120; level += 40) {
+      this.drawContour(level);
     }
 
     requestAnimationFrame(() => this.animate());
@@ -601,6 +736,13 @@ class TopographicBackground {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // CSS topo background is always active. Canvas version stays opt-in because it is GPU/CPU heavy.
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canUseHeavyCanvas = document.body.classList.contains('topo-canvas-enhanced');
+  if (prefersReduced || !canUseHeavyCanvas) {
+    return;
+  }
+
   new TopographicBackground();
 });
 
@@ -1332,16 +1474,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const applyStagger = (selector, step = 0.09) => {
     document.querySelectorAll(selector).forEach((el, index) => {
-      el.classList.add('animate-on-scroll', 'stagger-card');
+      el.classList.add('animate-on-scroll', 'stagger-card', 'reveal-lift');
       el.style.setProperty('--stagger-index', String(index));
       el.style.setProperty('--stagger-step', `${step}s`);
     });
   };
 
   applyStagger('#portfolio .portfolio-item', 0.08);
+  applyStagger('#portfolio .portfolio-caption', 0.05);
   applyStagger('#team .blog-card', 0.1);
+  applyStagger('#team .blog-carousel-indicators .blog-indicator', 0.06);
   applyStagger('#about .timeline li', 0.1);
+  applyStagger('#about .timeline .timeline-panel', 0.08);
   applyStagger('#services .team-text p', 0.08);
+  applyStagger('.section-heading, .section-subheading', 0.06);
+  applyStagger('.footer-section, .footer-bottom', 0.08);
 
   const hero = document.querySelector('header.masthead.has-video');
   if (!hero) return;
@@ -1351,8 +1498,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ticking) return;
     ticking = true;
     window.requestAnimationFrame(() => {
-      const y = Math.min(window.scrollY * 0.2, 42);
-      hero.style.setProperty('--hero-offset', `${y}px`);
+      const y = Math.min(window.scrollY * 0.12, 24);
+      hero.style.setProperty('--hero-offset', `${y.toFixed(2)}px`);
       ticking = false;
     });
   };
