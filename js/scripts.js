@@ -1556,3 +1556,22 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', onScrollOrResize);
   onScrollOrResize();
 });
+
+// I18n logic moved to js/i18n.js for better maintainability.
+
+// Blog hero: drop decorative newspaper on first meaningful scroll
+document.addEventListener('DOMContentLoaded', () => {
+  const blogMasthead = document.querySelector('.masthead-blog');
+  if (!blogMasthead) return;
+
+  let dropped = false;
+  const maybeDropNewspaper = () => {
+    if (dropped || window.scrollY < 35) return;
+
+    dropped = true;
+    blogMasthead.classList.add('newspaper-fall');
+    window.removeEventListener('scroll', maybeDropNewspaper);
+  };
+
+  window.addEventListener('scroll', maybeDropNewspaper, { passive: true });
+});

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ro">
 
 <head>
   <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
@@ -57,7 +57,7 @@
   <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css" />
   <link href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700" rel="stylesheet" type="text/css" />
 
-  <link href="css/styles.css?v=20260307c" rel="stylesheet" />
+  <link href="css/styles.css?v=20260307h" rel="stylesheet" />
   <link href="css/blog-redesign.css" rel="stylesheet" />
   <link href="css/mobile-responsive.css" rel="stylesheet" />
   <link href="css/curved-timeline.css" rel="stylesheet" />
@@ -82,13 +82,26 @@
 
       <div class="collapse navbar-collapse morph-menu-panel" id="navbarResponsive">
         <ul class="navbar-nav text-uppercase morph-menu-links">
-          <li class="nav-item"><a class="nav-link" href="#page-top">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="#services">Echipa</a></li>
-          <li class="nav-item"><a class="nav-link" href="#portfolio">Sponsori</a></li>
-          <li class="nav-item"><a class="nav-link" href="#about">Progres</a></li>
-          <li class="nav-item"><a class="nav-link" href="blog.html" data-section="team">Blog</a></li>
-          <li class="nav-item"><a class="nav-link" href="ftc-decode-1v1.html">Joc FTC 1v1</a></li>
-          <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+          <li class="nav-item"><a class="nav-link" href="#page-top" data-i18n="nav.home">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="#services" data-i18n="nav.team">Echipa</a></li>
+          <li class="nav-item"><a class="nav-link" href="#portfolio" data-i18n="nav.sponsors">Sponsori</a></li>
+          <li class="nav-item"><a class="nav-link" href="#about" data-i18n="nav.progress">Progres</a></li>
+          <li class="nav-item"><a class="nav-link" href="blog.html" data-section="team" data-i18n="nav.blog">Blog</a>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="ftc-decode-1v1.html" data-i18n="nav.ftcGame">Joc FTC 1v1</a>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="#contact" data-i18n="nav.contact">Contact</a></li>
+          <li class="nav-item">
+            <div class="language-switcher" aria-label="Selecteaza limba site-ului">
+              <button type="button" class="lang-side" data-set-lang="ro" aria-label="Seteaza limba romana">RO</button>
+              <label class="language-toggle" for="languageToggleInput"
+                aria-label="Comuta limba intre romana si engleza">
+                <input type="checkbox" id="languageToggleInput" class="language-toggle-input" />
+                <span class="language-toggle-thumb" aria-hidden="true"></span>
+              </label>
+              <button type="button" class="lang-side" data-set-lang="en" aria-label="Seteaza limba engleza">EN</button>
+            </div>
+          </li>
           <li class="nav-item">
             <button id="rain-button" class="nav-link"
               style="background: none; border: none; cursor: pointer;">🐥</button>
@@ -99,7 +112,8 @@
   </nav>
 
   <header class="masthead has-video">
-    <video class="masthead-video" autoplay muted loop playsinline preload="metadata" poster="assets/index.png" aria-hidden="true">
+    <video class="masthead-video" autoplay muted loop playsinline preload="metadata" poster="assets/index.png"
+      aria-hidden="true">
       <source src="video/hero.mp4" type="video/mp4">
       <source src="video/REGIO_2026.mov" type="video/quicktime">
     </video>
@@ -109,7 +123,7 @@
         <text id="rolerbotHandText" x="50%" y="58%" text-anchor="middle" dominant-baseline="middle">ROLERBOT</text>
       </svg>
       <div class="hero-actions hero-under-video-cta">
-        <a class="btn btn-xl btn-start-hero" href="#services">Afla mai multe</a>
+        <a class="btn btn-xl btn-start-hero" href="#services" data-i18n="hero.learnMore">Afla mai multe</a>
       </div>
     </div>
     <a class="hero-scroll-indicator" href="#services" aria-label="Mergi la sectiunea Echipa">
@@ -121,19 +135,22 @@
   <section class="page-section" id="services">
     <div class="container">
       <div class="text-center mb-5">
-        <h2 class="section-heading text-uppercase animate-on-scroll">Echipa</h2>
-        <h3 class="section-subheading text-muted">Suntem născuți pentru inovație.</h3>
+        <h2 class="section-heading text-uppercase animate-on-scroll" data-i18n="section.team">Echipa</h2>
+        <h3 class="section-subheading text-muted" data-i18n="section.teamSubtitle">Suntem născuți pentru inovație.</h3>
       </div>
 
       <div class="row align-items-center team-section">
         <div class="col-md-6">
           <div class="team-text animate-on-scroll">
-            <p><span class="highlight">roLERbot</span>, echipa de robotică a Liceului Teoretic „Emil Racoviță” Vaslui,
+            <p data-i18n="team.desc1"><span class="highlight">roLERbot</span>, echipa de robotică a Liceului Teoretic
+              „Emil Racoviță” Vaslui,
               reunește 12 membri oficiali și voluntari pasionați de tehnologie, inginerie și inovație.</p>
-            <p>Cu o abordare colaborativă și o viziune axată pe performanță, echipa proiectează, construiește și
+            <p data-i18n="team.desc2">Cu o abordare colaborativă și o viziune axată pe performanță, echipa proiectează,
+              construiește și
               programează robotul <strong></strong> pentru competiția First Tech Challenge, în timp ce promovează
               educația STEAM în comunitatea locală.</p>
-            <p><span class="highlight">roLERbot</span> îmbină creativitatea cu rigurozitatea tehnică, reflectând
+            <p data-i18n="team.desc3"><span class="highlight">roLERbot</span> îmbină creativitatea cu rigurozitatea
+              tehnică, reflectând
               spiritul inovator al elevilor liceului.</p>
           </div>
         </div>
@@ -145,7 +162,7 @@
             </picture>
           </div>
         </div>
-      </div>   
+      </div>
     </div>
   </section>
 
@@ -155,14 +172,15 @@
   <section class="page-section bg-light" id="portfolio">
     <div class="container">
       <div class="text-center">
-        <h2 class="section-heading text-uppercase animate-on-scroll">Sponsori</h2>
+        <h2 class="section-heading text-uppercase animate-on-scroll" data-i18n="section.sponsors">Sponsori</h2>
 
       </div>
       <div class="row">
         <div class="col-lg-4 col-sm-6 mb-4">
           <!-- RECUMED -->
           <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://recumedclinic.ro/" target="_blank" rel="noopener" aria-label="Sponsor Recumed">
+            <a class="portfolio-link no-modal" href="https://recumedclinic.ro/" target="_blank" rel="noopener"
+              aria-label="Sponsor Recumed">
               <div class="portfolio-hover">
 
               </div>
@@ -177,7 +195,8 @@
         <div class="col-lg-4 col-sm-6 mb-4">
           <!-- PLANT AGRO -->
           <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://primariavs.ro/" target="_blank" rel="noopener" aria-label="Sponsor Plant Agro">
+            <a class="portfolio-link no-modal" href="https://primariavs.ro/" target="_blank" rel="noopener"
+              aria-label="Sponsor Plant Agro">
               <div class="portfolio-hover">
 
               </div>
@@ -192,7 +211,8 @@
         <div class="col-lg-4 col-sm-6 mb-4">
           <!-- DOMNIILE AVERESTI -->
           <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://domeniile-averesti.ro/ro" target="_blank" rel="noopener" aria-label="Sponsor Domniile Averesti">
+            <a class="portfolio-link no-modal" href="https://domeniile-averesti.ro/ro" target="_blank" rel="noopener"
+              aria-label="Sponsor Domniile Averesti">
               <div class="portfolio-hover">
 
               </div>
@@ -207,7 +227,8 @@
         <div class="col-lg-4 col-sm-6 mb-4">
           <!-- DOMNIILE AVERESTI -->
           <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://woodlinemob.ro/" target="_blank" rel="noopener" aria-label="Sponsor Domniile Averesti">
+            <a class="portfolio-link no-modal" href="https://woodlinemob.ro/" target="_blank" rel="noopener"
+              aria-label="Sponsor Domniile Averesti">
               <div class="portfolio-hover">
 
               </div>
@@ -222,7 +243,8 @@
         <div class="col-lg-4 col-sm-6 mb-4 mb-sm-0">
           <!-- APISROM -->
           <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="http://specialistul.ro/" target="_blank" rel="noopener" aria-label="Sponsor ApisRom">
+            <a class="portfolio-link no-modal" href="http://specialistul.ro/" target="_blank" rel="noopener"
+              aria-label="Sponsor ApisRom">
               <div class="portfolio-hover">
 
               </div>
@@ -237,7 +259,8 @@
         <div class="col-lg-4 col-sm-6">
           <!-- MIXCOD -->
           <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://mixcod.ro/" target="_blank" rel="noopener" aria-label="Sponsor Mixcod">
+            <a class="portfolio-link no-modal" href="https://mixcod.ro/" target="_blank" rel="noopener"
+              aria-label="Sponsor Mixcod">
               <div class="portfolio-hover">
 
               </div>
@@ -252,7 +275,8 @@
         <div class="col-lg-4 col-sm-6 mb-4">
           <!-- GOLDSTUDIO -->
           <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://www.facebook.com/goldmag.ro/?locale=ro_RO" target="_blank" rel="noopener" aria-label="Sponsor Gold Studio">
+            <a class="portfolio-link no-modal" href="https://www.facebook.com/goldmag.ro/?locale=ro_RO" target="_blank"
+              rel="noopener" aria-label="Sponsor Gold Studio">
               <div class="portfolio-hover">
 
               </div>
@@ -270,7 +294,8 @@
         <div class="col-lg-4 col-sm-6 mb-4">
           <!-- CURS FESTIV -->
           <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://www.facebook.com/cursfestivevents.iasi/" target="_blank" rel="noopener" aria-label="Sponsor Curs Festiv Events">
+            <a class="portfolio-link no-modal" href="https://www.facebook.com/cursfestivevents.iasi/" target="_blank"
+              rel="noopener" aria-label="Sponsor Curs Festiv Events">
               <div class="portfolio-hover">
 
               </div>
@@ -286,19 +311,35 @@
         <div class="col-lg-4 col-sm-6 mb-4">
           <!-- APSROM -->
           <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://apisrom.ro/" target="_blank" rel="noopener" aria-label="Sponsor APSROM">
+            <a class="portfolio-link no-modal" href="https://apisrom.ro/" target="_blank" rel="noopener"
+              aria-label="Sponsor APSROM">
               <div class="portfolio-hover">
 
               </div>
               <img class="img-fluid" src="assets/img/portfolio/apis.png" alt="APSROM sponsor" />
             </a>
             <div class="portfolio-caption">
-              <div class="portfolio-caption-heading">APSROM</div>
+              <div class="portfolio-caption-heading">APISROM</div>
 
             </div>
           </div>
         </div>
+        <div class="col-lg-4 col-sm-6 mb-4">
+          <!-- APSROM -->
+          <div class="portfolio-item">
+            <a class="portfolio-link no-modal" href="https://apisrom.ro/" target="_blank" rel="noopener"
+              aria-label="Sponsor APSROM">
+              <div class="portfolio-hover">
 
+              </div>
+              <img class="img-fluid" src="assets/img/portfolio/safir.png" alt="safir sponsor" />
+            </a>
+            <div class="portfolio-caption">
+              <div class="portfolio-caption-heading">SAFIR</div>
+
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -306,7 +347,7 @@
   <section class="page-section" id="about">
     <div class="container">
       <div class="text-center">
-        <h2 class="section-heading text-uppercase animate-on-scroll">Progres</h2>
+        <h2 class="section-heading text-uppercase animate-on-scroll" data-i18n="section.progress">Progres</h2>
         <h3 class="section-subheading text-muted">............</h3>
       </div>
       <div class="timeline-container-curved">
@@ -317,11 +358,12 @@
             </div>
             <div class="timeline-panel">
               <div class="timeline-heading">
-                <h4>14 Octombrie 2018</h4>
-                <h4 class="subheading">Pasiunea care ne-a unit</h4>
+                <h4 data-i18n="timeline.1.date">14 Octombrie 2018</h4>
+                <h4 class="subheading" data-i18n="timeline.1.title">Pasiunea care ne-a unit</h4>
               </div>
               <div class="timeline-body">
-                <p class="text-muted">Echipa roLERbot a apărut în 2018, din dorința unor tineri pasionați de științele
+                <p class="text-muted" data-i18n="timeline.1.desc">Echipa roLERbot a apărut în 2018, din dorința unor
+                  tineri pasionați de științele
                   exacte de a-și transforma ideile în realitate. Cine suntem noi? Suntem roLERbot – motivați, ambițioși
                   și
                   uniți de pasiunea pentru tehnologie. Prin programul Rover Ruckus am intrat în lumea Tech
@@ -334,11 +376,12 @@
             </div>
             <div class="timeline-panel">
               <div class="timeline-heading">
-                <h4>20 Februarie 2019</h4>
-                <h4 class="subheading">Primul pas, primul succes</h4>
+                <h4 data-i18n="timeline.2.date">20 Februarie 2019</h4>
+                <h4 class="subheading" data-i18n="timeline.2.title">Primul pas, primul succes</h4>
               </div>
               <div class="timeline-body">
-                <p class="text-muted">În 2019, echipa roLERbot, formată din 15 elevi, a obținut prima calificare la
+                <p class="text-muted" data-i18n="timeline.2.desc">În 2019, echipa roLERbot, formată din 15 elevi, a
+                  obținut prima calificare la
                   etapa
                   națională a competiției BRD First Tech Challenge România. După trei zile intense la Iași, emoțiile au
                   fost înlocuite de bucuria reușitei. Robotul nostru, construit cu multă muncă și dedicare, a funcționat
@@ -354,14 +397,15 @@
             </div>
             <div class="timeline-panel">
               <div class="timeline-heading">
-                <h4>11 Martie 2024</h4>
-                <h4 class="subheading">O nouă zi, un nou premiu</h4>
+                <h4 data-i18n="timeline.3.date">11 Martie 2024</h4>
+                <h4 class="subheading" data-i18n="timeline.3.title">O nouă zi, un nou premiu</h4>
               </div>
               <div class="timeline-body">
-                <p class="text-muted">Ziua a treia, 11 martie 2024, ne-a adus zâmbetul pe buze! După două zile pline de
+                <p class="text-muted" data-i18n="timeline.3.desc">Ziua a treia, 11 martie 2024, ne-a adus zâmbetul pe
+                  buze! După două zile pline de
                   emoții, provocări și momente intense, Regionala 4 de la Iași s-a încheiat cu o mare bucurie pentru
                   echipa roLERbot: am câștigat The Judges Award. Suntem foarte mândri de evoluția noastră, de robotul
-                  construit și de tot ceea ce am reușit să realizăm în acest sezon. În cele trei zile, am legat
+                  construit și de tot ceea ce am reușit să realizăm în acest sezon. În cele drie zile, am legat
                   prietenii,
                   am râs, ne-am enervat, am dansat și am trăit fiecare clipă la intensitate maximă. Am plecat acasă
                   obosiți, dar cu inimile pline de recunoștință și cu echipa mai unită ca niciodată.</p>
@@ -373,11 +417,12 @@
             </div>
             <div class="timeline-panel">
               <div class="timeline-heading">
-                <h4>19 Ianuarie 2025</h4>
-                <h4 class="subheading">O reușită care ne inspiră</h4>
+                <h4 data-i18n="timeline.4.date">19 Ianuarie 2025</h4>
+                <h4 class="subheading" data-i18n="timeline.4.title">O reușită care ne inspiră</h4>
               </div>
               <div class="timeline-body">
-                <p class="text-muted">Astăzi, 19 ianuarie 2025, încheiem competiția regională cu capul sus, după ce am
+                <p class="text-muted" data-i18n="timeline.4.desc">Astăzi, 19 ianuarie 2025, încheiem competiția
+                  regională cu capul sus, după ce am
                   câștigat 4 din cele 6 meciuri și am demonstrat determinare, creativitate și spirit de echipă. Suntem
                   extrem de mândri să anunțăm că am obținut Design Award – Locul 3, o distincție care evidențiază
                   echilibrul dintre funcționalitate și estetică în construcția robotului nostru. Acest premiu recunoaște
@@ -389,7 +434,7 @@
           <li class="timeline-end-marker animate-on-scroll">
             <div class="timeline-image timeline-image-final">
               <div class="timeline-final-text">
-                Fii parte<br>din<br>poveste
+                <span data-i18n="timeline.final">Fii parte<br>din<br>poveste</span>
               </div>
             </div>
           </li>
@@ -401,8 +446,9 @@
   <section class="page-section" id="team">
     <div class="container">
       <div class="text-center mb-5">
-        <h2 class="section-heading text-uppercase animate-on-scroll">Blog</h2>
-        <h3 class="section-subheading text-muted">Articole și actualizări din echipa roLERbot</h3>
+        <h2 class="section-heading text-uppercase animate-on-scroll" data-i18n="section.blog">Blog</h2>
+        <h3 class="section-subheading text-muted" data-i18n="section.blogSubtitle">Articole și actualizări din echipa
+          roLERbot</h3>
       </div>
 
       <div class="blog-carousel-container">
@@ -542,7 +588,7 @@
       <div class="text-center mt-5">
         <a href="blog.html" class="btn btn-primary btn-lg">
           <i class="fas fa-arrow-right me-2"></i>
-          Vezi toate articolele
+          <span data-i18n="blog.viewAll">Vezi toate articolele</span>
         </a>
       </div>
     </div>
@@ -577,7 +623,7 @@
                 <img src="assets/img/Design fără titlu (40).png" alt="roLERbot Logo" class="footer-logo">
                 roLERbot
               </h3>
-              <p class="footer-description">
+              <p class="footer-description" data-i18n="footer.desc">
                 Echipa de robotică a Liceului Teoretic „Emil Racoviță" Vaslui.
                 Pasionați de tehnologie, inovație și competiții FIRST Tech Challenge.
               </p>
@@ -601,13 +647,13 @@
           <!-- Quick Links -->
           <div class="col-lg-2 col-md-6">
             <div class="footer-section">
-              <h4 class="footer-heading">Navigare</h4>
+              <h4 class="footer-heading" data-i18n="footer.nav">Navigare</h4>
               <ul class="footer-links">
-                <li><a href="index.html#services">Echipa</a></li>
-                <li><a href="index.html#portfolio">Sponsori</a></li>
-                <li><a href="index.html#about">Progres</a></li>
-                <li><a href="blog.html">Blog</a></li>
-                <li><a href="index.html#contact">Contact</a></li>
+                <li><a href="index.html#services" data-i18n="nav.team">Echipa</a></li>
+                <li><a href="index.html#portfolio" data-i18n="nav.sponsors">Sponsori</a></li>
+                <li><a href="index.html#about" data-i18n="nav.progress">Progres</a></li>
+                <li><a href="blog.html" data-i18n="nav.blog">Blog</a></li>
+                <li><a href="index.html#contact" data-i18n="nav.contact">Contact</a></li>
               </ul>
             </div>
           </div>
@@ -615,7 +661,7 @@
           <!-- Resources -->
           <div class="col-lg-3 col-md-6">
             <div class="footer-section">
-              <h4 class="footer-heading">Resurse</h4>
+              <h4 class="footer-heading" data-i18n="footer.resources">Resurse</h4>
               <ul class="footer-links">
                 <li><a href="puiu-cross.html">Puiu-cross.exe</a></li>
                 <li><a href="puiu-run.html">Puiu-run.exe</a></li>
@@ -629,11 +675,11 @@
           <!-- Contact Info -->
           <div class="col-lg-3 col-md-6">
             <div class="footer-section">
-              <h4 class="footer-heading">Contact</h4>
+              <h4 class="footer-heading" data-i18n="footer.contact">Contact</h4>
               <ul class="footer-contact">
                 <li>
                   <i class="fas fa-map-marker-alt"></i>
-                  <span>Liceul Teoretic<br>„Emil Racoviță" Vaslui</span>
+                  <span data-i18n="footer.location">Liceul Teoretic<br>„Emil Racoviță" Vaslui</span>
                 </li>
                 <li>
                   <i class="fas fa-envelope"></i>
@@ -649,16 +695,16 @@
         <div class="footer-bottom">
           <div class="row align-items-center">
             <div class="col-md-6 text-center text-md-start">
-              <p class="footer-copyright">
+              <p class="footer-copyright" data-i18n="footer.copyright">
                 &copy; 2024 roLERbot. Toate drepturile rezervate.<br>
                 <small>Site realizat de Diaconu Mihaita</small>
               </p>
             </div>
             <div class="col-md-6 text-center text-md-end">
               <div class="footer-legal">
-                <a href="#!">Politica de Confidențialitate</a>
+                <a href="#!" data-i18n="footer.privacy">Politica de Confidențialitate</a>
                 <span class="separator">|</span>
-                <a href="#!">Termeni și Condiții</a>
+                <a href="#!" data-i18n="footer.terms">Termeni și Condiții</a>
               </div>
             </div>
           </div>
@@ -668,9 +714,8 @@
   </footer>
 
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"></script>
-
-  <script src="js/scripts.js?v=20260307e"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/scripts.js?v=20260308e"></script>
 
   <script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>
 

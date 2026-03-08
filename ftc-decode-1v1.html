@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ro">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,7 +19,9 @@
       --ok: #22c55e;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -142,8 +145,14 @@
       color: #0b1220;
     }
 
-    #startBtn { background: var(--ok); }
-    #resetBtn { background: #cbd5e1; }
+    #startBtn {
+      background: var(--ok);
+    }
+
+    #resetBtn {
+      background: #cbd5e1;
+    }
+
     #backBtn {
       background: #f8fafc;
       text-decoration: none;
@@ -159,16 +168,21 @@
       min-height: 20px;
     }
   </style>
+  <script src="js/i18n.js"></script>
+  <script src="js/scripts.js?v=20260308e"></script>
 </head>
+
 <body>
   <div class="app">
     <div class="topbar">
-      <div class="score"><span class="dot" style="background: var(--red)"></span> ROȘU: <span id="redScore">0</span></div>
+      <div class="score"><span class="dot" style="background: var(--red)"></span> <span
+          data-i18n="game.redScore">ROȘU</span>: <span id="redScore">0</span></div>
       <div class="phase">
-        <div id="phaseLabel">Apasă START</div>
+        <div id="phaseLabel" data-i18n="game.pressStart">Apasă START</div>
         <div class="timer" id="timer">01:40</div>
       </div>
-      <div class="score blue">ALBASTRU: <span id="blueScore">0</span> <span class="dot" style="background: var(--blue)"></span></div>
+      <div class="score blue"><span data-i18n="game.blueScore">ALBASTRU</span>: <span id="blueScore">0</span> <span
+          class="dot" style="background: var(--blue)"></span></div>
     </div>
 
     <div class="field-wrap">
@@ -177,24 +191,32 @@
 
     <div class="controls">
       <div class="card">
-        <h3>Control Roșu (1v1)</h3>
-        <p><span class="value">W A S D</span> = mișcare</p>
-        <p><span class="value">F</span> = ia piesă / trage</p>
+        <h3 data-i18n="game.redControl">Control Roșu (1v1)</h3>
+        <p><span class="value">W A S D</span> = <span data-i18n="game.move">mișcare</span></p>
+        <p><span class="value">F</span> = <span data-i18n="game.action">ia piesă / trage</span></p>
       </div>
       <div class="card">
-        <h3>Control Albastru (1v1)</h3>
-        <p><span class="value">Săgeți</span> = mișcare</p>
-        <p><span class="value">Enter</span> = ia piesă / trage</p>
+        <h3 data-i18n="game.blueControl">Control Albastru (1v1)</h3>
+        <p><span class="value">Săgeți</span> = <span data-i18n="game.move">mișcare</span></p>
+        <p><span class="value">Enter</span> = <span data-i18n="game.action">ia piesă / trage</span></p>
       </div>
       <div class="card">
-        <h3>Reguli rapide (FTC 1v1)</h3>
-        <p>Mingile apar pe <span class="value">liniile albe</span> de pe teren.</p>
-        <p>Roșu marchează în pătratul <span class="value">roșu</span>, albastru în pătratul <span class="value">albastru</span>.</p>
-        <p>AUTO: <span class="value">12p</span> / TELEOP: <span class="value">6p</span> / ENDGAME: <span class="value">10p</span></p>
+        <h3 data-i18n="game.rules">Reguli rapide (FTC 1v1)</h3>
+        <p data-i18n="game.rule1">Mingile apar pe <span class="value">liniile albe</span> de pe teren.</p>
+        <p data-i18n="game.rule2">Roșu marchează în pătratul <span class="value">roșu</span>, albastru în pătratul <span
+            class="value">albastru</span>.</p>
+        <p>AUTO: <span class="value">12p</span> / TELEOP: <span class="value">6p</span> / ENDGAME: <span
+            class="value">10p</span></p>
         <div class="actions">
           <button id="startBtn">START</button>
           <button id="resetBtn">RESET</button>
-          <a id="backBtn" href="index.html">Înapoi site</a>
+          <a id="backBtn" href="index.html" data-i18n="game.back">Înapoi site</a>
+          <div class="language-switcher-mini" style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+            <button type="button" class="lang-side" data-set-lang="ro"
+              style="background:none; border: 1px solid #334155; color: white; padding: 2px 5px; font-size: 10px; border-radius: 4px;">RO</button>
+            <button type="button" class="lang-side" data-set-lang="en"
+              style="background:none; border: 1px solid #334155; color: white; padding: 2px 5px; font-size: 10px; border-radius: 4px;">EN</button>
+          </div>
         </div>
         <div class="winner" id="winnerText"></div>
       </div>
@@ -665,4 +687,5 @@
     loop();
   </script>
 </body>
+
 </html>
