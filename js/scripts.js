@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const applyIntroFrame = () => {
     const lerp = (start, end, amt) => start + (end - start) * amt;
-    const SMOOTHING = 0.12; // Easing factor
+    const SMOOTHING = 0.15; // Snappier easing factor
 
     if (introUnlocked) {
       const y = window.scrollY || window.pageYOffset;
@@ -470,7 +470,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // While intro is locked, handwriting drives most of the scene and video shrink remains subtle.
     currentIntroProgress = lerp(currentIntroProgress, targetIntroProgress, SMOOTHING);
-    setCssVars(currentIntroProgress * 0.32, currentIntroProgress);
+    // Fixed: Keep video at full scale (0) during writing to prevent "shrink then grow" bounce.
+    setCssVars(0, currentIntroProgress);
 
     if (!scrollStarted && currentIntroProgress >= LOCKED_SHOW_THRESHOLD) {
       setScrollStarted(true);
@@ -1559,19 +1560,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // I18n logic moved to js/i18n.js for better maintainability.
 
-// Blog hero: drop decorative newspaper on first meaningful scroll
-document.addEventListener('DOMContentLoaded', () => {
-  const blogMasthead = document.querySelector('.masthead-blog');
-  if (!blogMasthead) return;
-
-  let dropped = false;
-  const maybeDropNewspaper = () => {
-    if (dropped || window.scrollY < 35) return;
-
-    dropped = true;
-    blogMasthead.classList.add('newspaper-fall');
-    window.removeEventListener('scroll', maybeDropNewspaper);
-  };
-
-  window.addEventListener('scroll', maybeDropNewspaper, { passive: true });
-});
+// Blog intro lock controller is injected inline in blog.html for guaranteed execution order.

@@ -955,13 +955,15 @@ legend {
 .animate-on-scroll {
   opacity: 0;
   transform: translateY(50px);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-  will-change: transform, opacity;
+  scale: 0.98;
+  transition: opacity 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), scale 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform, opacity, scale;
 }
 
 .animate-on-scroll.in-view {
   opacity: 1;
   transform: translateY(0);
+  scale: 1;
 }
 
 /* Special animation for timeline */
@@ -13438,6 +13440,7 @@ header.masthead.has-video .masthead-content {
   filter: drop-shadow(0 12px 24px rgba(249, 5, 108, 0.18));
   stroke-dasharray: 1600;
   stroke-dashoffset: calc(1600 - (1600 * var(--handwrite-progress)));
+  opacity: var(--handwrite-progress);
 }
 
 .hero-under-video-cta {
@@ -13481,11 +13484,6 @@ body {
 .page-section,
 .page-section.bg-light {
   background-color: transparent !important;
-}
-
-body:not(.intro-writing-complete) .hero-scroll-indicator {
-  opacity: 0 !important;
-  pointer-events: none !important;
 }
 
 @media (max-width: 991px) {
@@ -16563,6 +16561,7 @@ body.motion-enhanced #about .timeline li.in-view .timeline-image {
 }
 
 @keyframes logoBreath {
+
   0%,
   100% {
     transform: translateY(0) scale(1);

@@ -12,19 +12,20 @@
 }
 
 /* Blog Masthead - Different from index */
-.masthead-blog {
-  background: url('../assets/blog.png') center center / cover no-repeat !important;
-  min-height: 50vh !important;
+.blog-page .masthead-blog {
+  --blog-intro-overlay-duration: 0.86s;
+  --blog-intro-drop-duration: 1.15s;
+  --blog-intro-ease: cubic-bezier(0.22, 0.74, 0.24, 1);
+  --blog-handwrite-progress: 0;
+  --blog-intro-progress: 0;
+
+  background: url('..\/teren\/fundal.png') center center / cover no-repeat;
+  min-height: 100vh;
   position: relative;
+  overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  header.masthead.masthead-blog {
-    background: url('../assets/bgtel3.png') center center / cover no-repeat !important;
-  }
-}
-
-.masthead-blog::before {
+.blog-page .masthead-blog::before {
   content: "";
   position: absolute;
   top: 0;
@@ -35,92 +36,242 @@
   z-index: 1;
 }
 
-.masthead-blog .container {
-  position: relative;
-  z-index: 2;
-}
-
-.blog-newspaper {
+.blog-page .masthead-blog::after {
+  content: "";
   position: absolute;
-  right: clamp(12px, 6vw, 84px);
-  top: clamp(60px, 14vh, 140px);
-  width: clamp(170px, 20vw, 250px);
-  padding: 14px 12px;
-  border-radius: 6px;
-  background: linear-gradient(160deg, #fffdf7, #f0e9d8);
-  border: 1px solid rgba(63, 50, 26, 0.24);
-  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.32);
-  transform-origin: center top;
-  transform: rotate(-6deg) translateY(0);
-  transition: transform 0.9s cubic-bezier(0.2, 0.9, 0.2, 1), opacity 0.5s ease;
+  inset: 0;
+  background: #07070c;
+  opacity: 0;
+  transition: opacity 0.8s ease;
   z-index: 2;
+  pointer-events: none;
 }
 
-.newspaper-head {
-  font-size: 0.8rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  color: #3b3122;
-  margin-bottom: 8px;
+body.blog-page.blog-intro-pending .masthead-blog::after {
+  opacity: 1;
 }
 
-.newspaper-line {
-  height: 4px;
+.blog-page .masthead-blog .container.hero-intro-shell {
+  position: relative;
+  z-index: 3;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: min(98vw, 1500px);
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.blog-page .hero-intro-copy {
+  position: relative;
+  z-index: 4;
+  width: min(52vw, 620px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.5rem;
+  /* Clean gap for vertical stacking */
+  margin-left: clamp(-4rem, -3vw, -1rem);
+  /* Shifted back to the right as requested */
+}
+
+.blog-page .blog-handwrite-logo {
+  width: min(44vw, 500px);
+  max-width: 500px;
+  height: auto;
+  margin-bottom: -1rem;
+  /* Slight overlap for better look */
+  margin-left: 0;
+}
+
+.blog-page .blog-handwrite-logo text {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  font-family: "Pacifico", cursive;
+  font-size: clamp(3rem, 9vw, 7rem);
+  letter-spacing: 0.05em;
+  paint-order: stroke;
+  filter: drop-shadow(0 10px 24px rgba(249, 5, 108, 0.2));
+  stroke-dasharray: 1200;
+  stroke-dashoffset: calc(1200 - (1200 * var(--blog-handwrite-progress)));
+  opacity: var(--blog-handwrite-progress);
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+.blog-page .blog-newspaper {
+  position: absolute;
+  right: clamp(1rem, 5vw, 5rem);
+  left: auto;
+  top: 50%;
+  width: clamp(300px, 40vw, 620px);
+  max-width: 620px;
+  min-width: 290px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  transform-origin: center center;
+  /* Scroll-driven transform: falls from -185% to -50% and rotates from -16deg to -7deg */
+  transform: translateY(calc(-185% + (var(--blog-intro-progress) * 135%))) rotate(calc(-16deg + (var(--blog-intro-progress) * 9deg)));
+  /* Fade in tied directly to intro progress */
+  opacity: var(--blog-intro-progress);
+  transition: opacity 0.2s linear;
+  z-index: 3;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.masthead-blog.typing-done .blog-newspaper {
+  pointer-events: auto;
+}
+
+.blog-page .blog-newspaper-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  filter: none;
+  transform: none;
+  will-change: transform, filter;
+}
+
+body.blog-page.blog-intro-lock {
+  overflow: hidden;
+  height: 100vh;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+body.blog-page.blog-intro-lock .masthead-blog::after {
+  opacity: calc(0.96 * (1 - var(--blog-intro-progress)));
+  transition: none;
+}
+
+
+
+.blog-page #blogReadBtn {
   border-radius: 999px;
-  background: rgba(61, 49, 28, 0.32);
-  margin-bottom: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow: 0 10px 24px rgba(249, 5, 108, 0.26);
+  opacity: var(--blog-intro-progress);
+  transform: translateY(12px);
+  pointer-events: none;
+  margin-left: 0.15rem;
+  /* Minor nudge to match 'B' visual edge */
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.newspaper-photo {
-  height: 44px;
-  border-radius: 4px;
-  margin: 8px 0;
-  background: linear-gradient(135deg, rgba(249, 5, 108, 0.24), rgba(67, 109, 214, 0.28));
+.masthead-blog.typing-start #blogReadBtn,
+.masthead-blog.typing-done #blogReadBtn {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
-.newspaper-line.w-95 { width: 95%; }
-.newspaper-line.w-90 { width: 90%; }
-.newspaper-line.w-85 { width: 85%; }
-.newspaper-line.w-80 { width: 80%; }
-.newspaper-line.w-75 { width: 75%; }
-
-.masthead-blog.newspaper-fall .blog-newspaper {
-  animation: blogNewspaperDrop 1.05s cubic-bezier(0.2, 0.95, 0.22, 1) forwards;
+.blog-page .hero-scroll-indicator {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
-@keyframes blogNewspaperDrop {
+.blog-page .hero-scroll-indicator span {
+  position: absolute;
+  opacity: var(--blog-intro-progress);
+  top: 10px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  background-color: #fff;
+  border-radius: 50%;
+  animation: blogScrollPulse 2s infinite;
+}
+  opacity: var(--blog-intro-progress);
+.masthead-blog.intro-done::after {
+  opacity: 0;
+}
+
+@keyframes blogCurtainFade {
   0% {
-    transform: rotate(-6deg) translateY(0);
     opacity: 1;
+    backdrop-filter: blur(10px);
   }
-  64% {
-    transform: rotate(7deg) translateY(120px);
-    opacity: 1;
-  }
+
   100% {
-    transform: rotate(16deg) translateY(220px);
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+}
+
+@keyframes blogScrollPulse {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(20px);
     opacity: 0;
   }
 }
 
 /* Mobile - use 4:3 aspect ratio image */
 @media (max-width: 767px) {
-  .masthead-blog {
-    background: url('../assets/bgtel3.png') center top / cover no-repeat !important;
-    background-attachment: scroll !important;
-    background-size: cover !important;
-    background-position: center top !important;
-    min-height: 110vh !important;
+  .blog-page .masthead-blog {
+    min-height: 100vh;
   }
 
-  .blog-newspaper {
-    right: 12px;
-    top: 100px;
-    width: 160px;
+  .blog-page .blog-newspaper {
+    right: 50%;
+    left: auto;
+    min-width: 250px;
+    width: min(90vw, 430px);
+    transform: translate(50%, -185%) rotate(-16deg);
+  }
+
+  .masthead-blog.intro-playing .blog-newspaper {
+    transform: translate(50%, -50%) rotate(-7deg);
+  }
+
+  .blog-page .hero-intro-copy {
+    width: min(90vw, 430px);
+    align-items: center;
+    text-align: center;
+    margin-top: 8vh;
+    margin-left: 0;
+  }
+
+  .blog-page .blog-handwrite-logo {
+    width: min(90vw, 420px);
+  }
+
+  .blog-page .blog-handwrite-logo text {
+    font-size: clamp(2.4rem, 12vw, 4.4rem);
   }
 }
 
-body {
+@media (prefers-reduced-motion: reduce) {
+
+  .blog-page .masthead-blog::after,
+  .blog-page .blog-newspaper,
+  .blog-page .hero-intro-copy,
+  .blog-page .blog-handwrite-logo text,
+  .blog-page #blogReadBtn,
+  .blog-page .hero-scroll-indicator span {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+body.blog-page {
   background-color: #fdfdfd;
   background-image: radial-gradient(#f9056c 0.5px, transparent 0.5px);
   background-size: 30px 30px;
@@ -129,7 +280,7 @@ body {
 }
 
 /* Cleaner Section Headings */
-.section-heading {
+body.blog-page .section-heading {
   color: var(--text-dark);
   font-weight: 800;
   letter-spacing: -1px;
