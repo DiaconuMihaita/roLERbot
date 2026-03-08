@@ -5,11 +5,15 @@
   transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   box-shadow: none;
   padding: 0.6rem 0 !important;
+  -webkit-backdrop-filter: blur(22px) saturate(135%);
+  backdrop-filter: blur(22px) saturate(135%);
 }
 
 #mainNav.navbar-shrink {
-  background: linear-gradient(135deg, #94003f, #f9056c) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, rgba(148, 0, 63, 0.76), rgba(249, 5, 108, 0.72)) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(150%);
+  backdrop-filter: blur(32px) saturate(150%);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
 }
 
 #mainNav .navbar-brand {
@@ -74,7 +78,9 @@
 /* Mobile responsive */
 @media (max-width: 992px) {
   #mainNav .navbar-collapse {
-    background: transparent;
+    background: rgba(148, 0, 63, 0.42);
+    -webkit-backdrop-filter: blur(26px) saturate(145%);
+    backdrop-filter: blur(26px) saturate(145%);
     padding: 1rem;
     border-radius: 8px;
     margin-top: 0.5rem;
