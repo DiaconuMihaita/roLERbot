@@ -48,7 +48,7 @@ body {
   .logo-img,
   #mainNav .navbar-brand img {
     max-width: 250px;
-    height: 5.35rem !important;
+    height: 6.2rem !important;
     transition: none;
   }
 
@@ -674,8 +674,8 @@ body {
 
 @media (max-width: 420px) {
   #mainNav .navbar-brand img {
-    height: 4.6rem !important;
-    max-width: 210px;
+    height: 5.2rem !important;
+    max-width: 235px;
   }
 
   .navbar-nav .nav-link {
@@ -744,6 +744,49 @@ table {
   max-width: 100%;
   overflow-x: auto;
   display: block;
+}
+
+@media (max-width: 991px) {
+  #mainNav .navbar-brand img {
+    height: 6rem !important;
+    max-width: min(74vw, 300px) !important;
+  }
+
+  #mainNav .morph-menu-panel,
+  #mainNav.menu-open .morph-menu-panel,
+  #mainNav .navbar-collapse.show {
+    width: min(95vw, 360px) !important;
+    max-height: min(86vh, 690px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 10px !important;
+  }
+
+  #mainNav .morph-menu-links,
+  #mainNav .navbar-nav {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 8px !important;
+  }
+
+  #mainNav .morph-menu-links .nav-item,
+  #mainNav .navbar-nav .nav-item {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  #mainNav .morph-menu-links .nav-link,
+  #mainNav .navbar-nav .nav-link,
+  #mainNav #rain-button.nav-link {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    transform: none !important;
+  }
 }
 
 /* Prevent images from overflowing */
@@ -1039,5 +1082,65 @@ iframe {
 
   .member-description-box {
     min-height: 200px !important;
+  }
+}
+
+/* === FINAL MOBILE NAVBAR FIX (NO CROP / CLEAN LINKS) === */
+@media (max-width: 991px) {
+  #mainNav .morph-menu-panel,
+  #mainNav .navbar-collapse.show {
+    box-sizing: border-box;
+    width: min(95vw, 360px) !important;
+    max-width: 95vw !important;
+    max-height: min(86vh, 700px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 10px !important;
+  }
+
+  #mainNav .morph-menu-links,
+  #mainNav .navbar-nav {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #mainNav .morph-menu-links .nav-item,
+  #mainNav .navbar-nav .nav-item {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  #mainNav .morph-menu-links .nav-link,
+  #mainNav .navbar-nav .nav-link,
+  #mainNav #rain-button.nav-link {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-height: 44px !important;
+    padding: 0.62rem 0.78rem !important;
+    line-height: 1.25 !important;
+    border-radius: 10px !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    transform: none !important;
+  }
+
+  #mainNav .morph-menu-links .nav-link:hover,
+  #mainNav .navbar-nav .nav-link:hover,
+  #mainNav #rain-button.nav-link:hover {
+    transform: none !important;
+  }
+
+  #mainNav .language-switcher {
+    width: 100% !important;
+    justify-content: center !important;
+    margin-top: 2px;
   }
 }

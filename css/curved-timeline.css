@@ -455,6 +455,22 @@
     }
 
     .timeline-final-text {
-        font-size: 18px;
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 14px;
+        font-size: clamp(15px, 4.3vw, 20px);
+        line-height: 1.15;
+        letter-spacing: 1px;
+        text-align: center;
+        word-break: keep-all;
+        overflow-wrap: break-word;
+    }
+
+    .timeline-final-text span {
+        display: inline-block;
+        max-width: 100%;
     }
 }

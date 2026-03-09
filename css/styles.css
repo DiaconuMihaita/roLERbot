@@ -12503,7 +12503,7 @@ p {
   }
 
   #mainNav .navbar-brand img {
-    height: 8rem;
+    height: 9.2rem;
     transition: none;
   }
 
@@ -12519,7 +12519,7 @@ p {
 
   #mainNav.navbar-shrink .navbar-brand svg,
   #mainNav.navbar-shrink .navbar-brand img {
-    height: 5rem;
+    height: 6rem;
     filter: none;
   }
 
@@ -16185,7 +16185,7 @@ img:hover {
   align-items: center;
   justify-content: center;
   margin: 60px auto;
-  margin-bottom: 100px;
+  margin-bottom: 30px;
   padding: 0 40px;
   max-width: 1200px;
   z-index: 1;
@@ -16196,10 +16196,43 @@ img:hover {
   width: 100%;
   max-width: 900px;
   height: auto;
-  min-height: 700px;
+  min-height: clamp(420px, 58vw, 620px);
   margin: 0 auto;
-  margin-bottom: 80px;
+  margin-bottom: 20px;
   flex-shrink: 1;
+}
+
+@media (min-width: 992px) and (max-width: 1440px) {
+  .blog-cards-wrapper {
+    min-height: 0;
+    height: auto !important;
+  }
+
+  .blog-card {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    max-width: 100%;
+    display: none;
+    opacity: 1;
+    pointer-events: none;
+  }
+
+  .blog-card.active {
+    display: flex;
+    pointer-events: auto;
+  }
+
+  .blog-carousel-indicators {
+    margin-top: 26px;
+  }
+
+  #team .text-center.mt-5 {
+    margin-top: 1.8rem !important;
+    position: relative;
+    z-index: 30;
+  }
 }
 
 .blog-card {
@@ -16207,7 +16240,7 @@ img:hover {
   width: 100%;
   max-width: 900px;
   height: auto;
-  min-height: 700px;
+  min-height: 0;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
@@ -16286,7 +16319,6 @@ img:hover {
 .blog-card-content {
   padding: 24px 28px;
   background: white;
-  flex: 1;
   display: flex;
   flex-direction: column;
 }
@@ -16322,7 +16354,7 @@ img:hover {
   text-align: justify;
   font-weight: 400;
   overflow: visible;
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .blog-card-footer {
@@ -16395,7 +16427,7 @@ img:hover {
   display: flex;
   justify-content: center;
   gap: 12px;
-  margin-top: 180px;
+  margin-top: 18px;
   padding-bottom: 20px;
   position: relative;
   z-index: 20;
@@ -16467,7 +16499,7 @@ img:hover {
 
   .blog-card-description {
     font-size: 14px;
-    min-height: 50px;
+    min-height: 0;
   }
 
   .blog-carousel-btn {
@@ -17146,12 +17178,51 @@ header.masthead.has-video .btn-start-hero:focus {
 #portfolio .portfolio-item .portfolio-caption .portfolio-caption-subheading {
   font-style: italic;
   font-family: "Roboto Slab", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-}. a n i m a t e - o n - s c r o l l   {   w i l l - c h a n g e :   t r a n s f o r m ,   o p a c i t y ;   } 
- 
- . p o r t f o l i o - l i n k   {   w i l l - c h a n g e :   t r a n s f o r m ;   } 
- 
- # m a i n N a v   {   w i l l - c h a n g e :   b a c k g r o u n d ,   p a d d i n g ,   b o x - s h a d o w ;   } 
- 
- . b t n   {   w i l l - c h a n g e :   t r a n s f o r m ,   b o x - s h a d o w ,   b a c k g r o u n d - c o l o r ;   } 
- 
- 
+}.animate-on-scroll { will-change: transform, opacity; }
+
+.portfolio-link { will-change: transform; }
+
+#mainNav { will-change: background, padding, box-shadow; }
+
+.btn { will-change: transform, box-shadow, background-color; }
+
+/* Final hard-fix: prevent Blog cards from overlapping CTA on laptop/desktop */
+@media (min-width: 992px) {
+  #team .blog-cards-wrapper {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  #team .blog-card {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: none !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+  }
+
+  #team .blog-card.active {
+    display: flex !important;
+    pointer-events: auto !important;
+    z-index: 2 !important;
+  }
+
+  #team .blog-carousel-container {
+    align-items: flex-start !important;
+  }
+
+  #team .blog-carousel-indicators {
+    margin-top: 24px !important;
+  }
+
+  #team .text-center.mt-5 {
+    margin-top: 2rem !important;
+    position: relative;
+    z-index: 5;
+  }
+}
+
