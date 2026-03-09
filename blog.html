@@ -13,13 +13,13 @@
   <!-- Favicon-->
   <link rel="icon" type="image/x-icon" href="assets/img/Design fără titlu (15).png" />
   <!-- Font Awesome icons-->
-  <script src="https://use.fontawesome.com/releases/v5.15.3/js/all.js" crossorigin="anonymous"></script>
+  <script defer src="https://use.fontawesome.com/releases/v5.15.3/js/all.js" crossorigin="anonymous"></script>
   <!-- Google fonts-->
   <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css" />
   <link href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700" rel="stylesheet" type="text/css" />
   <!-- Core theme CSS -->
-  <link href="css/styles.css" rel="stylesheet" />
-  <link href="css/blog-redesign.css?v=20260309h" rel="stylesheet" />
+  <link href="css/styles.css?v=20260309j" rel="stylesheet" />
+  <link href="css/blog-redesign.css?v=20260309k" rel="stylesheet" />
   <link href="css/mobile-responsive.css" rel="stylesheet" />
 </head>
 
@@ -76,7 +76,8 @@
         <svg class="blog-handwrite-logo" viewBox="0 0 820 250" role="img" aria-label="BLOG">
           <text id="blogHandText" x="0" y="56%" text-anchor="start" dominant-baseline="middle">BLOG</text>
         </svg>
-        <a id="blogReadBtn" class="btn btn-start-hero btn-primary text-uppercase" href="#team-members">
+        <a id="blogReadBtn" class="btn btn-xl btn-start-hero text-uppercase" href="#team-members"
+          style="opacity:0;transform:translateY(12px);pointer-events:none;">
           Citeste blogul
         </a>
       </div>
@@ -206,10 +207,10 @@
         <button class="modal-close" onclick="closeSeasonModal()">✕</button>
       </div>
       <div class="modal-tabs">
-        <button class="tab-btn active" onclick="switchTab('proba')">Proba</button>
-        <button class="tab-btn" onclick="switchTab('robot')">Robot</button>
-        <button class="tab-btn" onclick="switchTab('activitati')">Activitati</button>
-        <button class="tab-btn" onclick="switchTab('meeturi')">Meeturi</button>
+        <button class="tab-btn active" onclick="switchTab('proba')" data-i18n="modal.tab.proba">Proba</button>
+        <button class="tab-btn" onclick="switchTab('robot')" data-i18n="modal.tab.robot">Robot</button>
+        <button class="tab-btn" onclick="switchTab('activitati')" data-i18n="modal.tab.activitati">Activitati</button>
+        <button class="tab-btn" onclick="switchTab('meeturi')" data-i18n="modal.tab.meeturi">Meeturi</button>
       </div>
       <div class="modal-body">
         <div id="tab-proba" class="tab-content active"></div>
@@ -947,7 +948,7 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/i18n.js"></script>
-  <script src="js/scripts.js?v=20260309c"></script>
+  <script src="js/scripts.js?v=20260309j"></script>
   <script>
     (function () {
       const body = document.body;
@@ -994,8 +995,20 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
         introDone = true;
         hero.classList.add('intro-done');
         readBtn.removeAttribute('aria-hidden');
+        readBtn.style.opacity = '1';
+        readBtn.style.transform = 'translateY(0px)';
+        readBtn.style.pointerEvents = 'auto';
         unlockScroll();
         cleanupListeners();
+      };
+
+      const updateReadButtonProgress = (progress) => {
+        const safeProgress = Math.max(0, Math.min(progress, 1));
+        const visualProgress = Math.max(0, Math.min(1, safeProgress * 1.35));
+        readBtn.style.setProperty('opacity', visualProgress.toFixed(3), 'important');
+        readBtn.style.setProperty('transform', `translateY(${((1 - visualProgress) * 12).toFixed(2)}px)`, 'important');
+        readBtn.style.pointerEvents = 'auto';
+        readBtn.removeAttribute('aria-hidden');
       };
 
       const applyFrame = () => {
@@ -1004,6 +1017,7 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
 
         hero.style.setProperty('--blog-handwrite-progress', currentProgress.toFixed(4));
         hero.style.setProperty('--blog-intro-progress', currentProgress.toFixed(4));
+        updateReadButtonProgress(currentProgress);
 
         // Show newspaper as we start
         if (currentProgress > 0.001 && !hero.classList.contains('intro-playing')) {
@@ -1031,8 +1045,8 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
 
       const nudge = (delta) => {
         if (introDone) return;
-        // Maximum scroll weight: 1000 divisor for a very deliberate cinematic descent
-        const step = Math.min(Math.abs(delta) / 1000, 0.1);
+        // Higher sensitivity so the CTA visibly reacts on small wheel/touch gestures.
+        const step = Math.min(Math.max(Math.abs(delta) / 260, 0.015), 0.22);
         targetProgress = Math.min(targetProgress + step, 1);
         if (!rafId) rafId = window.requestAnimationFrame(applyFrame);
       };
@@ -1104,6 +1118,9 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
         hero.classList.add('intro-done', 'typing-done');
         hero.style.setProperty('--blog-handwrite-progress', '1');
         readBtn.removeAttribute('aria-hidden');
+        readBtn.style.opacity = '1';
+        readBtn.style.transform = 'translateY(0px)';
+        readBtn.style.pointerEvents = 'auto';
         return;
       }
 
@@ -1112,6 +1129,7 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
         hero.classList.remove('intro-playing', 'typing-start', 'typing-done', 'intro-done');
         hero.style.setProperty('--blog-handwrite-progress', '0');
         readBtn.setAttribute('aria-hidden', 'true');
+        updateReadButtonProgress(0);
         window.addEventListener('wheel', onWheel, wheelOpts);
         window.addEventListener('keydown', onKeydown);
         window.addEventListener('touchstart', onTouchStart, touchOpts);
@@ -1122,6 +1140,9 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
         hero.classList.add('intro-done', 'typing-done');
         hero.style.setProperty('--blog-handwrite-progress', '1');
         readBtn.removeAttribute('aria-hidden');
+        readBtn.style.opacity = '1';
+        readBtn.style.transform = 'translateY(0px)';
+        readBtn.style.pointerEvents = 'auto';
       }
 
       window.addEventListener('beforeunload', () => {
@@ -1183,8 +1204,14 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
                 img.src = member.image;
                 img.alt = `Membru ${member.id}`;
               }
-              if (name) name.textContent = member.name;
-              if (dept) dept.textContent = member.dept;
+              if (name) {
+                name.setAttribute('data-i18n', `member.${member.id}.name`);
+                name.textContent = window.translate(`member.${member.id}.name`);
+              }
+              if (dept) {
+                dept.setAttribute('data-i18n', `member.${member.id}.dept`);
+                dept.textContent = window.translate(`member.${member.id}.dept`);
+              }
             };
 
             updateCard(leftCard, leftMember);
@@ -1274,13 +1301,13 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
           <!-- Quick Links -->
           <div class="col-lg-2 col-md-6">
             <div class="footer-section">
-              <h4 class="footer-heading">Navigare</h4>
+              <h4 class="footer-heading" data-i18n="footer.nav">Navigare</h4>
               <ul class="footer-links">
-                <li><a href="index.html#services">Echipa</a></li>
-                <li><a href="index.html#portfolio">Sponsori</a></li>
-                <li><a href="index.html#about">Progres</a></li>
-                <li><a href="blog.html">Blog</a></li>
-                <li><a href="#footer">Contact</a></li>
+                <li><a href="index.html#services" data-i18n="nav.team">Echipa</a></li>
+                <li><a href="index.html#portfolio" data-i18n="nav.sponsors">Sponsori</a></li>
+                <li><a href="index.html#about" data-i18n="nav.progress">Progres</a></li>
+                <li><a href="blog.html" data-i18n="nav.blog">Blog</a></li>
+                <li><a href="#footer" data-i18n="nav.contact">Contact</a></li>
               </ul>
             </div>
           </div>
@@ -1288,7 +1315,7 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
           <!-- Resources -->
           <div class="col-lg-3 col-md-6">
             <div class="footer-section">
-              <h4 class="footer-heading">Resurse</h4>
+              <h4 class="footer-heading" data-i18n="footer.resources">Resurse</h4>
               <ul class="footer-links">
                 <li><a href="puiu-cross.html">Puiu-cross.exe</a></li>
                 <li><a href="puiu-run.html">Puiu-run.exe</a></li>
@@ -1302,11 +1329,11 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
           <!-- Contact Info -->
           <div class="col-lg-3 col-md-6">
             <div class="footer-section">
-              <h4 class="footer-heading">Contact</h4>
+              <h4 class="footer-heading" data-i18n="footer.contact">Contact</h4>
               <ul class="footer-contact">
                 <li>
                   <i class="fas fa-map-marker-alt"></i>
-                  <span>Liceul Teoretic<br>„Emil Racoviță" Vaslui</span>
+                  <span data-i18n="footer.location">Liceul Teoretic<br>„Emil Racoviță" Vaslui</span>
                 </li>
                 <li>
                   <i class="fas fa-envelope"></i>
@@ -1322,16 +1349,16 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
         <div class="footer-bottom">
           <div class="row align-items-center">
             <div class="col-md-6 text-center text-md-start">
-              <p class="footer-copyright">
+              <p class="footer-copyright" data-i18n="footer.copyright">
                 &copy; 2024 roLERbot. Toate drepturile rezervate.<br>
                 <small>Site realizat de Diaconu Mihaita</small>
               </p>
             </div>
             <div class="col-md-6 text-center text-md-end">
               <div class="footer-legal">
-                <a href="#!">Politica de Confidențialitate</a>
+                <a href="#!" data-i18n="footer.privacy">Politica de Confidențialitate</a>
                 <span class="separator">|</span>
-                <a href="#!">Termeni și Condiții</a>
+                <a href="#!" data-i18n="footer.terms">Termeni și Condiții</a>
               </div>
             </div>
           </div>

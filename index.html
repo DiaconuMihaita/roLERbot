@@ -2,11 +2,23 @@
 <html lang="ro">
 
 <head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" as="style">
+  <link rel="preload" href="css/styles.css?v=20260309e" as="style">
+  <link rel="preload" href="css/blog-redesign.css" as="style">
+  <link rel="preload" href="assets/img/Design fără titlu (41).png" as="image">
   <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-  <meta name="description" content="" />
-  <meta name="author" content="" />
+  <meta name="description"
+    content="Echipa de robotică a Liceului Teoretic „Emil Racoviță” Vaslui. Pasionați de tehnologie, inovație și competiții FTC." />
+  <meta name="author" content="Diaconu Mihaita" />
+  <meta property="og:title" content="roLERbot - Echipa de Robotică">
+  <meta property="og:description"
+    content="Echipa de robotică a Liceului Teoretic „Emil Racoviță” Vaslui. Pasionați de tehnologie, inovație și competiții FIRST Tech Challenge.">
+  <meta property="og:image" content="assets/img/Design%20fără%20titlu%20(41).png">
+  <meta property="og:type" content="website">
   <title>Rolerbot</title>
 
   <!-- Blog Carousel Functions - Global Scope -->
@@ -52,12 +64,12 @@
 
   <link rel="icon" type="image/x-icon" href="assets/img/Design fără titlu (15).png" />
 
-  <script src="https://use.fontawesome.com/releases/v5.15.3/js/all.js" crossorigin="anonymous"></script>
+  <script defer src="https://use.fontawesome.com/releases/v5.15.3/js/all.js" crossorigin="anonymous"></script>
 
   <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css" />
   <link href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700" rel="stylesheet" type="text/css" />
 
-  <link href="css/styles.css?v=20260307h" rel="stylesheet" />
+  <link href="css/styles.css?v=20260309e" rel="stylesheet" />
   <link href="css/blog-redesign.css" rel="stylesheet" />
   <link href="css/mobile-responsive.css" rel="stylesheet" />
   <link href="css/curved-timeline.css" rel="stylesheet" />
@@ -114,6 +126,7 @@
   <header class="masthead has-video">
     <video class="masthead-video" autoplay muted loop playsinline preload="metadata" poster="assets/index.png"
       aria-hidden="true">
+      <source src="video/hero-with-audio.mp4" type="video/mp4">
       <source src="video/hero.mp4" type="video/mp4">
       <source src="video/REGIO_2026.mov" type="video/quicktime">
     </video>
@@ -126,6 +139,10 @@
         <a class="btn btn-xl btn-start-hero" href="#services" data-i18n="hero.learnMore">Afla mai multe</a>
       </div>
     </div>
+    <button id="heroSoundToggle" class="hero-sound-toggle" type="button" aria-pressed="false"
+      aria-label="Activeaza sunetul videoclipului" title="Sunet OFF" style="display:inline-flex;">
+      <span class="hero-sound-glyph" aria-hidden="true">&#128263;</span>
+    </button>
     <a class="hero-scroll-indicator" href="#services" aria-label="Mergi la sectiunea Echipa">
       <span></span>
     </a>
@@ -468,9 +485,10 @@
               </div>
             </div>
             <div class="blog-card-content">
-              <div class="blog-card-date">10 ianuarie 2026</div>
-              <h3 class="blog-card-title">MEET #1 - Piatra Neamt</h3>
-              <p class="blog-card-description">Meet-ul "Jurassic Peaks" , organizat la Piatra Neamț pe 10 ianuarie, a
+              <div class="blog-card-date" data-i18n="blog.card0.date">10 ianuarie 2026</div>
+              <h3 class="blog-card-title" data-i18n="blog.card0.title">MEET #1 - Piatra Neamt</h3>
+              <p class="blog-card-description" data-i18n="blog.card0.desc">Meet-ul "Jurassic Peaks" , organizat la
+                Piatra Neamț pe 10 ianuarie, a
                 fost primul nostru meet din acest sezon.
                 Am reușit să câștigăm 4 meciuri din 6, fiind un start bun. Robotul nostru s-a mișcat bine atât pe partea
                 de teleoperare, cât și pe cea de autonomie, rezultat al nenumăratelor teste pe care le-am făcut.
@@ -492,9 +510,10 @@
               </div>
             </div>
             <div class="blog-card-content">
-              <div class="blog-card-date">11 ianuarie 2026</div>
-              <h3 class="blog-card-title">MEET #2 - Iasi</h3>
-              <p class="blog-card-description">Meet-ul "Defrost", organizat la Iași pe 11 ianuarie, a fost al doilea
+              <div class="blog-card-date" data-i18n="blog.card1.date">11 ianuarie 2026</div>
+              <h3 class="blog-card-title" data-i18n="blog.card1.title">MEET #2 - Iasi</h3>
+              <p class="blog-card-description" data-i18n="blog.card1.desc">Meet-ul "Defrost", organizat la Iași pe 11
+                ianuarie, a fost al doilea
                 meet la care am participat. Deși am câștigat doar 2/6 meciuri și a fost o performanță mai slabă față de
                 meet-ul precedent, am observat mai multe lipsuri în design-ul robotului.
                 În primul meci ni s-a defectat push arm-ul, fapt ce ne-a îngreunat posibilitatea de scorare pe tot
@@ -518,9 +537,10 @@
               </div>
             </div>
             <div class="blog-card-content">
-              <div class="blog-card-date">24 ianuarie 2026</div>
-              <h3 class="blog-card-title">MEET #3 - Focșani</h3>
-              <p class="blog-card-description">La meet-ul "Focșani Tech Challenge", organizat pe 24 ianuarie, ne-am
+              <div class="blog-card-date" data-i18n="blog.card2.date">24 ianuarie 2026</div>
+              <h3 class="blog-card-title" data-i18n="blog.card2.title">MEET #3 - Focșani</h3>
+              <p class="blog-card-description" data-i18n="blog.card2.desc">La meet-ul "Focșani Tech Challenge",
+                organizat pe 24 ianuarie, ne-am
                 îmbunătățit strategia, câștigând 3/6 meciuri.
                 Deschiderea evenimentului a fost realizată prin prezența președintelui României, Nicușor Dan, în onoarea
                 celor 160 de ani de la fondarea Colegiului "Unirea". Robotul ni s-a mișcat bine și eficient, iar tactica
@@ -540,9 +560,10 @@
               </div>
             </div>
             <div class="blog-card-content">
-              <div class="blog-card-date">31 ianuarie 2026</div>
-              <h3 class="blog-card-title">MEET #4 - Galati</h3>
-              <p class="blog-card-description">Meet-ul "Ice Age", organizat pe 31 ianuarie, ne-a dat verdictul în sensul
+              <div class="blog-card-date" data-i18n="blog.card3.date">31 ianuarie 2026</div>
+              <h3 class="blog-card-title" data-i18n="blog.card3.title">MEET #4 - Galati</h3>
+              <p class="blog-card-description" data-i18n="blog.card3.desc">Meet-ul "Ice Age", organizat pe 31 ianuarie,
+                ne-a dat verdictul în sensul
                 viabilității robotului și a eficienței de mișcare, reușind să câștigăm 5/6 meciuri, fiind cea mai bună
                 performanță a noastră de până acum. </p>
 
@@ -560,9 +581,10 @@
               </div>
             </div>
             <div class="blog-card-content">
-              <div class="blog-card-date">7 februarie 2026</div>
-              <h3 class="blog-card-title">MEET #5 - Botosani</h3>
-              <p class="blog-card-description">Ultimul meet la care am participat a fost ,,Royal Stars”, organizat pe 7
+              <div class="blog-card-date" data-i18n="blog.card4.date">7 februarie 2026</div>
+              <h3 class="blog-card-title" data-i18n="blog.card4.title">MEET #5 - Botosani</h3>
+              <p class="blog-card-description" data-i18n="blog.card4.desc">Ultimul meet la care am participat a fost
+                ,,Royal Stars”, organizat pe 7
                 februarie la Botoșani. În cadrul acestuia am câștigat 4/6 meciuri, fapt care ne-a asigurat o poziție mai
                 bună în clasamentul ligii. În urma meet-ului am stabilit ultimele schimbări ce țin de design-ul
                 robotului pentru a optimiza și facilita funcționarea acestuia. Astfel, am evoluat de la competiție la
@@ -715,7 +737,7 @@
 
 
   <script src="js/i18n.js"></script>
-  <script src="js/scripts.js?v=20260308j"></script>
+  <script src="js/scripts.js?v=20260309g"></script>
 
   <script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>
 
