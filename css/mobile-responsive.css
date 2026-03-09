@@ -48,9 +48,17 @@ body {
   .logo-img,
   #mainNav .navbar-brand img {
     max-width: 250px;
-    height: 5rem !important;
-    /* Increased mobile logo size */
+    height: 5.35rem !important;
     transition: none;
+  }
+
+  .morph-menu-links {
+    width: 100%;
+    gap: 8px;
+  }
+
+  #mainNav .morph-menu-panel {
+    width: 100%;
   }
 
   /* Navbar Toggler */
@@ -104,11 +112,13 @@ body {
   .navbar-nav .nav-link {
     color: white !important;
     font-weight: 600;
-    padding: 0.4rem 0.7rem !important;
+    padding: 0.62rem 0.78rem !important;
     border-radius: 8px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-align: center;
+    text-align: left;
     width: 100%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .navbar-nav .nav-link:hover,
@@ -118,41 +128,173 @@ body {
     transform: scale(1.05);
   }
 
-  /* Hero section */
+  /* ===================================================
+     HERO INTRO (index.html) - aspect similar cu desktop
+     =================================================== */
   .masthead {
-    padding: 2rem 1.2rem 1.5rem;
+    padding: 0;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Video de fundal - acopera tot ecranul ca pe desktop */
+  .masthead-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
   }
 
   .masthead .container {
-    align-items: center !important;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 6rem;
+    /* offset navbar */
+    padding-bottom: 3rem;
+    gap: 1.2rem;
+    text-align: center;
   }
 
-  .masthead-heading {
-    font-size: 1.75rem;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: visible;
-    font-weight: 700;
-    text-align: center !important;
+  /* SVG logo "ROLERBOT" — MARE, vizibil ca pe desktop */
+  .hero-handwrite-logo {
+    width: min(98vw, 760px) !important;
+    height: auto !important;
+    margin: 0 auto;
+    display: block;
   }
 
-  .masthead-subheading {
-    font-size: 0.95rem;
-    line-height: 1.4;
-    text-align: center !important;
+  /* Textul SVG din logo — font marit */
+  .hero-handwrite-logo text {
+    font-size: clamp(7.4rem, 28vw, 15rem) !important;
+    fill: transparent !important;
+    stroke: #f9056c !important;
+    stroke-width: 3.8 !important;
+    paint-order: stroke fill !important;
+    letter-spacing: 0.02em !important;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.85)) drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55)) !important;
+  }
+
+  body.intro-writing-complete .hero-handwrite-logo text {
+    fill: #f9056c !important;
+    transition: fill 0.28s ease;
+  }
+
+  /* Buton "Află mai multe" - identic ca stil desktop, dar centrat */
+  .hero-actions,
+  .hero-under-video-cta {
+    display: flex;
+    justify-content: center;
+    width: 100%;
   }
 
   .btn-start-hero {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+    font-size: 1rem !important;
+    padding: 0.85rem 2.2rem !important;
+    border-radius: 999px !important;
+    box-shadow: 0 6px 24px rgba(249, 5, 108, 0.45) !important;
+    letter-spacing: 0.08em;
+    min-width: 180px;
+    justify-content: center;
   }
 
-  /* Mobile Header Background - uncomment when puiu-mobile.png exists */
-  /* header.masthead {
-    background-image: url("../assets/img/puiu-mobile.png") !important;
-    background-position: center bottom;
-  } */
+  /* Scroll indicator centrat */
+  .hero-scroll-indicator {
+    bottom: 18px;
+  }
+
+  /* Buton sunet — mai mic pe telefon */
+  .hero-sound-toggle {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 0.88rem !important;
+    right: 12px !important;
+    bottom: 14px !important;
+  }
+
+  /* ===================================================
+     BLOG HERO INTRO - aspect similar cu desktop
+     =================================================== */
+  .masthead-blog {
+    min-height: 100svh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Container: stiva verticala ca pe PC, dar pe o coloana */
+  .masthead-blog .hero-intro-shell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100svh;
+    padding-top: 5rem;
+    padding-bottom: 3rem;
+    gap: 2rem;
+  }
+
+  .blog-page .hero-intro-copy {
+    width: 100%;
+    align-items: center;
+    text-align: center;
+    margin: 0 auto;
+    gap: 1.4rem;
+    padding: 0 16px;
+    order: 1;
+  }
+
+  /* Logo "BLOG" animat — mare, vizibil */
+  .blog-page .blog-handwrite-logo {
+    width: clamp(220px, 85vw, 420px) !important;
+    height: auto;
+    margin: 0 auto;
+  }
+
+  .blog-page .blog-handwrite-logo text {
+    font-size: clamp(3.5rem, 18vw, 6rem) !important;
+    stroke-width: 2.5;
+    letter-spacing: 0.05em;
+  }
+
+  /* Buton "Citeste blogul" — identic cu desktop */
+  .blog-page #blogReadBtn {
+    font-size: 1rem !important;
+    padding: 0.9rem 2.2rem !important;
+    border-radius: 999px !important;
+    box-shadow: 0 6px 20px rgba(249, 5, 108, 0.4) !important;
+    letter-spacing: 0.05em;
+    min-width: 180px;
+    justify-content: center;
+  }
+
+  /* Ziarul animat — mai mic, centrat, deasupra textului */
+  .blog-page .blog-newspaper {
+    position: absolute;
+    left: auto !important;
+    right: 50% !important;
+    top: 58% !important;
+    width: min(75vw, 320px);
+    margin: 0;
+    order: unset;
+    transform: translate(50%, calc(-185% + (var(--blog-intro-progress) * 132%))) rotate(calc(-15deg + (var(--blog-intro-progress) * 8deg))) !important;
+    opacity: var(--blog-intro-progress) !important;
+  }
+
+  /* pastreaza animatia intro pe mobil */
+  .masthead-blog.intro-playing .blog-newspaper,
+  .masthead-blog .blog-newspaper {
+    transform: translate(50%, calc(-185% + (var(--blog-intro-progress) * 132%))) rotate(calc(-15deg + (var(--blog-intro-progress) * 8deg))) !important;
+    opacity: var(--blog-intro-progress) !important;
+  }
 
   /* Page sections */
   .page-section {
@@ -194,45 +336,111 @@ body {
     font-size: 0.9rem;
   }
 
-  /* Timeline layout */
+  /* ===== TIMELINE MOBIL — fix prin flexbox ===== */
   .timeline {
     padding-left: 0;
+    list-style: none;
   }
 
-  .timeline li {
-    margin-bottom: 2rem;
-    padding: 0;
-    margin-left: 0;
-    text-align: left;
-    position: relative;
+  /* Fiecare item = coloana centrata */
+  .timeline>li {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    float: none !important;
+    margin-bottom: 2.5rem !important;
+    min-height: auto !important;
+    width: 100% !important;
   }
 
-  .timeline-image {
-    position: relative;
-    width: 50px;
-    height: 50px;
-    min-width: 50px;
-    margin: 0 auto 1rem;
-    left: auto;
+  /* Imaginea circulara — centrata natural prin flexbox, fara left */
+  .timeline>li .timeline-image {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    transform: none !important;
+    margin: 0 auto 1.2rem auto !important;
+    width: 130px !important;
+    height: 130px !important;
+    float: none !important;
   }
 
-  .timeline-panel {
-    position: relative;
-    float: none;
-    padding: 0.4rem 0.6rem;
-    margin-left: 0;
+  /* Card text sub imagine */
+  .timeline>li .timeline-panel {
+    position: relative !important;
+    float: none !important;
+    width: 100% !important;
+    padding: 1.2rem 1rem !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+  }
+
+  /* Ascunde linia centrala si conectorii */
+  .timeline:before,
+  .timeline>li .timeline-panel:before {
+    display: none !important;
+  }
+
+  .timeline-heading h4,
+  .timeline>li:nth-child(odd) .timeline-heading h4,
+  .timeline>li:nth-child(even) .timeline-heading h4 {
+    font-size: 1rem;
+    text-align: center !important;
+  }
+
+  .timeline-heading .subheading {
+    text-align: center !important;
+  }
+
+  .timeline-heading .subheading:after,
+  .timeline>li:nth-child(odd) .timeline-heading .subheading:after {
+    margin: 8px auto 0 auto !important;
+  }
+
+  .timeline-body .text-muted,
+  .timeline-body p {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    text-align: center;
+  }
+
+  /* Echipa Image */
+  .team-image {
+    margin-top: 2rem;
+    text-align: center;
+  }
+
+  .team-image img {
+    max-width: 90%;
+    margin: 0 auto;
+    border-radius: 16px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Sponsori Grid - 1 coloana pe mobil */
+  #portfolio .row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #portfolio .col-lg-4,
+  #portfolio .col-sm-6 {
+    width: 85% !important;
+    max-width: 360px;
+    padding: 10px 0;
+  }
+
+  #portfolio .portfolio-item {
+    margin-bottom: 0.5rem;
+  }
+
+  #portfolio .portfolio-item img {
+    border-radius: 12px;
+    max-height: 120px;
+    object-fit: contain;
     width: 100%;
-    text-align: left;
-  }
-
-  .timeline-heading h4 {
-    font-size: 0.9rem;
-  }
-
-  .timeline-body .text-muted {
-    font-size: 0.82rem;
-    line-height: 1.45;
-    text-align: left;
   }
 
   /* Blog carousel */
@@ -371,6 +579,120 @@ body {
     margin-left: 0;
     margin-right: 0;
   }
+
+  /* Blog page: hero + carousel + modal */
+  .blog-page .hero-intro-shell,
+  .blog-page .masthead-blog .container.hero-intro-shell {
+    min-height: 100vh;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .blog-page .hero-intro-copy {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    gap: 1rem !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .blog-page #blogReadBtn {
+    width: auto;
+    max-width: 90vw;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .team-members-section .team-carousel-container {
+    margin: 20px auto !important;
+    max-width: 100% !important;
+  }
+
+  .team-members-section .carousel-cards-wrapper {
+    padding: 24px 8px !important;
+  }
+
+  .team-members-section .carousel-btn {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 1rem !important;
+  }
+
+  .team-members-section .prev-btn {
+    left: 0 !important;
+  }
+
+  .team-members-section .next-btn {
+    right: 0 !important;
+  }
+
+  .season-grid {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+    padding: 6px !important;
+  }
+
+  .folder-wrapper {
+    width: min(92vw, 320px) !important;
+    height: auto !important;
+    aspect-ratio: 14 / 11;
+  }
+
+  .modal-window {
+    width: calc(100vw - 16px) !important;
+    max-height: 92vh !important;
+    border-radius: 14px !important;
+  }
+
+  .modal-tabs {
+    padding: 8px 10px 0 !important;
+    overflow-x: auto;
+    white-space: nowrap;
+    gap: 6px;
+  }
+
+  .tab-btn {
+    padding: 10px 12px !important;
+    font-size: 0.88rem !important;
+    margin-right: 0 !important;
+  }
+
+  .modal-body {
+    padding: 16px !important;
+  }
+
+  .activity-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .language-switcher {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  #mainNav .navbar-brand img {
+    height: 4.6rem !important;
+    max-width: 210px;
+  }
+
+  .navbar-nav .nav-link {
+    font-size: 0.9rem;
+    padding: 0.56rem 0.66rem !important;
+  }
+
+  .btn-start-hero,
+  .blog-page #blogReadBtn {
+    font-size: 0.86rem !important;
+    padding: 0.68rem 1rem !important;
+    letter-spacing: 0.4px !important;
+  }
+
+  .section-heading {
+    font-size: 1.2rem;
+  }
 }
 
 /* Tablet adjustments (640px to 1024px) */
@@ -398,6 +720,11 @@ body {
 
   .blog-card {
     min-width: 300px;
+  }
+
+  .season-grid {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+    gap: 26px;
   }
 }
 

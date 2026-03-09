@@ -13434,7 +13434,7 @@ header.masthead.has-video .masthead-content {
   stroke-linecap: round;
   stroke-linejoin: round;
   font-family: "Pacifico", cursive;
-  font-size: clamp(3.6rem, 12vw, 9rem);
+  font-size: clamp(3.45rem, 11vw, 8.6rem);
   letter-spacing: 0.045em;
   paint-order: stroke;
   filter: drop-shadow(0 12px 24px rgba(249, 5, 108, 0.18));
@@ -13543,6 +13543,7 @@ body {
 
 @media (max-width: 991px) {
   .hero-handwrite-logo text {
+    font-size: clamp(4.9rem, 19vw, 11.2rem);
     stroke-width: 2.2;
     letter-spacing: 0.025em;
   }
@@ -17145,8 +17146,12 @@ header.masthead.has-video .btn-start-hero:focus {
 #portfolio .portfolio-item .portfolio-caption .portfolio-caption-subheading {
   font-style: italic;
   font-family: "Roboto Slab", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-}. a n i m a t e - o n - s c r o l l   {   w i l l - c h a n g e :   t r a n s f o r m ,   o p a c i t y ;   }  
- . p o r t f o l i o - l i n k   {   w i l l - c h a n g e :   t r a n s f o r m ;   }  
- # m a i n N a v   {   w i l l - c h a n g e :   b a c k g r o u n d ,   p a d d i n g ,   b o x - s h a d o w ;   }  
- . b t n   {   w i l l - c h a n g e :   t r a n s f o r m ,   b o x - s h a d o w ,   b a c k g r o u n d - c o l o r ;   }  
+}. a n i m a t e - o n - s c r o l l   {   w i l l - c h a n g e :   t r a n s f o r m ,   o p a c i t y ;   } 
+ 
+ . p o r t f o l i o - l i n k   {   w i l l - c h a n g e :   t r a n s f o r m ;   } 
+ 
+ # m a i n N a v   {   w i l l - c h a n g e :   b a c k g r o u n d ,   p a d d i n g ,   b o x - s h a d o w ;   } 
+ 
+ . b t n   {   w i l l - c h a n g e :   t r a n s f o r m ,   b o x - s h a d o w ,   b a c k g r o u n d - c o l o r ;   } 
+ 
  

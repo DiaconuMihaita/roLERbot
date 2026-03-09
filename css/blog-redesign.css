@@ -227,31 +227,43 @@ body.blog-page.blog-intro-lock .masthead-blog::after {
   }
 
   .blog-page .blog-newspaper {
-    right: 50%;
-    left: auto;
-    min-width: 250px;
-    width: min(90vw, 430px);
-    transform: translate(50%, -185%) rotate(-16deg);
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%) translateY(-185%) rotate(-12deg);
+    min-width: 200px;
+    width: min(72vw, 340px);
+    top: 40%;
+    opacity: 0.9;
   }
 
   .masthead-blog.intro-playing .blog-newspaper {
-    transform: translate(50%, -50%) rotate(-7deg);
+    transform: translateX(-50%) translateY(-50%) rotate(-6deg);
   }
 
   .blog-page .hero-intro-copy {
-    width: min(90vw, 430px);
+    width: 100%;
     align-items: center;
     text-align: center;
-    margin-top: 8vh;
+    margin-top: 6vh;
     margin-left: 0;
+    padding: 0 16px;
+    gap: 1rem;
   }
 
   .blog-page .blog-handwrite-logo {
-    width: min(90vw, 420px);
+    width: min(92vw, 420px);
   }
 
   .blog-page .blog-handwrite-logo text {
-    font-size: clamp(2.4rem, 12vw, 4.4rem);
+    font-size: clamp(3rem, 15vw, 5rem);
+    stroke-width: 2.5;
+  }
+
+  .blog-page #blogReadBtn {
+    font-size: 1rem !important;
+    padding: 0.9rem 2rem !important;
+    letter-spacing: 0.05em;
+    box-shadow: 0 6px 20px rgba(249, 5, 108, 0.35);
   }
 }
 

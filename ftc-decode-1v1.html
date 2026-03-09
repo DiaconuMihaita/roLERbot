@@ -167,6 +167,56 @@
       margin-top: 6px;
       min-height: 20px;
     }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+        display: block;
+      }
+
+      .app {
+        border-radius: 12px;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 8px;
+        padding: 10px 12px;
+      }
+
+      .score,
+      .score.blue {
+        justify-content: center;
+        font-size: 0.95rem;
+      }
+
+      .timer {
+        font-size: 1.15rem;
+      }
+
+      .field-wrap {
+        padding: 10px;
+      }
+
+      canvas {
+        border-radius: 10px;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+        padding: 0 10px 12px;
+      }
+
+      .actions {
+        gap: 6px;
+      }
+
+      button,
+      #backBtn {
+        width: 100%;
+      }
+    }
   </style>
   <script src="js/i18n.js"></script>
   <script src="js/scripts.js?v=20260308e"></script>

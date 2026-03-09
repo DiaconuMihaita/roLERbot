@@ -194,6 +194,87 @@
         #teamSelect optgroup {
             background-color: #2c3e50;
         }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                align-items: flex-start;
+            }
+
+            .game-container {
+                width: 96vw;
+                height: 72vh;
+                min-height: 520px;
+                border-width: 3px;
+            }
+
+            .ui-layer {
+                padding: 12px;
+            }
+
+            .score-board {
+                font-size: 14px;
+                text-shadow: 2px 2px 0 #000;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin-bottom: 12px;
+            }
+
+            h2 {
+                font-size: 14px;
+                margin-bottom: 14px;
+            }
+
+            .big-text {
+                font-size: 42px;
+            }
+
+            .btn-retro {
+                min-width: 0;
+                width: min(88vw, 320px);
+                padding: 12px 14px;
+                font-size: 11px;
+                box-shadow: 4px 4px 0 #000;
+            }
+
+            .back-link {
+                top: 10px;
+                left: 10px;
+                font-size: 10px;
+            }
+
+            #teamSelect {
+                width: min(88vw, 360px) !important;
+                font-size: 9px !important;
+                padding: 8px !important;
+            }
+
+            .team-logo-img {
+                width: 64px;
+                height: 64px;
+            }
+
+            #leaderboardList {
+                max-width: 92vw !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                height: 68vh;
+                min-height: 480px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .big-text {
+                font-size: 34px;
+            }
+        }
     </style>
 <link href="css/mobile-responsive.css" rel="stylesheet" /></head>
 
