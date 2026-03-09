@@ -55,9 +55,24 @@ window.addEventListener('DOMContentLoaded', event => {
   });
 
 });
+
+// Global image loading optimization: keep hero/nav images eager, lazy-load the rest.
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('img:not([loading])').forEach((img) => {
+    if (img.closest('#mainNav, .masthead, .masthead-blog, .blog-newspaper')) {
+      return;
+    }
+
+    img.loading = 'lazy';
+    img.decoding = 'async';
+  });
+});
+
 ///PLOAIE CU PUI
 document.addEventListener("DOMContentLoaded", () => {
   const rainButton = document.getElementById("rain-button");
+
+  if (!rainButton) return;
 
   rainButton.addEventListener("click", () => {
     const rainContainer = document.createElement("div");
@@ -79,53 +94,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 8000);
   });
 });
-
-
-document.addEventListener("DOMContentLoaded", () => {
-  const slides = document.querySelectorAll(".carousel-slide");
-  const btnLeft = document.querySelector(".carousel-btn.left");
-  const btnRight = document.querySelector(".carousel-btn.right");
-  const dots = document.querySelectorAll(".carousel-dots .dot");
-
-  if (!slides.length || !btnLeft || !btnRight) return;
-
-  let index = 0;
-
-  function showSlide(i) {
-    slides.forEach(slide =>
-      slide.classList.remove("active", "prev", "next")
-    );
-
-    dots.forEach(dot => dot.classList.remove("active"));
-
-    slides[i].classList.add("active");
-    if (slides[i - 1]) slides[i - 1].classList.add("prev");
-    if (slides[i + 1]) slides[i + 1].classList.add("next");
-
-    if (dots[i]) dots[i].classList.add("active");
-  }
-
-  btnLeft.addEventListener("click", () => {
-    index = (index - 1 + slides.length) % slides.length;
-    showSlide(index);
-  });
-
-  btnRight.addEventListener("click", () => {
-    index = (index + 1) % slides.length;
-    showSlide(index);
-  });
-
-  dots.forEach((dot, i) => {
-    dot.addEventListener("click", () => {
-      index = i;
-      showSlide(index);
-    });
-  });
-
-  showSlide(index);
-});
-
-
 
 // --- Additional behaviors: autoplay carousel, disable portfolio modal links, animate on scroll ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -233,17 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCarousel();
   }
 });
-var navbarShrink = function () {
-  const navbarCollapsible = document.body.querySelector('#mainNav');
-  if (!navbarCollapsible) {
-    return;
-  }
-  if (window.scrollY === 0) {
-    navbarCollapsible.classList.remove('navbar-shrink')
-  } else {
-    navbarCollapsible.classList.add('navbar-shrink')
-  }
-};
+
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.toggle-section').forEach(button => {
     button.addEventListener('click', function () {
@@ -614,6 +572,82 @@ document.addEventListener('DOMContentLoaded', () => {
   requestFrame();
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+  const heroVideo = document.querySelector('header.masthead.has-video .masthead-video');
+  let soundToggle = document.getElementById('heroSoundToggle');
+
+  if (!heroVideo) {
+    return;
+  }
+
+  if (!soundToggle) {
+    soundToggle = document.createElement('button');
+    soundToggle.id = 'heroSoundToggle';
+    soundToggle.className = 'hero-sound-toggle';
+    soundToggle.type = 'button';
+    soundToggle.setAttribute('aria-pressed', 'false');
+    soundToggle.setAttribute('title', 'Sunet OFF');
+    soundToggle.setAttribute('aria-label', 'Activeaza sunetul videoclipului');
+    soundToggle.innerHTML = '<span class="hero-sound-glyph" aria-hidden="true">&#128263;</span>';
+    document.body.appendChild(soundToggle);
+  }
+
+  // Force visibility even if another stylesheet accidentally hides this control.
+  Object.assign(soundToggle.style, {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: '2147483647',
+    opacity: '1',
+    visibility: 'visible',
+    pointerEvents: 'auto'
+  });
+
+  const speakerIcon = soundToggle.querySelector('i');
+  const speakerGlyph = soundToggle.querySelector('.hero-sound-glyph');
+
+  const updateSoundButton = () => {
+    const isMuted = !!heroVideo.muted;
+    if (speakerIcon) {
+      speakerIcon.classList.toggle('fa-volume-mute', isMuted);
+      speakerIcon.classList.toggle('fa-volume-up', !isMuted);
+    }
+    if (speakerGlyph) {
+      speakerGlyph.innerHTML = isMuted ? '&#128263;' : '&#128266;';
+    }
+    soundToggle.classList.toggle('is-on', !isMuted);
+    soundToggle.setAttribute('aria-pressed', String(!isMuted));
+    soundToggle.setAttribute('title', isMuted ? 'Sunet OFF' : 'Sunet ON');
+    soundToggle.setAttribute(
+      'aria-label',
+      isMuted ? 'Activeaza sunetul videoclipului' : 'Dezactiveaza sunetul videoclipului'
+    );
+  };
+
+  updateSoundButton();
+
+  soundToggle.addEventListener('click', () => {
+    const nextMuted = !heroVideo.muted;
+    heroVideo.muted = nextMuted;
+    heroVideo.defaultMuted = nextMuted;
+
+    if (nextMuted) {
+      heroVideo.setAttribute('muted', 'muted');
+    } else {
+      heroVideo.removeAttribute('muted');
+      heroVideo.volume = 1;
+    }
+
+    if (!heroVideo.paused) {
+      heroVideo.play().catch(() => {
+        // Ignore playback errors when browser autoplay policy interferes.
+      });
+    }
+
+    updateSoundButton();
+  });
+});
+
 // ===== AUTHENTIC ISO-CONTOUR TOPOGRAPHIC BACKGROUND (MARCHING SQUARES) =====
 class TopographicBackground {
   constructor() {
@@ -908,28 +942,6 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   items.forEach(item => observer.observe(item));
-});
-const items = document.querySelectorAll(".portfolio-item");
-
-function revealSponsors() {
-  items.forEach((item, index) => {
-    const rect = item.getBoundingClientRect();
-    if (rect.top < window.innerHeight - 100) {
-      setTimeout(() => {
-        item.classList.add("show");
-      }, index * 150);
-    }
-  });
-}
-
-window.addEventListener("scroll", revealSponsors);
-revealSponsors(); // ruleaza si la load
-document.querySelectorAll('.toggle-section').forEach(button => {
-  button.addEventListener('click', () => {
-    const target = document.querySelector(button.dataset.target);
-    if (!target) return;
-    target.classList.toggle('open');
-  });
 });
 
 // ===== DINO GAME SIMPLE =====

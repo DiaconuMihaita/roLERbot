@@ -154,21 +154,18 @@ body.blog-page.blog-intro-lock .masthead-blog::after {
   transition: none;
 }
 
-
-
 .blog-page #blogReadBtn {
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  box-shadow: 0 10px 24px rgba(249, 5, 108, 0.26);
+  display: inline-block;
+  background-color: white !important;
+  color: #980041 !important;
+  border-radius: 999px !important;
   opacity: var(--blog-intro-progress);
   transform: translateY(12px);
-  pointer-events: none;
-  margin-left: 0.15rem;
-  /* Minor nudge to match 'B' visual edge */
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: auto;
+  margin-left: 0;
+  transition: opacity 0.22s ease, transform 0.22s ease;
 }
 
-.masthead-blog.typing-start #blogReadBtn,
 .masthead-blog.typing-done #blogReadBtn {
   opacity: 1;
   transform: translateY(0);
@@ -194,7 +191,7 @@ body.blog-page.blog-intro-lock .masthead-blog::after {
   border-radius: 50%;
   animation: blogScrollPulse 2s infinite;
 }
-  opacity: var(--blog-intro-progress);
+
 .masthead-blog.intro-done::after {
   opacity: 0;
 }
