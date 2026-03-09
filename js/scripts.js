@@ -1436,20 +1436,44 @@ window.totalBlogSlides = 5;
 window.updateBlogCarousel = function () {
   const cards = document.querySelectorAll('.blog-card');
   const indicators = document.querySelectorAll('.blog-indicator');
+  const cardsWrapper = document.querySelector('.blog-cards-wrapper');
+
+  if (!cards.length) return;
+
+  const safeIndex = ((window.currentBlogSlide % cards.length) + cards.length) % cards.length;
+  window.currentBlogSlide = safeIndex;
 
   cards.forEach((card, index) => {
     card.classList.remove('active');
-    if (index === window.currentBlogSlide) {
+    if (index === safeIndex) {
       card.classList.add('active');
     }
   });
 
   indicators.forEach((indicator, index) => {
     indicator.classList.remove('active');
-    if (index === window.currentBlogSlide) {
+    if (index === safeIndex) {
       indicator.classList.add('active');
     }
   });
+
+  const activeCard = cards[safeIndex];
+  if (cardsWrapper && activeCard) {
+    requestAnimationFrame(() => {
+      if (window.matchMedia('(min-width: 992px)').matches) {
+        cardsWrapper.style.height = 'auto';
+        return;
+      }
+
+      cardsWrapper.style.height = `${activeCard.offsetHeight}px`;
+    });
+  }
+};
+
+const refreshBlogCarouselLayout = () => {
+  if (typeof window.updateBlogCarousel === 'function') {
+    window.updateBlogCarousel();
+  }
 };
 
 window.changeBlogSlide = function (direction) {
@@ -1470,13 +1494,25 @@ window.goToBlogSlide = function (slideIndex) {
 
 // Initialize carousel on page load
 document.addEventListener("DOMContentLoaded", () => {
+  const cards = document.querySelectorAll('.blog-card');
+  if (cards.length) {
+    window.totalBlogSlides = cards.length;
+  }
+
   window.updateBlogCarousel();
+
+  // Re-sync layout after fonts/images/translated text settle.
+  setTimeout(refreshBlogCarouselLayout, 220);
+  setTimeout(refreshBlogCarouselLayout, 900);
 
   // Auto-advance blog carousel every 7 seconds
   setInterval(() => {
     window.changeBlogSlide(1);
   }, 7000);
 });
+
+window.addEventListener('load', refreshBlogCarouselLayout);
+window.addEventListener('resize', refreshBlogCarouselLayout);
 
 // Motion enhancer: staggered reveals and subtle hero parallax
 document.addEventListener('DOMContentLoaded', () => {

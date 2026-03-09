@@ -93,3 +93,50 @@ body {
 .legend strong {
   color: var(--text);
 }
+
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  .app {
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .hud {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 6px;
+    padding: 10px 12px;
+  }
+
+  .score,
+  .score.blue {
+    text-align: center;
+  }
+
+  .title {
+    font-size: 0.95rem;
+  }
+
+  .canvas-wrap {
+    padding: 10px;
+  }
+
+  .legend {
+    gap: 8px;
+    font-size: 0.82rem;
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .title {
+    font-size: 0.84rem;
+  }
+
+  .legend {
+    font-size: 0.75rem;
+  }
+}
