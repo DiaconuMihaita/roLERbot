@@ -19,8 +19,8 @@
   <link href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700" rel="stylesheet" type="text/css" />
   <!-- Core theme CSS -->
   <link href="css/styles.css?v=20260309j" rel="stylesheet" />
-  <link href="css/blog-redesign.css?v=20260309k" rel="stylesheet" />
-  <link href="css/mobile-responsive.css" rel="stylesheet" />
+  <link href="css/blog-redesign.css?v=20260310i" rel="stylesheet" />
+  <link href="css/mobile-responsive.css?v=20260310i" rel="stylesheet" />
 </head>
 
 <body id="page-top" class="blog-page blog-intro-pending">
@@ -961,6 +961,22 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
       }
 
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const syncBlogTextPlacement = () => {
+        const isMobile = window.matchMedia('(max-width: 767px)').matches;
+        if (isMobile) {
+          handText.setAttribute('x', '43%');
+          handText.setAttribute('y', '50%');
+          handText.setAttribute('text-anchor', 'middle');
+        } else {
+          handText.setAttribute('x', '0');
+          handText.setAttribute('y', '56%');
+          handText.setAttribute('text-anchor', 'start');
+        }
+      };
+
+      syncBlogTextPlacement();
+      window.addEventListener('resize', syncBlogTextPlacement);
 
       const wheelOpts = { passive: false };
       const touchOpts = { passive: false };
