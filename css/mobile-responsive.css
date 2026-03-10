@@ -225,7 +225,7 @@ body {
      BLOG HERO INTRO - aspect similar cu desktop
      =================================================== */
   .masthead-blog {
-    min-height: 100svh;
+    min-height: 82svh;
     position: relative;
     overflow: hidden;
   }
@@ -236,7 +236,7 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100svh;
+    min-height: 82svh;
     padding-top: 5rem;
     padding-bottom: 3rem;
     gap: 2rem;
@@ -254,15 +254,21 @@ body {
 
   /* Logo "BLOG" animat — mare, vizibil */
   .blog-page .blog-handwrite-logo {
-    width: clamp(220px, 85vw, 420px) !important;
+    width: clamp(280px, 98vw, 560px) !important;
     height: auto;
     margin: 0 auto;
   }
 
   .blog-page .blog-handwrite-logo text {
-    font-size: clamp(3.5rem, 18vw, 6rem) !important;
+    font-size: clamp(6.6rem, 28vw, 10.5rem) !important;
     stroke-width: 2.5;
     letter-spacing: 0.05em;
+    text-anchor: middle !important;
+  }
+
+  .blog-page #blogHandText {
+    x: 43% !important;
+    y: 52% !important;
   }
 
   /* Buton "Citeste blogul" — identic cu desktop */
