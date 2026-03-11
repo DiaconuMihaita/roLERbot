@@ -307,11 +307,15 @@ body.blog-page.blog-intro-lock .masthead-blog::after {
 }
 
 body.blog-page {
-  background-color: #fdfdfd;
-  background-image: radial-gradient(#f9056c 0.5px, transparent 0.5px);
+  background-color: #090912 !important;
+  opacity: 0.98;
+}
+
+body.blog-page .page-section {
+  background-color: #fdfdfd !important;
+  background-image: radial-gradient(#f9056c 0.5px, transparent 0.5px) !important;
   background-size: 30px 30px;
   background-attachment: fixed;
-  opacity: 0.98;
 }
 
 /* Cleaner Section Headings */
