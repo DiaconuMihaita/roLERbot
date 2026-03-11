@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ro">
 
 <head>
@@ -50,6 +50,11 @@
           <li class="nav-item"><a class="nav-link" href="#activities-section" data-i18n="nav.activities">Activități</a>
           </li>
           <li class="nav-item"><a class="nav-link" href="#footer" data-i18n="nav.contact">Contact</a></li>
+          
+          <li class="nav-item">
+            <button id="rain-button" class="nav-link"
+              style="background: none; border: none; cursor: pointer;">🐥</button>
+          </li>
           <li class="nav-item">
             <div class="language-switcher" aria-label="Selecteaza limba site-ului">
               <button type="button" class="lang-side" data-set-lang="ro" aria-label="Seteaza limba romana">RO</button>
@@ -61,9 +66,7 @@
               <button type="button" class="lang-side" data-set-lang="en" aria-label="Seteaza limba engleza">EN</button>
             </div>
           </li>
-          <li class="nav-item">
-            <button id="rain-button" class="nav-link"
-              style="background: none; border: none; cursor: pointer;">🐥</button>
+           <li class="nav-item"><a class="nav-link" href="https://lervs.ro/" data-i18n="nav.ftcGame">Inapoi</a>
           </li>
         </ul>
       </div>
@@ -167,7 +170,7 @@
             <div class="folder-tab"></div>
             <div class="folder-front">
               <div class="folder-icon">📁</div>
-              <div class="folder-year">Sezon 2023-2024</div>
+              <div class="folder-year"><span data-i18n="modal.seasonPrefix">Sezon</span> 2023-2024</div>
             </div>
           </div>
         </div>
@@ -179,7 +182,7 @@
             <div class="folder-tab"></div>
             <div class="folder-front">
               <div class="folder-icon">📁</div>
-              <div class="folder-year">Sezon 2024-2025</div>
+              <div class="folder-year"><span data-i18n="modal.seasonPrefix">Sezon</span> 2024-2025</div>
             </div>
           </div>
         </div>
@@ -191,7 +194,7 @@
             <div class="folder-tab"></div>
             <div class="folder-front">
               <div class="folder-icon">📁</div>
-              <div class="folder-year">Sezon 2025-2026</div>
+              <div class="folder-year"><span data-i18n="modal.seasonPrefix">Sezon</span> 2025-2026</div>
             </div>
           </div>
         </div>
@@ -203,7 +206,7 @@
   <div class="modal-overlay" id="seasonModal">
     <div class="modal-window">
       <div class="modal-header">
-        <h3 class="modal-title" id="modalTitle">Sezon ...</h3>
+        <h3 class="modal-title" id="modalTitle"><span data-i18n="modal.seasonPrefix">Sezon</span>&nbsp;<span id="modalSeasonYear">...</span></h3>
         <button class="modal-close" onclick="closeSeasonModal()">✕</button>
       </div>
       <div class="modal-tabs">
@@ -222,670 +225,23 @@
   </div>
 
   <script>
-    // Rich Season Data
-    const seasonData = {
-      '2023-2024': {
-        proba: `
-                 <div class="row">
-                    <div class="col-md-6">
-                        <h4>FTC Challenge: CENTERSTAGE 🎭</h4>
-                        <p>Sezonul 2023-2024, prezentat de RTX, a fost despre <strong>ARTĂ</strong> și <strong>TEHNOLOGIE</strong>. Roboții au trebuit să colecteze "pixeli" hexagonali și să-i plaseze pe un Backdrop înclinat pentru a crea mozaicuri artistice.</p>
-                        <div class="mt-3">
-                            <h5>Phase 1: Autonomous (30s)</h5>
-                            <ul>
-                                <li>Detectarea elementului de echipă (Team Prop) folosind camere video.</li>
-                                <li>Plasarea pixelului violet pe poziția corectă (Spike Mark).</li>
-                                <li>Deplasarea către Backdrop și plasarea pixelului galben.</li>
-                                <li>Parcarea în zona de Backstage.</li>
-                            </ul>
-                            <h5>Phase 2: TeleOp (2m)</h5>
-                            <ul>
-                                <li>Colectarea pixelilor de pe teren sau din zona de alimentare (Wing).</li>
-                                <li>Trecerea pe sub porțile centrale (Rigging).</li>
-                                <li>Plasarea pixelilor pe Backdrop pentru a forma linii și mozaicuri.</li>
-                            </ul>
-                            <h5>Phase 3: Endgame (30s)</h5>
-                            <ul>
-                                <li>Suspendarea robotului de barele orizontale (Rigging).</li>
-                                <li>Lansarea "Dronei" (avion de hârtie) în zonele de punctaj (Zona 1, 2 sau 3).</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-md-6 text-center">
-                        <img src="assets/img/ftc-challenge.png" class="img-fluid rounded shadow-lg mb-3 animate-on-scroll" alt="CenterStage Field">
-                        <img src="teren/20241.png" class="img-fluid rounded shadow-sm mb-2" alt="Detaliu Joc 1">
-                        <img src="teren/20242.png" class="img-fluid rounded shadow-sm" alt="Detaliu Joc 2">
-                    </div>
-                 </div>
-              `,
-        robot: `
-            <div class="robot-section">
-              <div class="robot-media">
-                 <img src="assets/roboti/2024.png" class="robot-image" alt="Robot Puiu">
-              </div>
-              <div class="robot-content">
-                <h4 class="robot-title">Robotul "Puiu" v3.0</h4>
-                      <p>În cadrul evoluției robotului nostru, un aspect deosebit de important este dezvoltarea și perfecționarea sistemelor de locomoție. În acest sens, baza robotului nostru a rămas neschimbată în acest sezon, păstrând caracteristicile tehnologice și de performanță ale roților de tip Mecanum. Astfel, echipa noastră a pus accent asupra altor aspecte ale dezvoltării robotului, știind că baza sa de mișcare este solidă și eficientă.</p>
-                      <p>Procesul de dezvoltare a cleștelui pentru prinderea a doi pixeli simultan a fost unul plin de provocări și inovație, începând de la concepția inițială a cleștelui cu separator în mijloc, care ar fi permis prinderea simultană a doi pixeli, la realizarea sa practică care s-a dovedit a fi total diferită. Primul meet de la Brăila a fost momentul care ne-a confruntat cu realitatea și ne-a forțat să regândim complet conceptul nostru inițial. Cleștele cu separator pe mijloc nu a fost o soluție viabilă în practică, iar această conștientizare ne-a condus către o abordare radical nouă.</p>
-                      <p>Pentru înlocuirea cleștelui am explorat mai multe opțiuni, iar lopățica a devenit alegerea noastră finală. Inițial, am creat-o din plexiglas și am lipit-o cu superglue, o idee spontană care a fost înlocuită imediat de o lopățică printată. Un aspect imporant al lopățicii sunt suporții plasați la baza acesteia, suporți ce țin pixelii în loc, evitând posibilul risc de a cădea unde nu dorim. De asemenea, având posibilitatea de a ține pixelii în loc, autonomia era avantajată, deoarece cunoșteam poziția pixelilor în lopățică. Pentru partea superioară a lopățicii, am ales să folosim în continuare plexiglasul, pentru a facilita vizibilitatea și pentru a permite operatorului să vadă clar momentul prinderii a doi pixeli.</p>
-                      <p>În faza inițială a proiectului nostru pentru lansatorul de avioane, am avut în vedere o soluție ce implica folosirea unui mecanism bazat pe elastic și plexiglas. Cu toate acestea, pe măsură ce am analizat mai atent cerințele și fezabilitatea, am concluzionat că o abordare alternativă ar fi mai potrivită pentru nevoile noastre. Astfel, am decis să ne orientăm către printarea 3D a unui lansator, însă rezultatele nu au fost conform așteptărilor noastre.</p>
-                      <p>Din această cauză, am revenit la conceptul inițial care implica utilizarea elasticului ca principală sursă de energie pentru lansator, însă de data aceasta am optat pentru un sistem mai simplu și mai eficient. Lansatorul nostru de avioane utilizează un elastic atașat de un cârlig, iar acesta din urmă este conectat la un servo. Funcționarea este intuitivă: servo-ul acționează cârligul, eliberând astfel elasticul și propulsând avionul în aer.</p>
-                      <p>După participarea la primul meet din acel sezon, am decis să dăm o șansă ideii de parcare suspendată și am început să o punem în practică. După mai multe idei testate, am ajuns la una finală, care presupunea utilizarea a două lifturi, plasate pe fiecare parte a robotului. Neavând posibilitatea de a cumpăra lifturile am creat propriul nostru concept cu ață și rulmenți.</p>
-                    </div>
-                </div>
-              `,
-        activitati: `
-                  <div class="activity-grid">
-                    <article class="activity-card">
-                      <div class="activity-media">
-                        <img src="assets/img/2023/activitati/ac1.png" class="activity-img" alt="Halloween">
-                      </div>
-                      <div class="activity-body">
-                        <h5 class="activity-title">🎃 Halloween - robot in tema de sarbatoare</h5>
-                        <p class="activity-text">De Halloween am adaptat aspectul robotului nostru in tema de sarbatoare, pentru a fi si in ton cu tehnologia, dar si cu distractia.</p>
-                      </div>
-                    </article>
+    function openSeasonModal(season) {
+      document.getElementById('modalSeasonYear').textContent = season;
+      modal.classList.add('active');
+      documentBody.style.overflow = 'hidden'; // Stop scrolling
 
-                    <article class="activity-card">
-                      <div class="activity-media">
-                        <img src="assets/img/2023/activitati/ac2.png" class="activity-img" alt="Femei si fete in stiinta">
-                      </div>
-                      <div class="activity-body">
-                        <h5 class="activity-title">🔬 11 februarie - Ziua Internationala a Femeilor si a Fetelor in Stiinta</h5>
-                        <p class="activity-text">Am sarbatorit Ziua Internationala a Femeilor si a Fetelor in Stiinta, apreciind implicarea fetelor in teme precum cercetarea.</p>
-                      </div>
-                    </article>
+      // Load Content from i18n dictionaries
+      const tabs = ['proba', 'robot', 'activitati', 'meeturi'];
+      tabs.forEach(tab => {
+        const el = document.getElementById('tab-' + tab);
+        const key = `season.${season}.${tab}`;
+        el.setAttribute('data-i18n', key);
+        el.innerHTML = window.translate(key);
+      });
 
-                    <article class="activity-card">
-                      <div class="activity-media">
-                        <img src="assets/img/2023/activitati/ac3.png" class="activity-img" alt="Martisoare">
-                      </div>
-                      <div class="activity-body">
-                        <h5 class="activity-title">🌸 1 martie - Martisoare cu Puiu</h5>
-                        <p class="activity-text">Ziua de 1 martie a fost celebrata prin confectionarea martisoarelor in care Puiu a fost in centrul atentiei. Aceste simboluri ale primaverii au adus zambete pe chipul elevilor, al doamnei mentor si al doamnei director.</p>
-                      </div>
-                    </article>
-
-                    <article class="activity-card">
-                      <div class="activity-media">
-                        <img src="assets/img/2023/activitati/ac4.png" class="activity-img" alt="Robotica la granita dintre inginerie si tehnologie">
-                      </div>
-                      <div class="activity-body">
-                        <h5 class="activity-title">🤖 16 august - Robotica: La granita dintre inginerie si tehnologie</h5>
-                        <p class="activity-text">Am participat la activitatea "Robotica: La granita dintre inginerie si tehnologie", organizata la Centrul Cultural "Dimitrie Cantemir" (Casa Armatei) Vaslui. Scopul a fost sa aratam comunitatii ce presupune competitia First Tech Challenge. Pentru inceput, am jucat un meci demonstrativ cu @ftc_orion, apoi am discutat cu cei prezenti ce inseamna cu adevarat FTC si ce provocari ne asteapta. La final am primit un premiu de recunostinta din partea Primariei Municipiului Vaslui.</p>
-                      </div>
-                    </article>
-                  </div>
-                `,
-        meeturi: `
-                 <div class="accordion" id="meeturiAccordion">
-                   <!-- Meet 1 -->
-                   <div class="card mb-4 border-0 shadow-sm">
-                    <div class="card-header bg-white text-primary p-3">
-                      <div class="d-flex justify-content-between align-items-center">
-                         <h5 class="mb-0">13 Ian - Braila</h5>
-                      </div>
-                    </div>
-                    <div class="card-body p-4">
-                      <p>roLERbot a participat la primul sau meet din sezon nu a inceput intocmai cum am fi vrut, insa a fost spre imbunatatirea robotului. Pentru proba de atunci, bratul si barele de sustinere erau prea inalte pentru a incapea sub poarta, ceea ce ducea adesea la blocarea robotului in timpul perioadei autonome.</p>
-                      <p>Cleștele, ulterior inlocuit cu o lopata, nu reușea să prindă doi pixeli simultan, ci doar câte unul, cu o probabilitate ridicată de eșec în a-i plasa pe panou. Nu am obținut victorii propriu zise, dar am putut să lucrăm atât partea de hardware cat și de software a lui Puiu, pentru meet-urile viitoare.</p>
-                    </div>
-                   </div>
-
-                   <!-- Meet 2 -->
-                   <div class="card mb-4 border-0 shadow-sm">
-                    <div class="card-header bg-white text-primary p-3">
-                      <div class="d-flex justify-content-between align-items-center">
-                         <h5 class="mb-0">27 ian - Focsani</h5>
-                      </div>
-                    </div>
-                    <div class="card-body p-4">
-                      <p>Am participat la al doilea eveniment FTC, la care am remarcat o imbunatatire atat in performanta robotului, cat si in clasament, semn ca am progresat semnificativ. Am intampinat cu mari emotii primul nostru meci, cel cu numarul 3, la care inceputul a fost dificil, insa ne-am mobilizat ulterior.</p>
-                      <p>Am beneficiat si de sprijinul echipelor prezente atat in ceea ce priveste partea de software, unde echipa Helix ne-a oferit asistenta, cat si pe partea de hardware, unde am primit imprumut de la o alta echipa un controller.</p>
-                      <p>În pauză, într-o atmosfera destinsă, unii au legat prietenii și au putut dansa în horă, iar Ionuț și Nati au rezolvat problemele ivite.
-Victoria a reflectat soluționarea impedimentelor anterioare, marcând primul nostru câștig.
-Și acesta a fost un meci din care am putut învăța ceva pentru perfecționarea noastră.</p>
-                    </div>
-                   </div>
-
-                   <!-- Meet 3 -->
-                   <div class="card mb-4 border-0 shadow-sm">
-                    <div class="card-header bg-white text-primary p-3">
-                      <div class="d-flex justify-content-between align-items-center">
-                         <h5 class="mb-0">3 feb - Iasi</h5>
-                      </div>
-                    </div>
-                    <div class="card-body p-4">
-                      <p>Primele meciuri din acest meet au fost putin in defavoarea noastra, am intampinat probleme tehnice inca de la inceput si nu au putut fi rezolvate. Cu toate acestea, au urmat doua victorii consecutive, ceea ce ne-a readus optimismul.</p>
-                      <p>Prezenta unui coechipier aflat in primul an de facultate a fost, de asemenea, un lucru imbucurator. Ne-a crescut moralul, fiind alaturi de noi atat cu sfaturi, cat si pe partea de hardware si codare.</p>
-                      <p>Un moment semnificativ care a evidentiat spiritul nostru de echipa a fost cand, in timpul meciului, membrii s-au adunat in tribune si i-au incurajat pe cei de pe teren printr-un cantec special. Imnul echipei noastre a fost initial creat de fosti colegi, dar a fost dezvoltat ulterior de catre Serban, Rares si Ionut, avand urmatoarele versuri:</p>
-                      <div class="bg-light rounded p-3">
-                       <p class="mb-1">CAND BUNICA MEA TRAIA, TOT CU ROLERBOT TINEA.</p>
-                       <p clashttps://ftc-events.firstinspires.org/2023/RONR4M2/qualificationss="mb-0">CAND SE PREDA SMECHERIA, ROLERBOT FACEA CUTIA.</p>
-                      </div>
-                      <p class="mt-3">Acesta a ajuns, cu timpul, un slogan auzit la oricare meet FTC.</p>
-                    </div>
-                   </div>
-
-                   <!-- Regionala -->
-                   <div class="card mb-4 border-0 shadow-sm">
-                    <div class="card-header bg-white text-primary p-3">
-                      <div class="d-flex justify-content-between align-items-center">
-                         <h5 class="mb-0">Regio: 8-10 martie 2024</h5>
-                      </div>
-                    </div>
-                    <div class="card-body p-4">
-                      <p>Am fost impreuna cu Puiu la regionala de la Iasi, unde ne-am descurcat bine atat la inspectii si interviuri, cat si la meciurile demonstrative. In a doua zi de meciuri, ne-am descurcat foarte bine, conform asteptarilor noastre.</p>
-                      <p> În final, ziua a treia ne-a adus zâmbetul pe buze! Dupa două zile pline, care ne-au trecut prin fel de fel de emoții, regionala de la lași s-a terminat. 
-Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o evoluție semnificativă, de care am fost foarte mândri. </p>
-                      <p>Aceste zile au avus doar plusuri: am legat prietenii, am ras, am dansat, dar cel mai important, am plecat acasa cel putin la fel de uniti ca inainte.</p>
-                    </div>
-                   </div>
-                 </div>
-                `
-      },
-      '2024-2025': {
-        proba: `
-                 <div class="row">
-                    <div class="col-md-6">
-                        <h4>FTC Challenge: INTO THE DEEP 🌊</h4>
-                        <p>Sezonul 2024-2025 aduce roboții în lumea submarină! Echipele trebuie să colecteze și să plaseze <strong>EȘANTIOANE</strong> în diferite zone de scufundare, simulând explorarea oceanelor.</p>
-                        <div class="mt-3">
-                            <h5>Phase 1: Autonomous (30s)</h5>
-                            <ul>
-                                <li>Detectarea eșantionului de echipă folosind computer vision.</li>
-                                <li>Plasarea specimen-ului în coșul de scufundare (Submersible).</li>
-                                <li>Navigarea către zonele de punctaj și plasarea eșantioanelor.</li>
-                                <li>Parcarea în zona Observation Zone.</li>
-                            </ul>
-                            <h5>Phase 2: TeleOp (2m)</h5>
-                            <ul>
-                                <li>Colectarea specimen-urilor de pe fundul oceanului.</li>
-                                <li>Ridicarea și plasarea eșantioanelor în High Chamber și Low Chamber.</li>
-                                <li>Colectarea algelor și plasarea lor în Net Zone.</li>
-                            </ul>
-                            <h5>Phase 3: Endgame (30s)</h5>
-                            <ul>
-                                <li>Urcarea robotului pe prima sau a doua treaptă a Submersible.</li>
-                                <li>Bonus: Suspended - robotul suspendat complet fără contact cu solul.</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-md-6 text-center">
-                        <img src="assets/img/2024/meet/field-2024.jpg" class="img-fluid rounded shadow-lg mb-3 animate-on-scroll" alt="Into The Deep Field">
-                        <img src="teren/20251.png" class="img-fluid rounded shadow-sm mb-2" alt="Detaliu Joc 1">
-                        <img src="teren/20252.png" class="img-fluid rounded shadow-sm" alt="Detaliu Joc 2">
-                    </div>
-                 </div>
-              `,
-        robot: `
-                 <div class="robot-section">
-                  <div class="robot-media">
-                    <img src="assets/roboti/2025.png" alt="Robot Puiu 2024" class="robot-image">
-                  </div>
-                    <div class="robot-content">
-                        <h4 class="robot-title">Robotul "Puiu" v4.0 - Deep Diver</h4>
-                        <p>Baza robotului reprezintă fundația pe care se construiesc toate celelalte mecanisme. Este formată dintr-un șasiu rigid și ușor, optimizat pentru stabilitate și mobilitate pe terenul de joc, fiind dotată cu 3 dead wheels pentru odometrie, care permit localizarea precisă pe teren, esențială pentru perioada de autonomie. Mecanismul de roți pasive oferă o înaltă precizie în calcularea traiectoriei.</p>
-                        <p>Am ales un sistem de roți mecanum care permite robotului să se deplaseze în orice direcție, având un control precis al mișcărilor laterale și diagonale. Alegerea s-a dovedit extrem de insipirată deoarece există deja o sumedenie de resurse în legătura cu fizica din spate. Pentru drive train, am optat pentru motoare GoBilda 312rpm, cu un cuplu de 4.14N/m, conectate la roți, transmisia facându-se prin pinioane conice. Designul actual oferă o combinație ideală între viteză și putere datorită noilor roților mecanum ce au circumferința mai mare.</p>
-                        <p>Intake-ul este componenta care se ocupă cu colectarea obiectelor de pe teren. Este format din două sub-secțiuni principale: mecanismul propriu-zis de intake și patul de transfer. Se utilizează un sistem bazat pe un antebraț virtual acționat de doua servomotoare care au la capăt atașat un clește ce permite prinderea obiectelor și ridicarea lor de la nivelul solului cu ușurință. Am ales un sistem bazat pe antebraț virtual cu scopul de a menține cleștele mereu paralel cu solul pentru a evita folosirea a inca un servomotor care ar fi îngreunat robotul.</p>
-                        <p>După colectare, obiectele sunt mutate pe un pat de transfer care le transportă către outtake. Patul este proiectat să mențină obiectele în poziție stabilă, indiferent de mișcările robotului. Am îmbunătățit mecanismul prin ajustarea unghiurilor de înclinare și optimizarea vitezelor pentru a asigura un flux constant.</p>
-                        <p>Outtake-ul este responsabil pentru plasarea precisă a obiectelor în zonele desemnate. Este proiectat să funcționeze rapid și eficient, asigurând puncte valoroase în competiție.Brațul outtake-ului este pe un mecanism format din glisiere, construit dintr-o serie de segmente care se pot extinde și retrage cu ajutorul unor ațe puse pe scripeți și actionate de două motoare. Brațul este acționat de un servomotor cu transmisie pe curea care permite rotirea cleștelui prin pivot, și de un servomotor care facilitează mișcarea atât în direcția frontală, cât și în cea opusă. Am ales acest design pentru a putea atinge diferite înălțimi fără a compromite stabilitatea robotului.</p>
-                        <p>La capătul brațului se află un clește acționat la rândul său de un servomotor, care poate apuca și elibera obiectele cu un control precis. Inițial, am avut dificultăți în prinderea sample-urilor, dar, după mai multe iterații am îmbunătățit designul cleștelui, adăugând un strat de cauciuc pentru aderență suplimentară. Pentru a asigura unghiuri de plasare precise, brațul include un pivot care permite rotația pentru manipularea sample-urilor. Am amplasat servomotorul care acționează pivotul la baza brațului pentru a nu-i îngreuna partea de sus. Funcționalitatea adaugă flexibilitate în amplasarea lor, indiferent de poziția robotului pe teren.</p>
-                    </div>
-                </div>
-              `,
-        activitati: `
-                <div class="activity-grid">
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2024/activitati/ac1.png" class="activity-img" alt="Targul Educational">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🎓 Targul Educational</h5>
-                      <p class="activity-meta">11-12 aprilie 2024</p>
-                      <p class="activity-text">Anual, inca de la infiintarea echipei, suntem prezenti la targul educational organizat de CJRAE Vaslui.</p>
-                      <p class="activity-text">Reprezentand Liceul Teoretic "Emil Racovita" Vaslui, am prezentat robotul, echipa si competitia FIRST Tech Challenge.</p>
-                      <p class="activity-text">Evenimentul este important pentru noi: multi membri si alumni s-au alaturat echipei dupa ce ne-au vazut aici.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2024/activitati/ac2.png" class="activity-img" alt="Robotica la granita dintre inginerie si tehnologie">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🤖 Robotica: La granita dintre inginerie si tehnologie</h5>
-                      <p class="activity-meta">16 august 2024</p>
-                      <p class="activity-text">Am organizat activitatea in parteneriat cu Primaria Vaslui, cu ocazia Zilelor Culturale ale Municipiului.</p>
-                      <p class="activity-text">Am jucat un meci demonstrativ cu echipa Orion si am explicat ce inseamna cu adevarat FTC.</p>
-                      <p class="activity-text">La final am primit un premiu de recunostinta din partea Primariei Municipiului Vaslui.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2024/activitati/ac3.png" class="activity-img" alt="Gala Tanarului Vasluian">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🏆 Gala Tanarului Vasluian</h5>
-                      <p class="activity-meta">2024</p>
-                      <p class="activity-text">Echipa roLERbot a fost premiata la categoria "Implicare si Solidaritate".</p>
-                      <p class="activity-text">Premiul a fost oferit de Federatia Tinerilor din Vaslui, Vaslui Capitala Tineretului si Primaria Vaslui.</p>
-                      <p class="activity-text">Este o recunoastere a eforturilor de a aduce educatia STEAM mai aproape de comunitate.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2024/activitati/ac4.png" class="activity-img" alt="Targul de hobby-uri">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🎨 Targul de hobby-uri</h5>
-                      <p class="activity-meta">13-14 decembrie 2024</p>
-                      <p class="activity-text">Am aratat vizitatorilor ca robotica nu inseamna doar suruburi si cod, ci si echipa, creativitate si perseverenta.</p>
-                      <p class="activity-text">In FTC nu asamblam doar roboti, ci formam familii si invatam colaborarea.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2024/activitati/ac5.png" class="activity-img" alt="Proiectul Puiu Eco-Clean">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">♻️ Proiectul Puiu: Eco-Clean</h5>
-                      <p class="activity-meta">2024</p>
-                      <p class="activity-text">Am evidentiat impactul pozitiv al tehnologiei in combaterea problemelor de mediu.</p>
-                      <p class="activity-text">Robotul Puiu este un exemplu practic al modului in care robotii pot ajuta la colectarea si gestionarea deseurilor.</p>
-                      <p class="activity-text">Proiectul este un apel la responsabilitate si actiune pentru un viitor mai curat.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2024/activitati/ac6.png" class="activity-img" alt="3D Print(re) elevi">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🧩 3D Print(re) elevi</h5>
-                      <p class="activity-meta">30 septembrie si 3 octombrie 2024</p>
-                      <p class="activity-text">Proiectul "3D Print(re) elevi" a adus printarea 3D mai aproape de elevii liceului.</p>
-                      <p class="activity-text">Participantii au invatat Blender si Tinkercad si au vazut cum modelele devin obiecte reale.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2024/activitati/ac7.png" class="activity-img" alt="Robot in 20 hours">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">⏱️ Robot in 20 hours</h5>
-                      <p class="activity-meta">29-30 noiembrie si 7-8 decembrie 2024</p>
-                      <p class="activity-text">Am participat la proiectul organizat de echipa Orion, in colaborare cu Federatia Tinerilor din Vaslui.</p>
-                      <p class="activity-text">Grupuri de copii ne-au vizitat si le-am prezentat competitia FTC si valorile Gracious Professionalism.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2024/activitati/ac8.png" class="activity-img" alt="STEM la Feminin">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">👩‍🔬 STEM la Feminin</h5>
-                      <p class="activity-meta">29 noiembrie 2024</p>
-                      <p class="activity-text">Eveniment dedicat promovarii egalitatii de gen si incurajarii tinerelor in STEAM.</p>
-                      <p class="activity-text">Discutiile au abordat egalitatea de sansa, provocarile si oportunitatile pentru fete si femei.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2024/activitati/ac9.png" class="activity-img" alt="Parteneriate cu scolile gimnaziale">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🤝 Parteneriate cu scolile gimnaziale</h5>
-                      <p class="activity-meta">2024-2025</p>
-                      <p class="activity-text">Extindem anual parteneriatele pentru a incuraja echipe FIRST LEGO League si mentorat.</p>
-                      <p class="activity-text">Povestile impartasite de profesori ne confirma impactul pozitiv in comunitate.</p>
-                    </div>
-                  </article>
-                </div>
-              `,
-        meeturi: `
-                <div class="accordion" id="meeturiAccordion2024">
-                   <!-- Meet 1 -->
-                   <div class="card mb-4 border-0 shadow-sm">
-                     <div class="card-header bg-white text-primary p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Xmas Robo Stone - Piatra Neamt</h5>
-                            <span class="badge bg-primary rounded-pill px-3 py-2">21 decembrie</span>
-                        </div>
-                     </div>
-                     <div class="card-body p-4">
-                       <p>Primul meet al sezonului. Am castigat doua meciuri, am inceput si am terminat cu cate o victorie.</p>
-                       <p>Desi eram demoralizati, ne-am incurajat si am vazut pierderile ca oportunitati de a ne perfectiona pentru regionala.</p>
-                       <p>Meet-ul a reflectat ce inseamna o echipa: sustinere, incurajare si pozitivitate indiferent de circumstante.</p>
-                     </div>
-                   </div>
-
-                   <!-- Meet 2 -->
-                   <div class="card mb-4 border-0 shadow-sm">
-                     <div class="card-header bg-white text-primary p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Frozen Depths Meet - Suceava</h5>
-                            <span class="badge bg-success rounded-pill px-3 py-2">4 ianuarie</span>
-                        </div>
-                     </div>
-                     <div class="card-body p-4">
-                       <p>Am aratat progres major fata de primul meet, cu 4 victorii obtinute.</p>
-                       <p>La final am primit recunoastere pentru designul inovativ al lui Puiu.</p>
-                     </div>
-                   </div>
-
-                   <!-- Meet 3 -->
-                   <div class="card mb-4 border-0 shadow-sm">
-                     <div class="card-header bg-white text-primary p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">League Meet of Iasi</h5>
-                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">11 ianuarie</span>
-                        </div>
-                     </div>
-                     <div class="card-body p-4">
-                       <p>Am venit increzatori, dar robotul s-a defectat la inceput din cauza unui bug al Control Hub-ului, care a sters configuratia.</p>
-                       <p>Rescrierea configuratiei a durat aproximativ doua ore; am masurat tensiunile cu multimetru si am facut reverse engineering la robot.</p>
-                     </div>
-                   </div>
-                </div>
-              `
-      },
-      '2025-2026': {
-        proba: `
-                 <div class="row">
-                    <div class="col-md-6">
-                <h4>FTC Challenge: DECODE 🧩</h4>
-                <p>Sezonul FTC 2025-2026, <strong>DECODE</strong>, este axat pe <strong>colectarea, sortarea și lansarea artefactelor</strong> în coșuri, cu obiectivul de a reproduce un model de 3 artefacte afișat pe panou. Jocul pune accent pe viteză, precizie și coordonare între roboții aflați în alianță.</p>
-                <div class="mt-3">
-                  <h5>Phase 1: Autonomous (30s)</h5>
-                  <ul>
-                    <li>Identificarea unui model aleator de 3 artefacte afișat pe panou.</li>
-                    <li>Navigare autonomă către zonele de colectare și lansare.</li>
-                    <li>Sortare rapidă și marcaj corect pentru punctaj bonus.</li>
-                  </ul>
-                  <h5>Phase 2: TeleOp (2m)</h5>
-                  <ul>
-                    <li>Control manual orientat pe lansarea artefactelor (mingi) în coșuri.</li>
-                    <li>Optimizarea traseelor pentru flux continuu între colectare și lansare.</li>
-                    <li>Coordonare cu aliații pentru a acoperi cât mai multe coșuri.</li>
-                  </ul>
-                  <h5>Scorare</h5>
-                  <ul>
-                    <li>Artefactele clasificate corect valorează mai mult decât cele din overflow.</li>
-                    <li>Potrivirea modelului în autonomous aduce puncte bonus.</li>
-                    <li>Consecvența și precizia echipei pot face diferența la final.</li>
-                  </ul>
-                </div>
-                    </div>
-                    <div class="col-md-6 text-center">
-                        <img src="assets/img/2025/meet/field-concept.jpg" class="img-fluid rounded shadow-lg mb-3 animate-on-scroll" alt="Reefscape Field">
-                        <img src="teren/20261.png" class="img-fluid rounded shadow-sm mb-2" alt="Coral Detail">
-                        <img src="teren/20262.png" class="img-fluid rounded shadow-sm" alt="Sanctuary Zone">
-                    </div>
-                 </div>
-              `,
-        robot: `
-            <div class="robot-section">
-              <div class="robot-media">
-                 <img src="assets/roboti/2026.png" alt="Robot Puiu 2025" class="robot-image">
-              </div>
-              <div class="robot-content">
-                <h4 class="robot-title">Robotul "Puiu"</h4>
-                        <p>Puiu a trecut prin numeroase schimbari, evoluand de la o competitie la alta. Am folosit un sasiu cu roti mecanum, care ne-a oferit mobilitate in orice directie si manevrabilitate in spatii restranse.</p>
-                        <p>Sistemul de colectare (intake) a fost conceput pentru a prelua artefactele eficient si fara blocaje, trimitandu-le mai departe catre un mecanism intern de sortare.</p>
-                        <p>Pentru scorare, robotul a fost echipat cu un shooter reglabil, capabil sa arunce mingile de la distante diferite, adaptandu-se pozitiei fata de goal. Precizia a fost imbunatatita prin auto-alignment, care ajuta robotul sa se pozitioneze corect inainte de lansare.</p>
-                    </div>
-                </div>
-              `,
-        activitati: `
-                 <div class="activity-grid">
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/ac1.jpg" class="activity-img" alt="Targ educational">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🎓 Ediția a XXVI-a a Târgului educațional</h5>
-                      <p class="activity-meta">15-16 aprilie</p>
-                      <p class="activity-text">Am continuat tradiția anuală de a lua parte la Târgul educațional organizat de CJRAE Vaslui și ISJ Vaslui pentru a promova echipa de robotică și oferta educațională a Liceului Teoretic „Emil Racoviță” Vaslui elevilor de clasa a VIII-a.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/ac2.png" class="activity-img" alt="Vizite scoli gimnaziale">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🏫 Vizite la Școlile Gimnaziale din Vaslui</h5>
-                      <p class="activity-meta">Final de mai - început de iunie</p>
-                      <ul class="activity-list">
-                        <li>22 mai - Școala Gimnazială Nr. 2 „Dimitrie Cantemir” și Școala Gimnazială Nr. 3 „Constantin Parfene”</li>
-                        <li>23 mai - Școala Gimnazială Nr. 6 „Mihai Eminescu” și Școala Gimnazială Nr. 8 „Alexandra Nechita”</li>
-                        <li>12 iunie - Școala Gimnazială Nr. 1 Văleni</li>
-                      </ul>
-                      <p class="activity-text">Obiectivul principal a fost promovarea educației STEM, din postura de ambasadori FIRST. Ne-am propus atragerea noilor generații către domeniul roboticii și am prezentat întreaga noastră activitate, împărtășind din experiențele competiționale și despre munca din spatele construirii și programării unui robot.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/ac3.png" class="activity-img" alt="Tabara Rotary">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🏕️ Tabăra Rotary</h5>
-                      <p class="activity-meta">7 iulie</p>
-                      <p class="activity-text">În cadrul Taberei Rotary organizată de Rotaract, dedicată elevilor olimpici din Vaslui, am prezentat competiția și valorile FIRST Tech Challenge, activitatea echipei noastre și parcursul din ultimii ani, împărtășind atât reușitele, cât și provocările întâmpinate. Participanții au putut controla robotul nostru și am discutat despre mecanisme, funcționalități și importanța implicării tinerilor în domenii STEM.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/ac4.png" class="activity-img" alt="Biblioteca de vacanta">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">📚 Ateliere săptămânale de educație STEM - „Biblioteca de vacanță”</h5>
-                      <p class="activity-meta">7 iulie - 22 august</p>
-                      <p class="activity-text">În parteneriat cu Biblioteca Județeană „Nicolae Milescu Spătarul”, în fiecare miercuri am prezentat copiilor de 11-14 ani noțiuni de programare în C++, într-un mediu interactiv. Ei au descoperit logica din spatele codului, și-au creat propriile proiecte și au aflat pașii din spatele construirii și funcționării robotului nostru, ultima sesiune fiind prezentarea lui Puiu.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/ac5.png" class="activity-img" alt="Zilele Vasluiului">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🎉 Zilele Vasluiului</h5>
-                      <p class="activity-meta">19 august</p>
-                      <p class="activity-text">Cu ocazia Zilelor Vasluiului, am fost parte din organizatorii proiectului „Robotica, la granița dintre știință și tehnologie”. La Centrul Cultural Județean Vaslui, am susținut prezentări și meciuri FTC demonstrative dedicate comunității noastre. Ne-am bucurat de susținerea directă oferită de domnul primar și domnul viceprimar, dar și de participarea localnicilor de toate vârstele.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/rob.jpeg" class="activity-img" alt="Ziua Educatiei">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">📖 Ziua Educației</h5>
-                      <p class="activity-meta">5 octombrie</p>
-                      <p class="activity-text">Am desfășurat o activitate la Casa Corpului Didactic Vaslui, unde am avut bucuria de a le prezenta elevilor de la Școala Gimnazială „Mihai Eminescu” Vaslui robotul nostru și activitatea echipei.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/sah.jpeg" class="activity-img" alt="Robotica pe tabla de sah">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">♟️ „Robotica pe tabla de șah”</h5>
-                      <p class="activity-meta">21 octombrie</p>
-                      <p class="activity-text">Alături de Clubul de Șah CSM Vaslui, am desfășurat un atelier de robotică dedicat micilor șahiști. Copiii au fost cu adevărat interesați de echipă, au controlat cu măiestrie robotul și au descoperit cum gândirea critică din șah îi poate ajuta în domeniile STEM.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/vr.png" class="activity-img" alt="VR eXperience">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🕶️ „VR eXperience”</h5>
-                      <p class="activity-meta">28 noiembrie</p>
-                      <p class="activity-text">În cadrul Zilelor Liceului Teoretic „Emil Racoviță” Vaslui, am organizat un workshop despre realitatea virtuală. Participanții au testat ochelarii VR și au descoperit simulări 3D captivante, jocuri educative și aplicații care arată cum tehnologia poate transforma modul în care învățăm și interacționăm cu lumea din jur.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/ac9.jpeg" class="activity-img" alt="Erasmus plus">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🌍 Erasmus+ „Emotional Intelligence Approach on Teaching Methods”</h5>
-                      <p class="activity-meta">3 decembrie</p>
-                      <p class="activity-text">Am susținut un atelier internațional cu profesori din Spania, Italia, Portugalia și Finlanda. Am prezentat competiția și valorile FIRST Tech Challenge, parcursul echipei noastre și emoțiile gestionate în timpul meciurilor, proiectelor și în timpul construcției robotului. La final, profesorii au putut controla robotul și ne-au împărtășit emoțiile lor: bucurie, uimire și apreciere.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/ac10.jpeg" class="activity-img" alt="Lab Mobil">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🧪 Lab Mobil</h5>
-                      <p class="activity-meta">10 decembrie</p>
-                      <p class="activity-text">Am creat un mini-laborator mobil de robotică şi l-am prezentat la două şcoli gimnaziale din municipiul Vaslui. Elevii au testat robotul şi au învățat principiile roboticii prin demonstrații practice și exerciții interactive, dezvoltându-și gândirea critică, creativitatea şi abilitatea de a lucra în echipă. Proiectul a reprezentat primul contact al tinerilor cu robotică, iar ei au dat dovadă de curiozitate şi apreciere față de domeniu.</p>
-                      <p class="activity-text">Am învățat cât de important este să ne împărtășim cunoştinţele tinerilor, contribuind la dezvoltarea comunității în ceea ce privește tehnologia.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/ac11.jpeg" class="activity-img" alt="Roboti pentru viitor">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🤖 Roboți pentru viitor</h5>
-                      <p class="activity-meta">11-12 decembrie</p>
-                      <p class="activity-text">Am desfășurat două workshop-uri la Liceul Teoretic „Emil Racoviță” Vaslui, adresate elevilor de la Şcoala Gimnazială Nr. 1 Văleni. Am învățat copiii să-și construiască propriul robot cu ajutorul kit-urilor Arduino şi a programării. La final, elevii și-au prezentat proiectele, primind diplome și dulciuri, dezvoltând o pasiune pentru robotică.</p>
-                      <p class="activity-text">Activitatea a avut un impact important asupra elevilor din Văleni. Datorită activității, doamna profesoară a Şcoala Gimnazială Nr. 1 Văleni a început implementarea unui opțional de robotică în cadrul şcolii din mediul rural. Am învățat că accesul la resurse educaționale şi tehnologie poate schimba în bine o comunitate, iar tinerii merită oportunități egale.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/ac12.jpeg" class="activity-img" alt="Coding and Tech">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">💻 Coding & Tech - Programarea pe înțelesul tuturor</h5>
-                      <p class="activity-meta">16 decembrie</p>
-                      <p class="activity-text">Am organizat un workshop introductiv în C++ și tehnologii Arduino pentru elevii din Vaslui, la Biblioteca Județeană „Nicolae Milescu Spătarul”. Activitatea a oferit acces la educație STEM prin activități interactive, folosind simulatoare online și demonstrații practice. Am crescut treptat dificultatea exercițiilor, iar copiii au învățat bazele programării și ale electronicii într-un mod interactiv și distractiv.</p>
-                      <p class="activity-text">Ei și-au dezvoltat gândirea logică și au fost motivați să își continue parcursul în domeniul programării și al roboticii.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/ac13.png" class="activity-img" alt="3D Minds">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">🧩 3D Minds - Workshop-uri de imprimare 3D</h5>
-                      <p class="activity-meta">11 și 17 decembrie</p>
-                      <p class="activity-text">Am desfășurat două workshop-uri practice de modelare și imprimare 3D, unul pentru elevii de gimnaziu și unul pentru elevii de liceu. Participanții au învățat să creeze modele 3D în Blender și să le transforme în obiecte reale, descoperind cum imprimarea 3D este strâns legată de robotică.</p>
-                      <p class="activity-text">Am învățat că accesul la tehnologii moderne, precum robotica și imprimarea 3D, oferă tinerilor abilități relevante pentru piața muncii și oportunități importante de carieră.</p>
-                    </div>
-                  </article>
-
-                  <article class="activity-card">
-                    <div class="activity-media">
-                      <img src="assets/img/2025/activitati/ac14.png" class="activity-img" alt="Girls Code">
-                    </div>
-                    <div class="activity-body">
-                      <h5 class="activity-title">👩‍💻 Girls Code</h5>
-                      <p class="activity-meta">12 și 13 decembrie</p>
-                      <p class="activity-text">Două sesiuni practice de robotică și programare, în care participantele au explorat partea hardware a construirii unui robot și partea software, învățând să creeze un site web folosind HTML, CSS și JavaScript. Impactul activității a fost semnificativ: 78% dintre participanți nu mai creaseră anterior un site web, iar 56% nu participaseră la activități de robotică.</p>
-                      <p class="activity-text">Am înțeles cât de important este ca fetele să aibă șanse și oportunități egale în domeniile STEM și cât de mult contează un mediu incluziv în procesul de învățare.</p>
-                    </div>
-                  </article>
-                 </div>
-              `,
-        meeturi: `
-                <div class="accordion" id="meeturiAccordion2025">
-                   <!-- Meet 1 -->
-                   <div class="card mb-4 border-0 shadow-sm">
-                     <div class="card-header bg-white text-primary p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Piatra Neamț - „Jurassic Peaks”</h5>
-                            <span class="badge bg-primary rounded-pill px-3 py-2">10 ianuarie</span>
-                        </div>
-                     </div>
-                     <div class="card-body p-4">
-                       <p>Primul meet al sezonului, cu 4 victorii din 6 meciuri. Robotul a funcționat bine în autonomous și teleop, iar problemele inițiale de ping au fost rezolvate rapid. Am dezvoltat o strategie solidă de scorare, care a pus bazele evoluției noastre ulterioare.</p>
-                     </div>
-                   </div>
-
-                   <!-- Meet 2 -->
-                   <div class="card mb-4 border-0 shadow-sm">
-                     <div class="card-header bg-white text-primary p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Iași - „Defrost”</h5>
-                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">11 ianuarie</span>
-                        </div>
-                     </div>
-                     <div class="card-body p-4">
-                       <p>Un meet mai dificil, cu 2 victorii din 6 meciuri, în care au apărut probleme la push-arm. Chiar și așa, robotul a reușit perioade eficiente de scorare, iar experiența ne-a ajutat să identificăm punctele fragile ale robotului și să îmbunătățim design-ul.</p>
-                     </div>
-                   </div>
-
-                   <!-- Meet 3 -->
-                   <div class="card mb-4 border-0 shadow-sm">
-                     <div class="card-header bg-white text-primary p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Focșani - „Focșani Tech Challenge”</h5>
-                            <span class="badge bg-info rounded-pill px-3 py-2">24 ianuarie</span>
-                        </div>
-                     </div>
-                     <div class="card-body p-4">
-                       <phttps://ftc-events.firstinspires.org/2025/ROFOS/qualifications>Am revenit cu o performanță mai bună, 3 victorii din 6 meciuri, menținând o tactică de scorare constantă. Robotul s-a mișcat eficient, confirmând îmbunătățirile aduse după meet-ul precedent.</p>
-                     </div>
-                   </div>
-
-                   <!-- Meet 4 -->
-                   <div class="card mb-4 border-0 shadow-sm">
-                     <div class="card-header bg-white text-primary p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Galați - „Ice Age”</h5>
-                            <span class="badge bg-success rounded-pill px-3 py-2">31 ianuarie</span>
-                        </div>
-                     </div>
-                     <div class="card-body p-4">
-                    <p>Cel mai reușit meet al sezonului, cu 5 victorii din 6 meciuri. Acest rezultat a confirmat viabilitatea design-ului, eficiența sistemelor și consistența strategiei noastre.</p>
-                     </div>
-                   </div>
-
-                   <!-- Regionala -->
-                   <div class="card mb-4 border-0 shadow-sm">
-                     <div class="card-header bg-white text-primary p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Regionala - Piatra Neamț</h5>
-                            <span class="badge bg-primary rounded-pill px-3 py-2">21-22 februarie 2026</span>
-                        </div>
-                     </div>
-                     <div class="card-body p-4">
-                       <h6>Obiective pentru regionala</h6>
-                       <ul>
-                         <li><strong>Stabilitate maxima:</strong> meciuri fara erori, cu autonomous si teleop curate.</li>
-                         <li><strong>Strategie clara:</strong> rol bine definit in alianta si punctaj constant.</li>
-                         <li><strong>Calificare:</strong> sa intram in fazele finale si sa obtinem recunoastere.</li>
-                       </ul>
-                       
-                     </div>
-                   </div>
-                </div>
-              `
-      }
-    };
+      // Auto switch to Proba tab first
+      switchTab('proba');
+    }
 
     const modal = document.getElementById('seasonModal');
     const modalTitle = document.getElementById('modalTitle');
@@ -909,22 +265,6 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
       }, 600);
     }
 
-    function openSeasonModal(season) {
-      modalTitle.textContent = 'Sezon ' + season;
-      modal.classList.add('active');
-      documentBody.style.overflow = 'hidden'; // Stop scrolling
-
-      // Load Content
-      const data = seasonData[season] || seasonData['2023-2024'];
-      document.getElementById('tab-proba').innerHTML = data.proba;
-      document.getElementById('tab-robot').innerHTML = data.robot;
-      document.getElementById('tab-activitati').innerHTML = data.activitati;
-      document.getElementById('tab-meeturi').innerHTML = data.meeturi;
-
-      // Auto switch to Proba tab first
-      switchTab('proba');
-    }
-
     function closeSeasonModal() {
       modal.classList.remove('active');
       documentBody.style.overflow = ''; // Restore scrolling
@@ -938,7 +278,10 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
       // Button activation logic
       const tabs = ['proba', 'robot', 'activitati', 'meeturi'];
       const index = tabs.indexOf(tabName);
-      if (index >= 0) document.querySelectorAll('.tab-btn')[index].classList.add('active');
+      if (index >= 0) {
+        const btns = document.querySelectorAll('.tab-btn');
+        if (btns[index]) btns[index].classList.add('active');
+      }
     }
 
     modal.addEventListener('click', (e) => {
@@ -1334,6 +677,7 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
               <h4 class="footer-heading" data-i18n="footer.resources">Resurse</h4>
               <ul class="footer-links">
                 <li><a href="puiu-cross.html">Puiu-cross.exe</a></li>
+                <li><a href="puiu-invaders.html">Puiu-invaders.exe</a></li>
                 <li><a href="puiu-run.html">Puiu-run.exe</a></li>
                 <li><a href="https://ftc-events.firstinspires.org/team/21031">Competiții</a></li>
                 <li><a href="#!">Înscriere Echipă</a></li>
@@ -1365,10 +709,8 @@ Am plecat acasă cu un premiu: The Judges Award. Consideram ca aceasta este o ev
         <div class="footer-bottom">
           <div class="row align-items-center">
             <div class="col-md-6 text-center text-md-start">
-              <p class="footer-copyright" data-i18n="footer.copyright">
-                &copy; 2024 roLERbot. Toate drepturile rezervate.<br>
-                <small>Site realizat de Diaconu Mihaita</small>
-              </p>
+              <p class="footer-copyright" data-i18n="footer.copyright">&copy; 2024 roLERbot. Toate drepturile rezervate.</p>
+              <p class="footer-creator mb-0" data-i18n="footer.creator">Site realizat de Diaconu Mihaita</p>
             </div>
             <div class="col-md-6 text-center text-md-end">
               <div class="footer-legal">

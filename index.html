@@ -98,11 +98,13 @@
           <li class="nav-item"><a class="nav-link" href="#services" data-i18n="nav.team">Echipa</a></li>
           <li class="nav-item"><a class="nav-link" href="#portfolio" data-i18n="nav.sponsors">Sponsori</a></li>
           <li class="nav-item"><a class="nav-link" href="#about" data-i18n="nav.progress">Progres</a></li>
-          <li class="nav-item"><a class="nav-link" href="blog.html" data-section="team" data-i18n="nav.blog">Blog</a>
-          </li>
-          <li class="nav-item"><a class="nav-link" href="ftc-decode-1v1.html" data-i18n="nav.ftcGame">Joc FTC 1v1</a>
-          </li>
+          <li class="nav-item"><a class="nav-link" href="blog.html" data-section="team" data-i18n="nav.blog">Blog</a></li>
           <li class="nav-item"><a class="nav-link" href="#contact" data-i18n="nav.contact">Contact</a></li>
+          
+          <li class="nav-item">
+            <button id="rain-button" class="nav-link"
+              style="background: none; border: none; cursor: pointer;">🐥</button>
+          </li>
           <li class="nav-item">
             <div class="language-switcher" aria-label="Selecteaza limba site-ului">
               <button type="button" class="lang-side" data-set-lang="ro" aria-label="Seteaza limba romana">RO</button>
@@ -114,9 +116,8 @@
               <button type="button" class="lang-side" data-set-lang="en" aria-label="Seteaza limba engleza">EN</button>
             </div>
           </li>
-          <li class="nav-item">
-            <button id="rain-button" class="nav-link"
-              style="background: none; border: none; cursor: pointer;">🐥</button>
+           </li>
+          <li class="nav-item"><a class="nav-link" href="https://lervs.ro/" data-i18n="nav.ftcGame">Inapoi</a>
           </li>
         </ul>
       </div>
@@ -126,7 +127,7 @@
   <header class="masthead has-video">
     <video class="masthead-video" autoplay muted loop playsinline preload="metadata" poster="assets/index.png"
       aria-hidden="true">
-      <source media="(max-width: 768px)" src="video/hero.mp4" type="video/mp4">
+      <source media="(max-width: 768px)" src="video/AuraPuiu_compressed.mp4" type="video/mp4">
       <source media="(min-width: 769px)" src="video/hero-with-audio.mp4" type="video/mp4">
       <source src="video/hero-with-audio.mp4" type="video/mp4">
       <source src="video/REGIO_2026.mov" type="video/quicktime">
@@ -342,11 +343,11 @@
             </div>
           </div>
         </div>
-        <div class="col-lg-4 col-sm-6 mb-4">
-          <!-- APSROM -->
+        <div class="col-lg-4 col-sm-6 mb-4 mx-auto">
+          <!-- SAFIR -->
           <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://apisrom.ro/" target="_blank" rel="noopener"
-              aria-label="Sponsor APSROM">
+            <a class="portfolio-link no-modal" href="https://www.safir.ro/" target="_blank" rel="noopener"
+              aria-label="Sponsor SAFIR">
               <div class="portfolio-hover">
 
               </div>
@@ -687,6 +688,7 @@
               <h4 class="footer-heading" data-i18n="footer.resources">Resurse</h4>
               <ul class="footer-links">
                 <li><a href="puiu-cross.html">Puiu-cross.exe</a></li>
+                <li><a href="puiu-invaders.html">Puiu-invaders.exe</a></li>
                 <li><a href="puiu-run.html">Puiu-run.exe</a></li>
                 <li><a href="https://ftc-events.firstinspires.org/team/21031">Competiții</a></li>
                 <li><a href="#!">Înscriere Echipă</a></li>
@@ -718,10 +720,8 @@
         <div class="footer-bottom">
           <div class="row align-items-center">
             <div class="col-md-6 text-center text-md-start">
-              <p class="footer-copyright" data-i18n="footer.copyright">
-                &copy; 2024 roLERbot. Toate drepturile rezervate.<br>
-                <small>Site realizat de Diaconu Mihaita</small>
-              </p>
+              <p class="footer-copyright" data-i18n="footer.copyright">&copy; 2024 roLERbot. Toate drepturile rezervate.</p>
+              <p class="footer-creator mb-0" data-i18n="footer.creator">Site realizat de Diaconu Mihaita</p>
             </div>
             <div class="col-md-6 text-center text-md-end">
               <div class="footer-legal">

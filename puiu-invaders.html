@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUIU Invaders - roLERbot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+:root {
+    --brand-pink: #f9056c;
+    --space-bg: #0B0A11;
+    --text-color: #ffffff;
+    --accent-blue: #00d2ff;
+    --pixel-font: 'Press Start 2P', cursive;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #111;
+    color: var(--text-color);
+    font-family: var(--pixel-font);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+    user-select: none;
+}
+
+.game-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+}
+
+#game-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    max-width: 95vw;
+    background-color: var(--space-bg);
+    border: 4px solid #fff;
+    box-shadow: 0 0 20px rgba(249, 5, 108, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.8);
+    image-rendering: pixelated; /* Forces pixel art look */
+    overflow: hidden;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+}
+
+/* UI Layer */
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Let clicks pass through if needed, except overlays */
+}
+
+.hud {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 20px;
+    font-size: 14px;
+    text-shadow: 2px 2px 0px #000;
+    z-index: 10;
+}
+
+#scoreDisplay { color: #fff; }
+#levelDisplay { color: var(--accent-blue); text-align: center; }
+#livesDisplay { color: var(--brand-pink); text-align: right; }
+
+/* Overlays */
+.overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(11, 10, 17, 0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    z-index: 50;
+    backdrop-filter: blur(2px);
+    transition: opacity 0.3s;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.title-primary {
+    font-size: 36px;
+    color: #ffffff;
+    text-shadow: 4px 4px 0px var(--brand-pink);
+    margin-bottom: 10px;
+    text-align: center;
+    animation: pulse 1.5s infinite;
+}
+
+.title-secondary {
+    font-size: 14px;
+    color: var(--brand-pink);
+    text-shadow: 2px 2px 0px #000;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.controls-info {
+    font-size: 10px;
+    color: #aaa;
+    margin-bottom: 30px;
+    line-height: 2;
+    text-align: center;
+}
+
+.retro-btn {
+    background-color: var(--brand-pink);
+    color: white;
+    font-family: var(--pixel-font);
+    font-size: 16px;
+    padding: 15px 30px;
+    border: 3px solid #fff;
+    cursor: pointer;
+    box-shadow: 4px 4px 0px #4d0022;
+    transition: transform 0.1s, box-shadow 0.1s;
+    margin: 10px 0;
+}
+
+.retro-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px #4d0022;
+}
+
+.retro-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px #4d0022;
+}
+
+.retro-btn.secondary {
+    background-color: #333;
+    border-color: #aaa;
+    box-shadow: 4px 4px 0px #000;
+}
+
+.retro-btn.secondary:hover {
+    box-shadow: 6px 6px 0px #000;
+}
+
+/* Boss HP Bar */
+#bossHpContainer {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    text-align: center;
+    z-index: 20;
+}
+
+.boss-name {
+    font-size: 12px;
+    color: #ff0044;
+    margin-bottom: 5px;
+    text-shadow: 1px 1px 0 #000;
+    animation: blink 0.5s infinite alternate;
+}
+
+.boss-hp-bar-bg {
+    width: 100%;
+    height: 15px;
+    background: #333;
+    border: 2px solid #fff;
+    padding: 2px;
+}
+
+.boss-hp-bar-fill {
+    width: 100%;
+    height: 100%;
+    background: #ff0044;
+    transition: width 0.1s linear;
+}
+
+/* Custom Team Logo Display */
+.team-logo-container {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+
+.team-logo-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border: 3px solid #f9056c;
+    padding: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transition: transform 0.2s;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.team-logo-img:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px #f9056c;
+}
+
+#teamSelect option {
+    padding: 5px;
+    background-image: none;
+}
+#teamSelect optgroup {
+    background-color: #2c3e50;
+}
+
+/* Footer Credits */
+.site-footer {
+    text-align: center;
+    color: #777;
+    font-size: 10px;
+    line-height: 1.5;
+    margin-top: 20px;
+    padding-bottom: 20px;
+}
+
+.credit-highlight {
+    color: var(--brand-pink);
+}
+
+.retro-link {
+    color: #aaa;
+    text-decoration: none;
+    font-size: 10px;
+    margin-top: 30px;
+    display: inline-block;
+}
+.retro-link:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes blink {
+    from { opacity: 1; }
+    to { opacity: 0.5; }
+}
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div id="game-container">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            
+            <div id="ui-layer">
+                <div class="hud">
+                    <div id="scoreDisplay">SCORE: 0</div>
+                    <div id="levelDisplay">WAVE: 1</div>
+                    <div id="livesDisplay">LIVES: [3]</div>
+                </div>
+
+                <div id="startScreen" class="overlay">
+                    <h1 class="title-primary">CHICKEN INVADERS</h1>
+                    <h2 class="title-secondary">Defend Earth from the Pixel Chickens</h2>
+                    <br>
+                    
+                    <div style="margin: 20px 0; text-align: center;">
+                        <label style="font-size: 10px; color: #f9056c; margin-bottom: 10px; display: block;">SELECT YOUR TEAM:</label>
+                        <select id="teamSelect" style="font-family: 'Press Start 2P'; padding: 10px; font-size: 10px; background: #2c3e50; color: white; border: 2px solid #f9056c; width: 400px; max-width: 90%;">
+                            <option value="">-- Choose Team --</option>
+                        </select>
+                        <div class="team-logo-container">
+                            <img id="selectedTeamLogo" class="team-logo-img" src="echipe/default.png" alt="Team Logo" style="display: none;">
+                        </div>
+                        <div id="selectedTeamDisplay" style="font-size: 10px; margin-top: 10px; color: #4cd137;"></div>
+                    </div>
+
+                    <p class="controls-info">LEFT/A: Left | RIGHT/D: Right | SPACE: Shoot</p>
+                    <button id="startBtn" class="retro-btn">START GAME</button>
+                    <button id="viewLeaderboardBtn" class="retro-btn secondary">VIEW LEADERBOARD</button>
+                    <a href="index.html" class="retro-btn" style="display:block; margin: 10px auto; background: #2c3e50; text-decoration:none;">INAPOI</a>
+                </div>
+
+                <div id="gameOverScreen" class="overlay hidden">
+                    <img id="gameOverTeamLogo" class="team-logo-img" src="echipe/default.png" alt="Team Logo" style="width: 100px; height: 100px; margin-bottom: 20px; display: none;">
+                    <h1 class="title-primary" style="font-size: 30px;">GAME OVER</h1>
+                    <p id="finalScore" style="font-size: 18px; margin-top: 10px;">Final Score: 0</p>
+                    
+                    <div id="newHighScore" class="hidden" style="margin: 20px 0; text-align: center;">
+                        <p style="font-size: 14px; color: #4cd137;">--- NEW HIGH SCORE! ---</p>
+                        <p id="yourTeamDisplay" style="font-size: 10px; margin: 10px 0;"></p>
+                    </div>
+
+                    <button id="restartBtn" class="retro-btn mt-4">RESTART</button>
+                    <button id="menuBtn" class="retro-btn secondary">MAIN MENU</button>
+                </div>
+
+                <div id="leaderboardScreen" class="overlay hidden" style="overflow-y: auto;">
+                    <div style="flex-shrink: 0; text-align: center; margin-top: 20px;">
+                        <img id="leaderboardTeamLogo" class="team-logo-img" src="echipe/default.png" alt="Team Logo" style="width: 80px; height: 80px; margin: 0 auto 15px auto; display: none;">
+                        <h1 class="title-primary" style="font-size: 24px; margin-top: 0;">--- LEADERBOARD ---</h1>
+                    </div>
+                    <div id="leaderboardList" style="margin: 20px 0; max-width: 600px; width: 80%; overflow-y: auto; flex: 1;">
+                        <!-- Dynamic content -->
+                    </div>
+                    <div style="flex-shrink: 0; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
+                        <button id="closeLeaderboardBtn" class="retro-btn" style="font-size: 16px;">BACK</button>
+                        <button id="clearLeaderboardBtn" class="retro-btn secondary" style="font-size: 12px; background: #e74c3c;">CLEAR DATA</button>
+                    </div>
+                </div>
+
+                <div id="bossHpContainer" class="hidden">
+                    <div class="boss-name">BOSS CHICKEN</div>
+                    <div class="boss-hp-bar-bg">
+                        <div id="bossHpBar" class="boss-hp-bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="site-footer">
+            &copy; 2024 roLERbot. Toate drepturile rezervate.<br>
+            <span class="credit-highlight">Site realizat de Diaconu Mihăiță</span>
+        </footer>
+    </div>
+    
+    <script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+// UI Elements
+const scoreDisplay = document.getElementById('scoreDisplay');
+const levelDisplay = document.getElementById('levelDisplay');
+const livesDisplay = document.getElementById('livesDisplay');
+const startScreen = document.getElementById('startScreen');
+const gameOverScreen = document.getElementById('gameOverScreen');
+const finalScoreDisplay = document.getElementById('finalScore');
+const newHighScoreDiv = document.getElementById('newHighScore');
+const leaderboardScreen = document.getElementById('leaderboardScreen');
+const bossHpContainer = document.getElementById('bossHpContainer');
+const bossHpBar = document.getElementById('bossHpBar');
+const teamSelect = document.getElementById('teamSelect');
+const selectedTeamDisplay = document.getElementById('selectedTeamDisplay');
+const yourTeamDisplay = document.getElementById('yourTeamDisplay');
+const selectedTeamLogo = document.getElementById('selectedTeamLogo');
+
+// FTC Teams Database
+const ftcTeams = [
+    { number: 19066, name: "AiCitizens" }, { number: 21028, name: "The Eagles RO143" },
+    { number: 19061, name: "Boogeybots" }, { number: 15996, name: "BrickBot" },
+    { number: 19139, name: "SnakeTech" }, { number: 22998, name: "CYB3RG0DS" },
+    { number: 21031, name: "roLERbot" }, { number: 23161, name: "CyberLIS76" },
+    { number: 24928, name: "HYPERION" }, { number: 19097, name: "Quasar.Robotics" },
+    { number: 22017, name: "Eu codez" }, { number: 19071, name: "SmartCluster" },
+    { number: 19044, name: "Peppers" }, { number: 17871, name: "Thobor" },
+    { number: 19043, name: "CyLiis" }, { number: 20954, name: "STIM DC" },
+    { number: 19053, name: "Homosapiens" }, { number: 22590, name: "MechaByte" },
+    { number: 22697, name: "CreativityR" }, { number: 24308, name: "BrightCluster" },
+    { number: 19211, name: "Virtual Wolves" }, { number: 21097, name: "Dragonfly" },
+    { number: 19065, name: "Inorog Team RO 152" }, { number: 32762, name: "NightWings" },
+    { number: 23800, name: "Robozzi" }, { number: 23576, name: "ORION" },
+    { number: 24554, name: "AVOCADO ROBOTICS" }, { number: 19087, name: "MironoBot" },
+    { number: 19147, name: "Blizzard Eye" }, { number: 27660, name: "R0b0Ryders" },
+    { number: 32838, name: "CEMEKANIKS25" }, { number: 32442, name: "Iron Minds LTTC" }
+];
+
+let selectedTeam = JSON.parse(localStorage.getItem('puiu_selected_team')) || null;
+
+ftcTeams.forEach(team => {
+    const option = document.createElement('option');
+    option.value = team.number;
+    option.textContent = `#${team.number} - ${team.name}`;
+    teamSelect.appendChild(option);
+});
+
+if (selectedTeam) {
+    teamSelect.value = selectedTeam.number;
+    selectedTeamDisplay.textContent = `Playing as: #${selectedTeam.number} - ${selectedTeam.name}`;
+    selectedTeamLogo.src = `echipe/${selectedTeam.number}.png`;
+    selectedTeamLogo.onerror = function() { this.src = 'echipe/default.png'; };
+    selectedTeamLogo.style.display = 'block';
+}
+
+teamSelect.addEventListener('change', (e) => {
+    if (e.target.value) {
+        const teamNumber = parseInt(e.target.value);
+        selectedTeam = ftcTeams.find(t => t.number === teamNumber);
+        localStorage.setItem('puiu_selected_team', JSON.stringify(selectedTeam));
+        selectedTeamDisplay.textContent = `Playing as: #${selectedTeam.number} - ${selectedTeam.name}`;
+        selectedTeamLogo.src = `echipe/${selectedTeam.number}.png`;
+        selectedTeamLogo.onerror = function() { this.src = 'echipe/default.png'; };
+        selectedTeamLogo.style.display = 'block';
+    } else {
+        selectedTeam = null;
+        selectedTeamDisplay.textContent = '';
+        selectedTeamLogo.style.display = 'none';
+        localStorage.removeItem('puiu_selected_team');
+    }
+});
+
+// Leaderboard Logic
+const LEADERBOARD_KEY = 'puiuInvadersLeaderboard';
+const MAX_ENTRIES = 32;
+
+function getLeaderboard() {
+    const data = localStorage.getItem(LEADERBOARD_KEY);
+    if (!data) return [];
+    try {
+        const parsed = JSON.parse(data);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+}
+function saveLeaderboard(leaderboard) {
+    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
+}
+function saveScore() {
+    if (!selectedTeam) return false;
+    const leaderboard = getLeaderboard();
+    let scoreSaved = false;
+    const existingIndex = leaderboard.findIndex(entry => entry.teamNumber === selectedTeam.number);
+    if (existingIndex !== -1) {
+        if (score > leaderboard[existingIndex].score) {
+            leaderboard[existingIndex].score = score;
+            leaderboard[existingIndex].date = new Date().toLocaleDateString('ro-RO');
+            scoreSaved = true;
+        }
+    } else {
+        leaderboard.push({
+            teamNumber: selectedTeam.number,
+            teamName: selectedTeam.name,
+            score: score,
+            date: new Date().toLocaleDateString('ro-RO')
+        });
+        scoreSaved = true;
+    }
+    leaderboard.sort((a, b) => b.score - a.score);
+    if (leaderboard.length > MAX_ENTRIES) {
+        if (scoreSaved) {
+            const topSlice = leaderboard.slice(0, MAX_ENTRIES);
+            scoreSaved = topSlice.some(entry => entry.teamNumber === selectedTeam.number);
+        }
+        leaderboard.length = MAX_ENTRIES;
+    }
+    saveLeaderboard(leaderboard);
+    return scoreSaved;
+}
+function showLeaderboard() {
+    gameOverScreen.classList.add('hidden');
+    startScreen.classList.add('hidden');
+    const leaderboardTeamLogo = document.getElementById('leaderboardTeamLogo');
+    if (selectedTeam) {
+        leaderboardTeamLogo.src = `echipe/${selectedTeam.number}.png`;
+        leaderboardTeamLogo.onerror = function() { this.src = 'echipe/default.png'; };
+        leaderboardTeamLogo.style.display = 'block';
+    } else {
+        leaderboardTeamLogo.style.display = 'none';
+    }
+    const leaderboard = getLeaderboard();
+    const listDiv = document.getElementById('leaderboardList');
+    if (leaderboard.length === 0) {
+        listDiv.innerHTML = '<p style="font-size: 14px; text-align: center;">NO SCORES YET</p>';
+    } else {
+        let html = '<div style="text-align: left; font-size: 12px; line-height: 24px;">';
+        leaderboard.forEach((entry, index) => {
+            const medal = index === 0 ? '1ST' : index === 1 ? '2ND' : index === 2 ? '3RD' : `${index + 1}TH`;
+            html += `<div style="padding: 10px; margin: 8px 0; background: rgba(255,255,255,0.1); border-radius: 5px;">`;
+            html += `${medal} #${entry.teamNumber} - ${entry.teamName}`;
+            html += `<br><span style="font-size: 14px; color: #f9056c;">${entry.score} pts</span>`;
+            html += `<br><span style="font-size: 10px; color: #aaa;">${entry.date}</span>`;
+            html += `</div>`;
+        });
+        html += '</div>';
+        listDiv.innerHTML = html;
+    }
+    leaderboardScreen.classList.remove('hidden');
+}
+function closeLeaderboard() {
+    leaderboardScreen.classList.add('hidden');
+    if (gameState === STATE_START) startScreen.classList.remove('hidden');
+    else if (gameState === STATE_GAMEOVER) gameOverScreen.classList.remove('hidden');
+}
+function clearLeaderboard() {
+    if (confirm('Are you sure you want to clear all leaderboard data?')) {
+        localStorage.removeItem(LEADERBOARD_KEY);
+        showLeaderboard();
+    }
+}
+
+// Global Game States to prevent concurrent loops and overlapping logic
+const STATE_START = 0;
+const STATE_PLAYING = 1;
+const STATE_GAMEOVER = 2;
+let gameState = STATE_START;
+
+// Global Variables
+let score = 0;
+let lives = 3;
+let currentWave = 1;
+let waveTransition = false;
+let keys = {};
+let lastTime = 0;
+let animationFrameId = null; // Strict track of the run loop
+let waveTimeoutId = null;
+let gameOverTimeoutId = null;
+
+// Arrays
+let bullets = [];
+let enemies = [];
+let enemyBullets = [];
+let particles = [];
+let powerups = [];
+let enemyDirection = 1;
+let player = null;
+
+// Input
+window.addEventListener('keydown', e => {
+    keys[e.code] = true;
+    if (e.code === 'Space' && gameState === STATE_PLAYING && player && !player.isDead) {
+        player.shoot();
+    }
+});
+window.addEventListener('keyup', e => {
+    keys[e.code] = false;
+});
+
+// Buttons Connect
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+document.getElementById('menuBtn').addEventListener('click', showMenu);
+document.getElementById('viewLeaderboardBtn').addEventListener('click', showLeaderboard);
+document.getElementById('closeLeaderboardBtn').addEventListener('click', closeLeaderboard);
+document.getElementById('clearLeaderboardBtn').addEventListener('click', clearLeaderboard);
+
+function showMenu() {
+    gameState = STATE_START;
+    startScreen.classList.remove('hidden');
+    gameOverScreen.classList.add('hidden');
+    leaderboardScreen.classList.add('hidden');
+    bossHpContainer.classList.add('hidden');
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    if (waveTimeoutId) clearTimeout(waveTimeoutId);
+    if (gameOverTimeoutId) clearTimeout(gameOverTimeoutId);
+    keys = {};
+    bullets = []; enemies = []; enemyBullets = []; particles = []; powerups = [];
+    player = null;
+    waveTransition = false;
+    enemyMoveTimer = 0;
+}
+
+function startGame() {
+    if (!selectedTeam) {
+        alert('Please select your team first!');
+        return;
+    }
+    
+    // Strict Cleanup & State reset
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    if (waveTimeoutId) clearTimeout(waveTimeoutId);
+    if (gameOverTimeoutId) clearTimeout(gameOverTimeoutId);
+    
+    score = 0;
+    lives = 3;
+    currentWave = 1;
+    waveTransition = false;
+    keys = {};
+    bullets = [];
+    enemies = [];
+    enemyBullets = [];
+    particles = [];
+    powerups = [];
+    enemyDirection = 1;
+    enemyMoveTimer = 0;
+    gameState = STATE_PLAYING;
+    
+    player = new Player(canvas.width / 2, canvas.height - 50);
+    
+    // UI clean
+    startScreen.classList.add('hidden');
+    gameOverScreen.classList.add('hidden');
+    leaderboardScreen.classList.add('hidden');
+    bossHpContainer.classList.add('hidden');
+    
+    updateHUD();
+    spawnWave();
+    
+    lastTime = performance.now();
+    animationFrameId = requestAnimationFrame(gameLoop);
+}
+
+function updateHUD() {
+    scoreDisplay.innerText = `SCORE: ${score}`;
+    levelDisplay.innerText = `WAVE: ${currentWave}`;
+    livesDisplay.innerText = `LIVES: [${Math.max(0, lives)}]`;
+}
+
+// ==========================================
+// FEATURE: Better Wave Generation System
+// ==========================================
+function getWaveConfig(wave) {
+    let config = {
+        rows: 2 + Math.min(Math.floor(wave / 4), 3), // Max 5 rows
+        cols: 5 + Math.min(Math.floor(wave / 2), 6), // Max 11 cols
+        speedMult: 1 + (wave * 0.05), // Slower progression
+        dropDistance: 15,
+        typeDistribution: { normal: 1.0, fast: 0, armored: 0, rooster: 0 },
+        isBossPhase: false
+    };
+    
+    if (wave % 5 === 0) {
+        config.isBossPhase = true;
+        config.speedMult = 1 + (wave * 0.02);
+    } else {
+        if (wave >= 2) { config.typeDistribution.normal -= 0.15; config.typeDistribution.fast += 0.15; config.dropDistance = 18; }
+        if (wave >= 3) { config.typeDistribution.normal -= 0.15; config.typeDistribution.rooster += 0.15; }
+        if (wave >= 4) { config.typeDistribution.normal -= 0.1; config.typeDistribution.armored += 0.1; }
+    }
+    return config;
+}
+
+function getEnemyType(config) {
+    let rand = Math.random();
+    let sum = 0;
+    for (const [type, prob] of Object.entries(config.typeDistribution)) {
+        sum += prob;
+        if (rand < sum) return type;
+    }
+    return 'normal';
+}
+
+function spawnWave() {
+    enemies = [];
+    enemyBullets = []; // Strict cleanup between waves
+    enemyDirection = 1;
+    let config = getWaveConfig(currentWave);
+
+    if (config.isBossPhase) {
+        enemies.push(new Chicken(canvas.width/2, 80, 'boss', config.speedMult));
+    } else {
+        let startX = (canvas.width - ((config.cols - 1) * 50)) / 2;
+        for (let r = 0; r < config.rows; r++) {
+            for (let c = 0; c < config.cols; c++) {
+                let x = startX + c * 50;
+                let y = 40 + r * 45;
+                let type = getEnemyType(config);
+                // Guarantee normal ones in front line
+                if (r === config.rows - 1) type = 'normal';
+                enemies.push(new Chicken(x, y, type, config.speedMult));
+            }
+        }
+    }
+    waveTransition = false;
+}
+
+let enemyMoveTimer = 0;
+
+class Player {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 40;
+        this.height = 30;
+        this.speed = 5;
+        this.isDead = false;
+        this.cooldown = 0;
+        this.weaponLevel = 1;
+        this.invulnerableTimer = 0;
+        this.flameTimer = 0;
+        this.flameState = false;
+    }
+
+    update() {
+        if (this.isDead) return;
+        if ((keys['ArrowLeft'] || keys['KeyA']) && this.x > this.width / 2) {
+            this.x -= this.speed;
+        }
+        if ((keys['ArrowRight'] || keys['KeyD']) && this.x < canvas.width - this.width / 2) {
+            this.x += this.speed;
+        }
+        if (this.cooldown > 0) this.cooldown--;
+        if (this.invulnerableTimer > 0) this.invulnerableTimer--;
+    }
+
+    draw(ctx) {
+        if (this.isDead) return;
+        if (this.invulnerableTimer > 0 && Math.floor(Date.now() / 100) % 2 === 0) return;
+
+        ctx.fillStyle = '#ffffff'; 
+        ctx.fillRect(this.x - 4, this.y - 18, 8, 10);
+        ctx.fillStyle = '#00d2ff'; 
+        ctx.fillRect(this.x - 6, this.y - 8, 12, 10);
+        ctx.fillStyle = '#e0e0e0'; 
+        ctx.fillRect(this.x - 14, this.y + 2, 28, 12);
+        ctx.fillStyle = '#a0a0a0'; 
+        ctx.fillRect(this.x - 20, this.y + 2, 6, 12);
+        ctx.fillRect(this.x + 14, this.y + 2, 6, 12);
+        ctx.fillStyle = '#f9056c'; 
+        ctx.fillRect(this.x - 28, this.y + 8, 8, 6);
+        ctx.fillRect(this.x - 24, this.y + 14, 4, 4);
+        ctx.fillRect(this.x + 20, this.y + 8, 8, 6);
+        ctx.fillRect(this.x + 20, this.y + 14, 4, 4);
+        
+        this.flameTimer++;
+        if (this.flameTimer > 5) {
+            this.flameState = !this.flameState;
+            this.flameTimer = 0;
+        }
+
+        if (keys['ArrowLeft'] || keys['ArrowRight'] || keys['KeyA'] || keys['KeyD'] || this.flameState) {
+            ctx.fillStyle = '#ff9900'; 
+            ctx.fillRect(this.x - 10, this.y + 14, 6, 8 + (this.flameState ? 2 : 4));
+            ctx.fillRect(this.x + 4, this.y + 14, 6, 8 + (this.flameState ? 4 : 2));
+            ctx.fillStyle = '#ffff00'; 
+            ctx.fillRect(this.x - 8, this.y + 14, 2, 4 + (this.flameState ? 2 : 4));
+            ctx.fillRect(this.x + 6, this.y + 14, 2, 4 + (this.flameState ? 4 : 2));
+        }
+    }
+
+    shoot() {
+        if (this.cooldown > 0) return;
+        let type = this.weaponLevel;
+        if (type === 1) {
+            bullets.push(new Bullet(this.x, this.y - 20, -10));
+            this.cooldown = 15;
+        } else if (type === 2) {
+            bullets.push(new Bullet(this.x - 10, this.y - 15, -12));
+            bullets.push(new Bullet(this.x + 10, this.y - 15, -12));
+            this.cooldown = 10;
+        } else if (type >= 3) {
+            bullets.push(new Bullet(this.x, this.y - 20, -10));
+            bullets.push(new Bullet(this.x - 15, this.y - 10, -10, false, -2));
+            bullets.push(new Bullet(this.x + 15, this.y - 10, -10, false, 2));
+            this.cooldown = 12;
+        }
+    }
+
+    hit() {
+        if (this.invulnerableTimer > 0 || this.isDead) return;
+        lives--;
+        createExplosion(this.x, this.y, '#00d2ff');
+        updateHUD();
+        
+        if (lives <= 0) {
+            this.isDead = true;
+            triggerGameOver();
+        } else {
+            this.invulnerableTimer = 120;
+        }
+    }
+}
+
+class Bullet {
+    constructor(x, y, vy, isEnemy = false, vx = 0, isExplosive = false) {
+        this.x = x;
+        this.y = y;
+        this.width = 4;
+        this.height = 15;
+        this.vx = vx;
+        this.vy = vy;
+        this.isEnemy = isEnemy;
+        this.isExplosive = isExplosive;
+        this.color = isEnemy ? '#ff3366' : '#00ffcc';
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+    }
+    draw(ctx) {
+        if (this.isExplosive) {
+            ctx.fillStyle = '#ffcc00'; 
+            ctx.fillRect(this.x - 6, this.y - 8, 12, 16);
+            ctx.fillStyle = '#ff3300'; 
+            ctx.fillRect(this.x - 2, this.y - 2, 4, 4);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(this.x - 2, this.y - 8, 4, 2);
+        } else if (this.isEnemy) {
+            ctx.fillStyle = '#ffffff'; 
+            ctx.fillRect(this.x - 3, this.y - 4, 6, 8);
+            ctx.fillRect(this.x - 4, this.y - 2, 8, 4);
+            ctx.fillStyle = '#e0e0e0';
+            ctx.fillRect(this.x - 2, this.y + 2, 4, 2);
+        } else {
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+        }
+    }
+}
+
+class PowerUp {
+    constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.type = type; 
+        this.vy = 2;
+        this.size = 20;
+        this.colors = { 'weapon': '#00ffcc', 'life': '#ff0044', 'shield': '#ffff00', 'bomb': '#ff8800' };
+    }
+    update() { this.y += this.vy; }
+    draw(ctx) {
+        ctx.fillStyle = this.colors[this.type];
+        ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+        ctx.fillStyle = '#fff';
+        ctx.font = '10px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        let char = this.type === 'weapon' ? 'W' : (this.type === 'life' ? 'L' : (this.type === 'shield' ? 'S' : 'B'));
+        ctx.fillText(char, this.x, this.y + 4);
+    }
+}
+
+class Chicken {
+    constructor(x, y, type, speedMult) {
+        this.baseY = y;
+        this.x = x;
+        this.y = y;
+        this.width = 30;
+        this.height = 30;
+        this.type = type;
+        this.color = '#FFD700'; 
+        
+        this.vx = 2 * speedMult;
+        this.vy = 0;
+        this.hp = 1;
+        this.points = 10;
+        this.shootRate = 0.001 * speedMult; 
+        
+        // FEATURE: Animation States
+        this.animTime = Math.random() * 10; 
+        this.layEggFlash = 0;
+        this.isBoss = false;
+        
+        switch(type) {
+            case 'fast':
+                this.color = '#ff9900'; 
+                this.vx = 3.2 * speedMult;
+                this.points = 20;
+                break;
+            case 'armored':
+                this.color = '#cccccc'; 
+                this.hp = 3;
+                this.points = 30;
+                break;
+            case 'rooster':
+                this.color = '#ff3300'; 
+                this.hp = 2;
+                this.points = 40;
+                this.shootRate = 0.004 * speedMult;
+                break;
+            case 'boss':
+                this.isBoss = true;
+                this.width = 120;
+                this.height = 120;
+                this.color = '#FFD700'; 
+                this.hp = 50 + (currentWave * 10);
+                this.maxHp = this.hp;
+                this.points = 200 * currentWave;
+                this.vx = 2.0 * speedMult;
+                this.shootRate = 0.015 * speedMult; 
+                bossHpContainer.classList.remove('hidden');
+                updateBossHp(this.hp, this.maxHp);
+                break;
+        }
+    }
+
+    update() {
+        this.x += this.vx * enemyDirection;
+        this.animTime += 0.1;
+        
+        if (this.layEggFlash > 0) this.layEggFlash--;
+        
+        let bounce = this.isBoss ? Math.sin(this.animTime) * 4 : Math.sin(this.animTime) * 2;
+        this.y = this.baseY + bounce;
+
+        if (Math.random() < this.shootRate) {
+            enemyBullets.push(new Bullet(this.x, this.y + this.height/2, 5, true, 0, this.isBoss));
+            this.layEggFlash = 10; // Trigger shoot animation flash
+        }
+    }
+
+    draw(ctx) {
+        if (this.isBoss) {
+            let scale = 6;
+            let bounce = Math.sin(this.animTime) * 4;
+            let ox = this.x - (10 * scale);
+            let oy = this.y - (10 * scale) + bounce;
+            
+            if (this.layEggFlash > 0) {
+                oy -= (2 * scale);
+                ctx.fillStyle = '#ffffff';
+            } else {
+                ctx.fillStyle = '#FFD700';
+            }
+            
+            ctx.fillRect(ox, oy, 20 * scale, 20 * scale);
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(ox + 4 * scale, oy - 6 * scale, 4 * scale, 6 * scale);
+            ctx.fillRect(ox + 12 * scale, oy - 6 * scale, 4 * scale, 6 * scale);
+            ctx.fillRect(ox + 8 * scale, oy - 4 * scale, 4 * scale, 4 * scale);
+            ctx.fillStyle = '#ff3300';
+            ctx.fillRect(ox + 6 * scale, oy - 8 * scale, 2 * scale, 2 * scale);
+            ctx.fillRect(ox + 14 * scale, oy - 8 * scale, 2 * scale, 2 * scale);
+            
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(ox + 4 * scale, oy + 6 * scale, 4 * scale, 2 * scale);
+            ctx.fillRect(ox + 12 * scale, oy + 6 * scale, 4 * scale, 2 * scale);
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(ox + 5 * scale, oy + 6 * scale, 2 * scale, 1 * scale);
+            ctx.fillRect(ox + 13 * scale, oy + 6 * scale, 2 * scale, 1 * scale);
+            
+            ctx.fillStyle = '#FFA500';
+            ctx.fillRect(ox + 8 * scale, oy + 10 * scale, 4 * scale, 4 * scale);
+            ctx.fillRect(ox + 6 * scale, oy + 12 * scale, 8 * scale, 2 * scale);
+            
+            let flap = Math.cos(this.animTime * 2) > 0;
+            ctx.fillStyle = this.layEggFlash > 0 ? '#ffffff' : '#e6c200';
+            if (flap) {
+                ctx.fillRect(ox - 4 * scale, oy + 4 * scale, 4 * scale, 12 * scale);
+                ctx.fillRect(ox + 20 * scale, oy + 4 * scale, 4 * scale, 12 * scale);
+            } else {
+                ctx.fillRect(ox - 4 * scale, oy + 8 * scale, 4 * scale, 12 * scale);
+                ctx.fillRect(ox + 20 * scale, oy + 8 * scale, 4 * scale, 12 * scale);
+            }
+            return;
+        }
+
+        let scale = 2;
+        // Bounce animation based on animTime
+        let bounce = this.isBoss ? Math.sin(this.animTime) * 4 : Math.sin(this.animTime) * 2;
+        let ox = this.x - (7 * scale); 
+        let oy = this.y - (7 * scale) + bounce;
+        
+        if (this.layEggFlash > 0) {
+            oy -= (2 * scale); // kickback up when dropping egg
+            ctx.fillStyle = '#ffffff'; // Flash white
+        } else {
+            ctx.fillStyle = this.color;
+        }
+        
+        // Main Body
+        ctx.fillRect(ox, oy, 14 * scale, 14 * scale);
+
+        // Wings flap animation
+        let flap = Math.cos(this.animTime * 2) > 0;
+        ctx.fillStyle = this.type === 'armored' ? '#aaaaaa' : '#e6c200';
+        if (this.layEggFlash > 0) ctx.fillStyle = '#cccccc'; // Highlight wings on flash
+        
+        if (flap) {
+            // Wings UP
+            ctx.fillRect(ox - 2 * scale, oy + 4 * scale, 2 * scale, 4 * scale);
+            ctx.fillRect(ox + 14 * scale, oy + 4 * scale, 2 * scale, 4 * scale);
+        } else {
+            // Wings DOWN
+            ctx.fillRect(ox - 2 * scale, oy + 8 * scale, 2 * scale, 4 * scale);
+            ctx.fillRect(ox + 14 * scale, oy + 8 * scale, 2 * scale, 4 * scale);
+        }
+
+        ctx.fillStyle = '#FFA500'; 
+        ctx.fillRect(ox + 5 * scale, oy + 8 * scale, 4 * scale, 3 * scale); 
+        ctx.fillRect(ox + 2 * scale, oy + 14 * scale, 3 * scale, 2 * scale); 
+        ctx.fillRect(ox + 9 * scale, oy + 14 * scale, 3 * scale, 2 * scale);
+
+        ctx.fillStyle = '#000'; 
+        ctx.fillRect(ox + 3 * scale, oy + 5 * scale, 2 * scale, 2 * scale); 
+        ctx.fillRect(ox + 9 * scale, oy + 5 * scale, 2 * scale, 2 * scale); 
+
+        ctx.fillStyle = '#FF0000'; 
+        ctx.fillRect(ox + 5 * scale, oy - 3 * scale, 4 * scale, 3 * scale);
+        
+        if (this.isBoss) {
+            ctx.fillStyle = '#f9056c'; 
+            ctx.fillRect(ox + 3 * scale, oy + 5 * scale, 2 * scale, 2 * scale);
+            ctx.fillRect(ox + 9 * scale, oy + 5 * scale, 2 * scale, 2 * scale);
+        }
+    }
+    
+    hit(damage) {
+        this.hp -= damage;
+        createParticle(this.x, this.y, this.color);
+        
+        if (this.isBoss) updateBossHp(this.hp, this.maxHp);
+        
+        if (this.hp <= 0) {
+            score += this.points;
+            updateHUD();
+            createExplosion(this.x, this.y, this.color);
+            if (this.isBoss) bossHpContainer.classList.add('hidden');
+            return true; 
+        }
+        return false;
+    }
+}
+
+function updateBossHp(hp, max) {
+    let pct = Math.max(0, (hp / max) * 100);
+    bossHpBar.style.width = pct + '%';
+}
+
+class Particle {
+    constructor(x, y, color, isExplosion) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * (isExplosion ? 10 : 4);
+        this.vy = (Math.random() - 0.5) * (isExplosion ? 10 : 4);
+        this.life = isExplosion ? 1.0 : 0.5;
+        this.color = color;
+        this.size = Math.random() * 6 + 2;
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= 0.05;
+    }
+    draw(ctx) {
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.size, this.size);
+        ctx.globalAlpha = 1.0;
+    }
+}
+
+function createParticle(x, y, color) {
+    for(let i=0; i<3; i++) particles.push(new Particle(x, y, color, false));
+}
+function createExplosion(x, y, color) {
+    for(let i=0; i<15; i++) particles.push(new Particle(x, y, color, true));
+}
+
+// STABILIZATION: Collision system rewritten safely
+function checkCollisions() {
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        let b = bullets[i];
+        
+        for (let j = enemies.length - 1; j >= 0; j--) {
+            let e = enemies[j];
+            let hw = e.width / 2;
+            let hh = e.height / 2;
+            
+            if (b.x > e.x - hw && b.x < e.x + hw && b.y > e.y - hh && b.y < e.y + hh) {
+                if (e.hit(1)) {
+                    // Powerup drop chance
+                    if (Math.random() < 0.1 || e.isBoss) {
+                        let types = ['weapon', 'life', 'shield', 'bomb'];
+                        powerups.push(new PowerUp(e.x, e.y, types[Math.floor(Math.random() * types.length)]));
+                    }
+                    enemies.splice(j, 1);
+                }
+                bullets.splice(i, 1);
+                break; // One bullet per hit
+            }
+        }
+    }
+    
+    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        let b = enemyBullets[i];
+        if (!player.isDead && b.x > player.x - 20 && b.x < player.x + 20 && b.y > player.y - 15 && b.y < player.y + 15) {
+            player.hit();
+            if (b.isExplosive) createExplosion(b.x, b.y, '#ff8800');
+            enemyBullets.splice(i, 1);
+        }
+    }
+    
+    for (let j = enemies.length - 1; j >= 0; j--) {
+        let e = enemies[j];
+        if (!player.isDead && Math.abs(e.x - player.x) < 30 && Math.abs(e.y - player.y) < 30) {
+            player.hit();
+            e.hit(999); 
+            enemies.splice(j, 1);
+        }
+    }
+    
+    for (let i = powerups.length - 1; i >= 0; i--) {
+        let p = powerups[i];
+        if (!player.isDead && Math.abs(p.x - player.x) < 30 && Math.abs(p.y - player.y) < 30) {
+            if (p.type === 'weapon') {
+                if (player.weaponLevel < 3) player.weaponLevel++;
+            } else if (p.type === 'life') {
+                lives++;
+                updateHUD();
+            } else if (p.type === 'shield') {
+                player.invulnerableTimer = 300; 
+            } else if (p.type === 'bomb') {
+                createExplosion(player.x, player.y - 100, '#ff8800');
+                score += 50; 
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    if (!enemies[j].isBoss) {
+                        score += enemies[j].points;
+                        createParticle(enemies[j].x, enemies[j].y, enemies[j].color);
+                        enemies.splice(j, 1);
+                    } else {
+                        enemies[j].hit(20); 
+                    }
+                }
+                updateHUD();
+            }
+            createParticle(p.x, p.y, p.colors[p.type]);
+            powerups.splice(i, 1);
+        }
+    }
+}
+
+// Bounding check strictly controlled
+function updateEnemyFormation() {
+    if (enemies.length === 0) return;
+    
+    let hitEdge = false;
+    let lowestEnemyY = 0;
+    
+    let dropDist = getWaveConfig(currentWave).dropDistance;
+    
+    for (let e of enemies) {
+        if (enemyDirection === 1 && e.x > canvas.width - 30) hitEdge = true;
+        if (enemyDirection === -1 && e.x < 30) hitEdge = true;
+        if (e.y > lowestEnemyY) lowestEnemyY = e.y;
+    }
+    
+    if (hitEdge) {
+        enemyDirection *= -1;
+        for (let e of enemies) e.baseY += dropDist; 
+    }
+    
+    if (lowestEnemyY > canvas.height - 80) {
+        if (!player.isDead) { 
+            lives = 0;
+            player.isDead = true;
+            createExplosion(player.x, player.y, '#f9056c');
+            updateHUD();
+            triggerGameOver();
+        }
+    }
+}
+
+// Explicit distinct game over trigger to avoid overlap
+function triggerGameOver() {
+    if (gameState === STATE_GAMEOVER) return; 
+    gameState = STATE_GAMEOVER;
+    bossHpContainer.classList.add('hidden');
+    
+    gameOverTimeoutId = setTimeout(() => {
+        gameOverScreen.classList.remove('hidden');
+        finalScoreDisplay.innerText = `Final Score: ${score}`;
+        
+        const gameOverTeamLogo = document.getElementById('gameOverTeamLogo');
+        if (selectedTeam) {
+            gameOverTeamLogo.src = `echipe/${selectedTeam.number}.png`;
+            gameOverTeamLogo.onerror = function() { this.src = 'echipe/default.png'; };
+            gameOverTeamLogo.style.display = 'block';
+            
+            const scoreSaved = saveScore();
+            if (scoreSaved) {
+                newHighScoreDiv.classList.remove('hidden');
+                yourTeamDisplay.textContent = `Team: #${selectedTeam.number} - ${selectedTeam.name}`;
+            } else {
+                newHighScoreDiv.classList.add('hidden');
+            }
+        } else {
+            gameOverTeamLogo.style.display = 'none';
+            newHighScoreDiv.classList.add('hidden');
+        }
+    }, 1000); // Wait for explosion animation to finish
+}
+
+function gameLoop(timestamp) {
+    if (gameState !== STATE_PLAYING) {
+        return; // Break the loop forever if state deviated
+    }
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    
+    player.update();
+    player.draw(ctx);
+    
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        let b = bullets[i];
+        b.update();
+        b.draw(ctx);
+        if (b.y < -50) bullets.splice(i, 1);
+    }
+    
+    enemyMoveTimer++;
+    if (enemyMoveTimer > 2) {
+        updateEnemyFormation();
+        enemyMoveTimer = 0;
+    }
+    
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let e = enemies[i];
+        e.update();
+        e.draw(ctx);
+    }
+    
+    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        let b = enemyBullets[i];
+        b.update();
+        b.draw(ctx);
+        
+        if (b.isExplosive && b.y > canvas.height - 10) {
+            createExplosion(b.x, b.y, '#ff8800');
+            if (!player.isDead && Math.abs(b.x - player.x) < 80) { 
+                player.hit();
+            }
+            enemyBullets.splice(i, 1);
+        } else if (b.y > canvas.height + 50) {
+            enemyBullets.splice(i, 1);
+        }
+    }
+    
+    for (let i = powerups.length - 1; i >= 0; i--) {
+        let p = powerups[i];
+        p.update();
+        p.draw(ctx);
+        if (p.y > canvas.height + 50) powerups.splice(i, 1);
+    }
+    
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.update();
+        p.draw(ctx);
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+    
+    checkCollisions();
+    
+    // Controlled Wave Transition Flag
+    if (enemies.length === 0 && !waveTransition && !player.isDead) {
+        waveTransition = true;
+        currentWave++;
+        updateHUD();
+        waveTimeoutId = setTimeout(spawnWave, 2000); 
+    }
+    
+    animationFrameId = requestAnimationFrame(gameLoop);
+}
+
+    </script>
+</body>
+</html>
+
+
+
