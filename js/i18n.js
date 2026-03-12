@@ -660,7 +660,9 @@ const initI18n = () => {
                         </div>
                      </div>
                      <div class="card-body p-4">
-                       <p>Primul meet al sezonului, cu 4 victorii din 6 meciuri. Robotul a funcționat bine în autonomous și teleop, iar problemele inițiale de ping au fost rezolvate rapid. Am dezvoltat o strategie solidă de scorare, care a pus bazele evoluției noastre ulterioare.</p>
+                         <p>Meet-ul "Jurassic Peaks", organizat la Piatra Neamț pe 10 ianuarie, a fost primul nostru meet din acest sezon.</p>
+                         <p>Am reușit să câștigăm 4 meciuri din 6, fiind un start bun. Robotul nostru s-a mișcat bine atât pe partea de teleoperare, cât și pe cea de autonomie, rezultat al nenumăratelor teste pe care le-am făcut.</p>
+                         <p>La început am avut probleme cu ping-ul, dar le-am rezolvat destul de repede. Astfel, "Jurassic Peaks" a fost un meet în care ne-am dezvoltat o strategie bună de scorare, ceea ce ne-a permis să avansăm în clasamentul Ligii (de Est).</p>
                      </div>
                    </div>
 
@@ -673,7 +675,9 @@ const initI18n = () => {
                         </div>
                      </div>
                      <div class="card-body p-4">
-                       <p>Un meet mai dificil, cu 2 victorii din 6 meciuri, în care au apărut probleme la push-arm. Chiar și așa, robotul a reușit perioade eficiente de scorare, iar experiența ne-a ajutat să identificăm punctele fragile ale robotului și să îmbunătățim design-ul.</p>
+                         <p>Meet-ul "Defrost", organizat la Iași pe 11 ianuarie, a fost al doilea meet la care am participat. Deși am câștigat doar 2/6 meciuri și a fost o performanță mai slabă față de meet-ul precedent, am observat mai multe lipsuri în design-ul robotului.</p>
+                         <p>În primul meci ni s-a defectat push arm-ul, fapt ce ne-a îngreunat posibilitatea de scorare pe tot parcursul meet-ului, neavând resursele pentru a-l repara complet. Deși sistemul era defectat, avea momente când reușea să facă tranziția dintre indexer și shooter, iar în acele perioade de timp robotul nostru, cu ajutorul strategiei îmbunătățite de la meet-ul anterior, s-a mișcat rapid și eficient.</p>
+                         <p>Astfel, am remarcat fragilitatea subsistemului și am pus un perete de aluminiu în spatele robotului, lângă push arm.</p>
                      </div>
                    </div>
 
@@ -686,7 +690,9 @@ const initI18n = () => {
                         </div>
                      </div>
                      <div class="card-body p-4">
-                       <p>Am revenit cu o performanță mai bună, 3 victorii din 6 meciuri, menținând o tactică de scorare constantă. Robotul s-a mișcat eficient, confirmând îmbunătățirile aduse după meet-ul precedent.</p>
+                         <p>La meet-ul "Focșani Tech Challenge", organizat pe 24 ianuarie, ne-am îmbunătățit strategia, câștigând 3/6 meciuri.</p>
+                         <p>Deschiderea evenimentului a fost realizată prin prezența președintelui României, Nicușor Dan, în onoarea celor 160 de ani de la fondarea Colegiului "Unirea".</p>
+                         <p>Robotul ni s-a mișcat bine și eficient, iar tactica noastră de scorare a rămas consistentă.</p>
                      </div>
                    </div>
 
@@ -694,12 +700,14 @@ const initI18n = () => {
                    <div class="card mb-4 border-0 shadow-sm">
                      <div class="card-header bg-white text-primary p-3">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Galați - „Ice Age”</h5>
-                            <span class="badge bg-success rounded-pill px-3 py-2">31 ianuarie</span>
+                            <h5 class="mb-0">Botoșani - „Royal Stars”</h5>
+                            <span class="badge bg-success rounded-pill px-3 py-2">7 februarie</span>
                         </div>
                      </div>
                      <div class="card-body p-4">
-                    <p>Cel mai reușit meet al sezonului, cu 5 victorii din 6 meciuri. Acest rezultat a confirmat viabilitatea design-ului, eficiența sistemelor și consistența strategiei noastre.</p>
+                    <p>Ultimul meet la care am participat a fost „Royal Stars”, organizat pe 7 februarie la Botoșani. În cadrul acestuia am câștigat 4/6 meciuri, fapt care ne-a asigurat o poziție mai bună în clasamentul ligii.</p>
+                    <p>În urma meet-ului am stabilit ultimele schimbări ce țin de design-ul robotului pentru a optimiza și facilita funcționarea acestuia.</p>
+                    <p>Astfel, am evoluat de la competiție la competiție, îmbunătățind atât tactica de joc, cât și funcționalitățile hardware.</p>
                      </div>
                    </div>
 
@@ -712,12 +720,9 @@ const initI18n = () => {
                         </div>
                      </div>
                      <div class="card-body p-4">
-                       <h6>Obiective pentru regionala</h6>
-                       <ul>
-                         <li><strong>Stabilitate maxima:</strong> meciuri fara erori, cu autonomous si teleop curate.</li>
-                         <li><strong>Strategie clara:</strong> rol bine definit in alianta si punctaj constant.</li>
-                         <li><strong>Calificare:</strong> sa intram in fazele finale si sa obtinem recunoastere.</li>
-                       </ul>
+                         <p>Experiența echipei roLERbot la regionala de est FTC desfășurată la Piatra Neamț a fost o lecție de adaptabilitate, reușind să obținem 2 victorii din 6 meciuri.</p>
+                         <p>Deși problemele de expunere au afectat, inițial, precizia sistemului AprilTag, am remediat constant situația pe parcursul competiției, iar ulterior am implementat o soluție software superioară prin migrarea către Python SnapScript pentru o stabilitate deplină.</p>
+                         <p>Dincolo de terenul de joc, am transformat standul nostru într-un spațiu interactiv și incluziv, demonstrând prin activități creative și inedite că succesul în STEAM înseamnă puterea de a inova și de a învăța din fiecare obstacol.</p>
                      </div>
                    </div>
                 </div>`
