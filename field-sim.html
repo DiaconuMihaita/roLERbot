@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Field Sim BIOBUZZ - roLERbot</title>
+  <meta name="description" content="Simulator de teren FTC în browser, tema BIOBUZZ: condu robotul, colectează polen și marchează în stup." />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="icon" type="image/png" href="assets/img/Design fără titlu (41).png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link href="css/game.css?v=3" rel="stylesheet" />
+  <style>
+    :root { --red: #ff4d5e; --blue: #3d8bff; --purple: #ffb81f; --green: #ffe27a; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; padding: 16px; display: flex; justify-content: center; align-items: flex-start; user-select: none; -webkit-user-select: none; touch-action: none; }
+    .fs { width: min(1180px, 100%); display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+    .stage-wrap { position: relative; display: grid; gap: 12px; }
+
+    .topbar2 { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; padding: 12px 18px; border-radius: 22px; background: rgba(16,16,20,.8); box-shadow: inset 0 0 0 1px var(--g-line); backdrop-filter: blur(10px); }
+    .tb-score { display: flex; align-items: baseline; gap: 10px; font-family: var(--g-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--g-dim); }
+    .tb-score b { font-family: var(--g-display); font-weight: 800; font-size: 40px; letter-spacing: -.04em; color: #fff; line-height: 1; font-variant-numeric: tabular-nums; }
+    .tb-score b.bump { animation: bump .5s cubic-bezier(.2,.7,.1,1); }
+    @keyframes bump { 35% { transform: scale(1.35); color: var(--g-pink-hi); } }
+    .tb-score.red i, .tb-score.blue i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; align-self: center; }
+    .tb-score.red i { background: var(--red); box-shadow: 0 0 16px var(--red); }
+    .tb-score.blue { justify-content: flex-end; }
+    .tb-score.blue i { background: var(--blue); box-shadow: 0 0 16px var(--blue); order: 3; }
+    .tb-mid { text-align: center; }
+    .tb-phase { font-family: var(--g-mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--g-pink-hi); }
+    .tb-time { font-family: var(--g-display); font-weight: 800; font-size: 40px; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+    .tb-bar { height: 3px; border-radius: 3px; background: rgba(255,255,255,.1); margin-top: 6px; overflow: hidden; }
+    .tb-bar i { display: block; height: 100%; width: 0; background: var(--g-pink); }
+
+    .stage { position: relative; border-radius: 26px; overflow: hidden; background: #0c0c10; box-shadow: 0 0 0 1px var(--g-line), 0 40px 90px -30px rgba(249,5,108,.5); aspect-ratio: 1; width: 100%; max-height: calc(100vh - 150px); margin-inline: auto; }
+    .stage canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+
+    .overlay-screen { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 24px; overflow-y: auto; }
+    .overlay-screen.hidden { display: none; }
+    .overlay-screen h1 { margin-bottom: 8px !important; }
+    .seg { display: inline-flex; padding: 4px; border-radius: 999px; background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px var(--g-line); margin: 6px 0 14px; }
+    .seg button { background: transparent; border: 0; cursor: pointer; height: 42px; padding: 0 22px; border-radius: 999px; font-family: var(--g-display); font-weight: 700; font-size: 14px; color: var(--g-dim); transition: background .3s, color .3s; }
+    .seg button.on[data-al="red"] { background: var(--red); color: #fff; }
+    .seg button.on[data-al="blue"] { background: var(--blue); color: #fff; }
+    .seg button.on.pink { background: var(--g-pink); color: #fff; }
+    .row2 { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; margin-bottom: 6px; }
+    .lbl { font-family: var(--g-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--g-dim); margin-top: 8px; }
+    .big { font-family: var(--g-display); font-weight: 800; font-size: clamp(110px, 22vw, 220px); letter-spacing: -.05em; color: var(--g-pink); text-shadow: 0 0 70px rgba(249,5,108,.6); line-height: 1; }
+    .result-grid { display: flex; gap: 28px; align-items: flex-end; margin: 10px 0 18px; font-family: var(--g-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--g-dim); }
+    .result-grid b { display: block; font-family: var(--g-display); font-weight: 800; font-size: 64px; letter-spacing: -.04em; line-height: 1; color: #fff; }
+    .result-grid .r b { color: var(--red); } .result-grid .b b { color: var(--blue); }
+
+    .side { display: grid; gap: 12px; }
+    .card2 { padding: 18px; border-radius: 22px; background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px var(--g-line); }
+    .card2 h3 { margin: 0 0 12px; font-family: var(--g-display); font-weight: 700; font-size: 18px; letter-spacing: -.02em; }
+    .pips { display: flex; gap: 8px; margin-bottom: 14px; }
+    .pip { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px var(--g-line); transition: background .2s, box-shadow .2s; }
+    .pip.y { background: #ffc933; box-shadow: 0 0 18px #ffc933; }
+    .pip.r { background: #ff4d5e; box-shadow: 0 0 18px #ff4d5e; }
+    .pip.b { background: #3d8bff; box-shadow: 0 0 18px #3d8bff; }
+    .meter { height: 6px; border-radius: 6px; background: rgba(255,255,255,.08); overflow: hidden; margin: 6px 0 14px; }
+    .meter i { display: block; height: 100%; background: var(--g-pink); width: 100%; transform-origin: 0; }
+    .kv { display: flex; justify-content: space-between; font-size: 14px; color: var(--g-dim); padding: 6px 0; border-bottom: 1px solid var(--g-line); }
+    .kv:last-child { border: 0; } .kv b { color: var(--g-ink); font-weight: 600; }
+    .keys { display: grid; gap: 8px; font-size: 13.5px; color: var(--g-dim); }
+    .keys kbd { font-family: var(--g-mono); font-size: 11px; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,.09); color: var(--g-ink); margin-right: 4px; }
+    .toggle { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 14px; color: var(--g-ink); cursor: pointer; }
+    .toggle input { appearance: none; width: 44px; height: 26px; border-radius: 26px; background: rgba(255,255,255,.12); position: relative; transition: background .3s; cursor: pointer; }
+    .toggle input::after { content: ""; position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .3s; }
+    .toggle input:checked { background: var(--g-pink); } .toggle input:checked::after { transform: translateX(18px); }
+    .ghost-link { display: inline-flex; align-items: center; justify-content: center; height: 46px; border-radius: 999px; padding: 0 22px; font-family: var(--g-display); font-weight: 700; font-size: 14px; box-shadow: inset 0 0 0 1px rgba(244,241,236,.3); transition: background .3s, color .3s, transform .4s var(--g-ease); }
+    .ghost-link:hover { background: var(--g-ink); color: var(--g-bg); transform: translateY(-2px); }
+
+    /* touch controls */
+    .touch { display: none; position: absolute; inset: auto 0 0 0; z-index: 5; height: 40%; pointer-events: none; }
+    .joy { position: absolute; left: 18px; bottom: 18px; width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px var(--g-line); pointer-events: auto; touch-action: none; }
+    .joy i { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px; border-radius: 50%; background: var(--g-pink); box-shadow: 0 0 24px rgba(249,5,108,.7); }
+    .tbtn { position: absolute; pointer-events: auto; border-radius: 50%; display: grid; place-items: center; font-family: var(--g-display); font-weight: 800; background: rgba(255,255,255,.1); box-shadow: inset 0 0 0 1px var(--g-line); touch-action: none; color: #fff; }
+    .tbtn:active, .tbtn.on { background: var(--g-pink); }
+    .t-shoot { right: 18px; bottom: 28px; width: 92px; height: 92px; font-size: 15px; }
+    .t-dep { right: 120px; bottom: 28px; width: 64px; height: 64px; font-size: 10px; }
+    .t-take { right: 194px; bottom: 28px; width: 64px; height: 64px; font-size: 12px; }
+    .t-l { right: 126px; bottom: 112px; width: 58px; height: 58px; }
+    .t-r { right: 18px; bottom: 132px; width: 58px; height: 58px; }
+    @media (pointer: coarse) { .touch { display: block; } .keys-card { display: none; } }
+
+    @media (max-width: 980px) { .fs { grid-template-columns: 1fr; } .stage { max-height: none; } .tb-score b, .tb-time { font-size: 30px; } }
+  </style>
+</head>
+
+<body>
+  <div class="fs">
+    <div class="stage-wrap">
+      <div class="topbar2">
+        <div class="tb-score red"><i></i>Roșu <b id="sRed">0</b></div>
+        <div class="tb-mid">
+          <div class="tb-phase" id="phase">PREGĂTIRE</div>
+          <div class="tb-time" id="time">2:30</div>
+          <div class="tb-bar"><i id="bar"></i></div>
+        </div>
+        <div class="tb-score blue"><i></i><b id="sBlue">0</b> Albastru</div>
+      </div>
+
+      <div class="stage" id="stage">
+        <canvas id="cv" width="960" height="960"></canvas>
+
+        <div class="touch" id="touch">
+          <div class="joy" id="joy"><i id="joyKnob"></i></div>
+          <div class="tbtn t-l" id="tL">⟲</div>
+          <div class="tbtn t-r" id="tR">⟳</div>
+          <div class="tbtn t-shoot" id="tShoot">TRAGE</div>
+          <div class="tbtn t-dep" id="tDep">DEPUNE</div>
+          <div class="tbtn t-take" id="tTake">IA</div>
+        </div>
+
+        <div class="overlay-screen" id="menu">
+          <h1>BIOBUZZ<br>FIELD SIM</h1>
+          <h2>2026/27 · după manualul oficial (TU04) · neoficial</h2>
+          <div class="lbl">Alianța ta</div>
+          <div class="seg" id="segAlliance"><button class="on" data-al="red">Roșu</button><button data-al="blue">Albastru</button></div>
+          <div class="lbl">Robot</div>
+          <div class="seg" id="segRobot"><button class="on pink" data-rb="strafe">Full strafe</button><button data-rb="turret">Turelă independentă</button></div>
+          <div class="lbl">Sesiune</div>
+          <div class="seg" id="segMode"><button class="on pink" data-mode="1v1">Meci 1v1</button><button data-mode="2v2">Meci 2v2 + AI</button><button data-mode="free">Free drive</button></div>
+          <div class="row2" style="margin-top:10px">
+            <button class="btn-retro" id="btnStart">Intră pe teren</button>
+          </div>
+          <div class="lbl" id="bestLine"></div>
+        </div>
+
+        <div class="overlay-screen hidden" id="countdown"><div class="big" id="cdText">3</div></div>
+
+        <div class="overlay-screen hidden" id="paused"><h1>PAUZĂ</h1><div class="row2"><button class="btn-retro" id="btnResume">Continuă</button></div></div>
+
+        <div class="overlay-screen hidden" id="end">
+          <h1 id="endTitle">REZULTAT</h1>
+          <div class="result-grid"><div class="r"><b id="fRed">0</b>Roșu</div><div class="b"><b id="fBlue">0</b>Albastru</div></div>
+          <div class="lbl" id="endNote"></div>
+          <div class="row2" style="margin-top:14px">
+            <button class="btn-retro" id="btnAgain">Joacă din nou</button>
+            <button class="btn-retro" id="btnMenu">Meniu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="card2">
+        <h3>Robotul tău <span id="rbName" style="font-family:var(--g-mono);font-size:10px;letter-spacing:.12em;color:var(--g-dim)"></span></h3>
+        <div class="pips" id="pips"><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span></div>
+        <div class="lbl" style="margin-top:0">Reîncărcare shooter</div>
+        <div class="meter"><i id="cdBar"></i></div>
+        <div class="kv"><span>Viteză</span><b id="spd">0 in/s</b></div>
+        <div class="kv"><span>Hive tips (alianța ta)</span><b id="myShots">0</b></div>
+        <div class="kv"><span>Precizie</span><b id="acc">–</b></div>
+        <div class="kv"><span>Nectar rămas în zona ta</span><b id="bkNq">5</b></div>
+      </div>
+      <div class="card2">
+        <h3>Setări</h3>
+        <label class="toggle">Field-centric (implicit: robot-centric) <input type="checkbox" id="optFC"></label>
+        <div class="lbl" style="margin-top:6px">Viteză robot <span id="spdVal">100%</span></div>
+        <input type="range" id="optSpd" min="50" max="130" value="100" style="width:100%;accent-color:#f9056c">
+      </div>
+      <div class="card2 keys-card">
+        <h3>Comenzi</h3>
+        <div class="keys">
+          <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> mișcare</div>
+          <div><kbd>←</kbd><kbd>→</kbd> sau <kbd>Q</kbd><kbd>E</kbd> rotire</div>
+          <div><kbd>Space</kbd> aruncă spre stup</div>
+          <div><kbd>F</kbd> depune în floare · <kbd>C</kbd> ia din floare</div>
+          <div><kbd>Shift</kbd> precizie · <kbd>R</kbd> field-centric</div>
+          <div><kbd>P</kbd> pauză · Gamepad suportat</div>
+        </div>
+      </div>
+      <div class="card2">
+        <h3>Scor alianță</h3>
+        <div class="kv"><span>HIVE TIP (20)</span><b id="bkTip">0</b></div>
+        <div class="kv"><span>LEAVE + PARK</span><b id="bkLP">0</b></div>
+        <div class="kv"><span>În celulă (2 / element)</span><b id="bkCell">0</b></div>
+        <div class="kv"><span>Flori (2 / element + 5)</span><b id="bkFl">0</b></div>
+        <div class="kv"><span>Grădină (1 / element)</span><b id="bkGd">0</b></div>
+        <div class="kv"><span>Fault-uri credit</span><b id="bkFoul">0</b></div>
+      </div>
+      <div class="card2">
+        <h3>Reguli <span style="font-family:var(--g-mono);font-size:10px;letter-spacing:.12em;color:var(--g-pink-hi)">MANUAL TU04</span></h3>
+        <div class="keys">
+          <div><b style="color:#fff">Stupul</b> din mijloc are 2 celule; doar cea ridicată primește. Lansezi <b style="color:#ffc933">polen</b> sau nectar în ea; când e plină, <b style="color:#fff">se răstoarnă (+20)</b>, se varsă și primești încă un nectar.</div>
+          <div><b style="color:#fff">Nectarul</b> (roșu/albastru) merge în flori <b style="color:#fff">doar în ultimele 60 s</b> (altfel fault 20). Cine are nectarul cel mai de sus deține floarea: 2 pct pentru fiecare element. Nectarul cel mai de jos: +5.</div>
+          <div>Polenul se scoate din <b style="color:#fff">partea de jos</b> a florii (driving în ea). Grădina: 1 pct / element.</div>
+          <div>Mingea intră în celulă <b style="color:#fff">doar din partea ei deschisă</b>: trebuie să fii în fața ei. Turela urmărește celula doar dacă ești în față.</div>
+          <div>AUTO: LEAVE +3 (părăsești peretele), PARK +5 (în LOADING ZONE). La final PARK +5.</div>
+          <div style="color:#ff8a96">Nectar de culoarea adversarului: avertisment, apoi fault minor (5).</div>
+          <div style="opacity:.7">Pragul de răsturnare e estimat (nu e în manual).</div>
+        </div>
+      </div>
+      <a class="ghost-link" href="field-sim-3d.html">Versiunea 3D →</a>
+      <a class="ghost-link" href="index.html">← Înapoi la site</a>
+    </aside>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+    const IN = 144, cv = document.getElementById('cv'), ctx = cv.getContext('2d'), S = cv.width / IN;
+    const $ = (id) => document.getElementById(id);
+    const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+    const TAU = Math.PI * 2;
+
+    // ---------- constants (geometry + points from the BIOBUZZ manual, TU04) ----------
+    const GRAV = 330, Z0 = 12, Z_CELL = 44, Z_CELL_MIN = 30; // lob physics (inches, in/s^2)
+    const HS = 9; // half of the 18 in robot footprint
+    const BALL_R = { y: 1.5, r: 2.0, b: 2.0 }, BALL_M = { y: 1, r: 2.4, b: 2.4 };
+    const R = 10.5, MAX_V = 62, MAX_W = 3.3, HOLD = 4, SHOT_V = 125, SHOT_LIFE = 1.05;
+    const AUTO_T = 30, INTER_T = 8, TELE_T = 120, MATCH_T = AUTO_T + INTER_T + TELE_T, FLOWER_T = 60; // nectar into flowers only in the last 60 s
+    const PT = { tip: 20, cell: 2, flowerEach: 2, bottomNectar: 5, garden: 1, leave: 3, park: 5, minor: 5, major: 20 };
+    const TIP_AT = 6; // not specified in the manual (physical): elements needed in the up-cell to tip - estimate
+    const COL = { red: '#ff4d5e', blue: '#3d8bff', y: '#ffc933', r: '#ff4d5e', b: '#3d8bff', dust: '#a2a2ac' };
+    const NECT = { red: 'r', blue: 'b' };
+    const OPP = { red: 'blue', blue: 'red' };
+    // HIVE structure in the centre: frame 39 x 49.5 in (pivot axis along y), blue half on top, red half below
+    const FRAME = { x0: 52.5, x1: 91.5, y0: 47.3, y1: 96.7 };
+    const CELLS = { blue: [{ x: 58.5, y: 59 }, { x: 85.5, y: 59 }], red: [{ x: 58.5, y: 85 }, { x: 85.5, y: 85 }] };
+    const CELL_W = 16, CELL_H = 20;
+    const LZ = { blue: { x: 96, y: 0, w: 23, h: 11 }, red: { x: 25, y: 133, w: 23, h: 11 } };
+    const GARDEN = { blue: { x: 0, y: 0, w: 3.5, h: 23 }, red: { x: IN - 3.5, y: IN - 23, w: 3.5, h: 23 } };
+    const FLOWER_POS = [[48, 3.2], [141, 48], [3, 96], [96, 141]];
+    const ROBOTS = {
+      strafe: { name: 'FULL STRAFE', speed: 1, reload: 0.55, turret: false },
+      turret: { name: 'TURELĂ', speed: 0.92, reload: 0.72, turret: true }
+    };
+
+    // ---------- state ----------
+    const cfg = { alliance: 'red', robot: 'strafe', mode: '1v1' };
+    let G = null, mode = 'menu', last = 0, keys = {};
+    const touch = { mx: 0, my: 0, rot: 0, shoot: false, dep: false, take: false };
+    const best = JSON.parse(localStorage.getItem('fieldSimBest') || '{}');
+
+    function mkRobot(al, x, y, a, human, type, slot) {
+      return { al, x, y, a, vx: 0, vy: 0, w: 0, hold: ['y', 'y', 'y', 'y'], cd: 0, icd: 0, human, type, slot, shots: 0, hits: 0, thought: 0, tx: x, ty: y, role: 'collect', ta: a, fl: null, mid: null, wph: [0, 0, 0, 0], ip: 0, pend: 0, hintT: 0, recoil: 0, boost: 0, gotFlash: 0, num: human ? '21031' : String(10000 + Math.floor(Math.random() * 20000)) };
+    }
+    function newGame() {
+      const mine = cfg.alliance, opp = OPP[mine];
+      const start = { red: [[70, IN - R], [122, IN - R]], blue: [[74, R], [22, R]] };
+      const aim = (al) => (al === 'red' ? -Math.PI / 2 : Math.PI / 2);
+      const robots = [mkRobot(mine, start[mine][0][0], start[mine][0][1], aim(mine), true, cfg.robot, 0)];
+      if (cfg.mode === '1v1') robots.push(mkRobot(opp, start[opp][0][0], start[opp][0][1], aim(opp), false, 'strafe', 0));
+      if (cfg.mode === '2v2') {
+        robots.push(mkRobot(mine, start[mine][1][0], start[mine][1][1], aim(mine), false, 'turret', 1));
+        robots.push(mkRobot(opp, start[opp][0][0], start[opp][0][1], aim(opp), false, 'strafe', 0));
+        robots.push(mkRobot(opp, start[opp][1][0], start[opp][1][1], aim(opp), false, 'turret', 1));
+      }
+      const balls = [];
+      // 4 pollen in each garden, in a line from the corner nearest the alliance area
+      for (let k = 0; k < 4; k++) {
+        balls.push({ x: 1.9, y: 1.9 + k * 3.1, vx: 0, vy: 0, st: 'floor', c: 'y', life: 0 });
+        balls.push({ x: IN - 1.9, y: IN - 1.9 - k * 3.1, vx: 0, vy: 0, st: 'floor', c: 'y', life: 0 });
+      }
+      const hive = {
+        blue: { up: 0, cell: ['b', 'b', 'b'], tips: 0, p: 0, v: 0, pulse: 0 },
+        red: { up: 1, cell: ['r', 'r', 'r'], tips: 0, p: 1, v: 0, pulse: 0 }
+      };
+      return {
+        robots, balls, hive, t: 0, free: cfg.mode === 'free', fx: [], pops: [],
+        flowers: FLOWER_POS.map(([x, y]) => ({ x, y, stack: ['y', 'y', 'y', 'y'], pulse: 0 })), rings: [], shake: 0, tokens: [],
+        nq: { red: 5, blue: 5 }, release: [], allReleased: false,
+        pen: { red: 0, blue: 0 }, warn: { red: 0, blue: 0 }, lp: { red: 0, blue: 0 }, autoDone: false,
+        parts: { red: {}, blue: {} }, score: { red: 0, blue: 0 }
+      };
+    }
+
+    // ---------- input ----------
+    addEventListener('keydown', (e) => {
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+      keys[e.code] = true;
+      if (e.code === 'KeyR') { const o = $('optFC'); o.checked = !o.checked; }
+      if ((e.code === 'KeyP' || e.code === 'Escape') && (mode === 'run' || mode === 'pause')) togglePause();
+    });
+    addEventListener('keyup', (e) => { keys[e.code] = false; });
+    addEventListener('blur', () => { keys = {}; });
+
+    function readInput() {
+      let mx = 0, my = 0, rot = 0, shoot = false, slow = false, dep = !!keys.KeyF, take = !!keys.KeyC;
+      if (keys.KeyD) mx += 1; if (keys.KeyA) mx -= 1; if (keys.KeyW) my += 1; if (keys.KeyS) my -= 1;
+      if (keys.ArrowRight || keys.KeyE) rot += 1; if (keys.ArrowLeft || keys.KeyQ) rot -= 1;
+      if (keys.Space || keys.Enter) shoot = true; if (keys.ShiftLeft || keys.ShiftRight) slow = true;
+      const gps = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (const g of gps) {
+        if (!g) continue;
+        const dz = (v) => (Math.abs(v) < 0.15 ? 0 : v);
+        mx += dz(g.axes[0] || 0); my -= dz(g.axes[1] || 0); rot += dz(g.axes[2] || 0);
+        if ((g.buttons[7] && g.buttons[7].pressed) || (g.buttons[0] && g.buttons[0].pressed) || (g.buttons[5] && g.buttons[5].pressed)) shoot = true;
+        if (g.buttons[6] && g.buttons[6].pressed) slow = true;
+        if (g.buttons[2] && g.buttons[2].pressed) dep = true;
+        if (g.buttons[3] && g.buttons[3].pressed) take = true;
+        break;
+      }
+      mx += touch.mx; my += touch.my; rot += touch.rot; if (touch.shoot) shoot = true; if (touch.dep) dep = true; if (touch.take) take = true;
+      const m = Math.hypot(mx, my); if (m > 1) { mx /= m; my /= m; }
+      return { mx, my, rot: clamp(rot, -1, 1), shoot, slow, dep, take };
+    }
+    const ZERO = { mx: 0, my: 0, rot: 0, shoot: false, slow: false, dep: false, take: false };
+
+    // ---------- helpers ----------
+    const upCell = (al) => CELLS[al][G.hive[al].up];
+    const pop = (x, y, txt, c) => G.pops.push({ x, y, t: 0, txt, c });
+    const phaseOf = (t) => (t < AUTO_T ? 'auto' : t < AUTO_T + INTER_T ? 'inter' : 'tele');
+    const nearRect = (r, z, pad) => r.x > z.x - pad && r.x < z.x + z.w + pad && r.y > z.y - pad && r.y < z.y + z.h + pad;
+    function inCell(b, al, idx) { const c = CELLS[al][idx]; return Math.abs(b.x - c.x) < CELL_W / 2 && Math.abs(b.y - c.y) < CELL_H / 2; }
+
+    // ---------- physics ----------
+    function driveRobot(r, inp, dt) {
+      const def = ROBOTS[r.type];
+      const sp = (+$('optSpd').value / 100) * def.speed * (r.human ? 1 : 0.72) * (inp.slow ? 0.4 : 1);
+      let tvx, tvy;
+      if (r.human && !$('optFC').checked) {
+        const fx = Math.cos(r.a), fy = Math.sin(r.a), rx = -Math.sin(r.a), ry = Math.cos(r.a);
+        tvx = (fx * inp.my + rx * inp.mx) * MAX_V * sp; tvy = (fy * inp.my + ry * inp.mx) * MAX_V * sp;
+      } else { tvx = inp.mx * MAX_V * sp; tvy = -inp.my * MAX_V * sp; }
+      const k = 1 - Math.exp(-dt * 9);
+      r.vx += (tvx - r.vx) * k; r.vy += (tvy - r.vy) * k;
+      const kw = 1 - Math.exp(-dt * 12);
+      r.w += (inp.rot * MAX_W * (inp.slow ? 0.45 : 1) - r.w) * kw;
+      r.x += r.vx * dt; r.y += r.vy * dt; r.a += r.w * dt;
+      {
+        const vf = r.vx * Math.cos(r.a) + r.vy * Math.sin(r.a), vs = -r.vx * Math.sin(r.a) + r.vy * Math.cos(r.a), L = 9, k2 = dt / 12;
+        r.wph[0] += (vf + vs + r.w * L) * k2; r.wph[1] += (vf - vs - r.w * L) * k2; r.wph[2] += (vf - vs + r.w * L) * k2; r.wph[3] += (vf + vs - r.w * L) * k2;
+        r.ip += dt * (r.hold.length + r.pend < HOLD ? 14 : 3) + r.boost * dt * 40;
+      }
+      if (r.x < R) { r.x = R; r.vx = Math.max(0, r.vx); } if (r.x > IN - R) { r.x = IN - R; r.vx = Math.min(0, r.vx); }
+      if (r.y < R) { r.y = R; r.vy = Math.max(0, r.vy); } if (r.y > IN - R) { r.y = IN - R; r.vy = Math.min(0, r.vy); }
+      // the HIVE frame is solid
+      const x0 = FRAME.x0 - R * .8, x1 = FRAME.x1 + R * .8, y0 = FRAME.y0 - R * .8, y1 = FRAME.y1 + R * .8;
+      if (r.x > x0 && r.x < x1 && r.y > y0 && r.y < y1) {
+        const dl = r.x - x0, dr = x1 - r.x, du = r.y - y0, dd = y1 - r.y, m = Math.min(dl, dr, du, dd);
+        if (m === dl) { r.x = x0; r.vx = Math.min(0, r.vx); } else if (m === dr) { r.x = x1; r.vx = Math.max(0, r.vx); } else if (m === du) { r.y = y0; r.vy = Math.min(0, r.vy); } else { r.y = y1; r.vy = Math.max(0, r.vy); }
+      }
+      r.cd = Math.max(0, r.cd - dt); r.icd = Math.max(0, r.icd - dt); r.hintT = Math.max(0, r.hintT - dt); r.boost = Math.max(0, r.boost - dt); r.gotFlash = Math.max(0, r.gotFlash - dt); r.recoil = Math.max(0, r.recoil - dt * 7);
+      // independent turret: swings toward its own up-cell only when the robot is in front of it (open side) and the cell is inside
+      // the turret's travel (+-66 deg from the chassis); otherwise it rests facing forward. Slow, slightly wobbling aim.
+      {
+        const c = upCell(r.al), outS = c.x < 72 ? -1 : 1, want = Math.atan2(c.y - r.y, c.x - r.x);
+        const rel = ((want - r.a + Math.PI) % TAU + TAU) % TAU - Math.PI;
+        const front = (r.x - c.x) * outS > 6 && Math.abs(rel) < 1.15;
+        const tgt = front ? want + Math.sin((G ? G.t : 0) * 3.1 + r.slot) * 0.03 : r.a;
+        const d = ((tgt - r.ta + Math.PI) % TAU + TAU) % TAU - Math.PI; r.ta += clamp(d, -3.4 * dt, 3.4 * dt);
+      }
+      if (!def.turret) r.ta = r.a;
+    }
+    function flowerAhead(r) {
+      let bestF = null, bd = 1e9;
+      for (const f of G.flowers) {
+        const dx = f.x - r.x, dy = f.y - r.y, d = Math.hypot(dx, dy);
+        if (d > 25 || d < 0.1) continue;
+        if ((dx * Math.cos(r.a) + dy * Math.sin(r.a)) / d < 0.82) continue;
+        if (d < bd) { bd = d; bestF = f; }
+      }
+      return bestF;
+    }
+    const capOf = (r) => r.hold.length + (r.pend || 0);
+    const mouthOf = (r) => ({ x: r.x + Math.cos(r.a) * (HS + 2.5), y: r.y + Math.sin(r.a) * (HS + 2.5) });
+    function hint(r, txt) { if (!r.human || r.hintT > 0) return; r.hintT = 0.9; pop(r.x, r.y - 14, txt, r.al); }
+    // F: put the right element into the FLOWER in front (nectar first in the last 60 s, otherwise pollen)
+    function deposit(r) {
+      if (r.cd > 0) return false;
+      const f = flowerAhead(r);
+      if (!f) { hint(r, 'Nicio floare în față'); return false; }
+      if (f.stack.length + (f.pendIn || 0) >= 7) { hint(r, 'Floarea e plină'); return false; }
+      const late = G.free || G.t >= MATCH_T - FLOWER_T, mine = NECT[r.al];
+      let i = late ? r.hold.indexOf(mine) : -1; if (i < 0) i = r.hold.indexOf('y'); if (i < 0) i = late ? -1 : r.hold.indexOf(mine);
+      if (i < 0) { hint(r, 'Nimic de depus'); return false; }
+      const c = r.hold.splice(i, 1)[0], m = mouthOf(r);
+      f.pendIn = (f.pendIn || 0) + 1; r.cd = ROBOTS[r.type].reload * (r.human ? 1 : 2); r.shots++; r.boost = .3;
+      if ((c === 'r' || c === 'b') && !late) { G.pen[c === 'r' ? 'blue' : 'red'] += PT.major; pop(f.x, f.y + 14, 'FAULT MAJOR · G410', r.al); }
+      G.tokens.push({ k: 'in', x0: m.x, y0: m.y, x1: f.x, y1: f.y, t: 0, dur: 0.34, c, f, r });
+      return true;
+    }
+    // C: pull the bottom POLLEN out of the FLOWER in front (nectar cannot be removed)
+    function takeFlower(r) {
+      if (r.icd > 0) return false;
+      const f = flowerAhead(r);
+      if (!f) { hint(r, 'Nicio floare în față'); return false; }
+      if (capOf(r) >= HOLD) { hint(r, 'Robot plin (4)'); return false; }
+      if (!f.stack.length) { hint(r, 'Floarea e goală'); return false; }
+      if (f.stack[0] !== 'y') { hint(r, 'Nectarul nu se scoate'); return false; }
+      f.stack.shift(); f.pulse = .8; r.icd = 0.55; r.pend++; r.boost = .6;
+      const m = mouthOf(r);
+      G.tokens.push({ k: 'out', x0: f.x, y0: f.y, x1: m.x, y1: m.y, t: 0, dur: 0.4, c: 'y', f, r });
+      G.rings.push({ x: f.x, y: f.y, t: .35, c: 'y' });
+      return true;
+    }
+    function stepTokens(dt) {
+      for (const k of G.tokens) {
+        k.t += dt; if (k.t < k.dur) continue; k.done = true;
+        if (k.k === 'in') {
+          k.f.pendIn = Math.max(0, (k.f.pendIn || 0) - 1); k.f.stack.push(k.c); k.f.pulse = 1; k.r.hits++;
+          G.rings.push({ x: k.f.x, y: k.f.y, t: 0, c: k.c });
+          for (let i = 0; i < 10; i++) { const a2 = Math.random() * TAU; G.fx.push({ x: k.f.x, y: k.f.y, vx: Math.cos(a2) * 35, vy: Math.sin(a2) * 35, life: .4, c: k.c }); }
+        } else {
+          k.r.pend = Math.max(0, k.r.pend - 1); k.r.hold.push('y'); k.r.gotFlash = .45;
+          for (let i = 0; i < 7; i++) { const a2 = k.r.a + (Math.random() - .5) * 1.6; G.fx.push({ x: k.x1, y: k.y1, vx: Math.cos(a2) * 26, vy: Math.sin(a2) * 26, life: .3, c: 'y' }); }
+        }
+      }
+      G.tokens = G.tokens.filter((k) => !k.done);
+    }
+    // range assist: if you are lined up with an upward-facing cell, the lob is sized to drop into it; otherwise a default lob
+    function assistRange(r, dir) {
+      let bestD = null, bad = 0.14, tgt = null;
+      for (const al of ['red', 'blue']) {
+        const cc = CELLS[al][G.hive[al].up];
+        const outS = cc.x < 72 ? -1 : 1; if ((r.x - cc.x) * outS < 6) continue;   // only from the open side of the cell
+        const ang = Math.atan2(cc.y - r.y, cc.x - r.x), d = Math.hypot(cc.x - r.x, cc.y - r.y);
+        const da = Math.abs(((ang - dir + Math.PI) % TAU + TAU) % TAU - Math.PI);
+        if (da < bad && d > 12 && d < 100) { bad = da; bestD = d; tgt = cc; }
+      }
+      return { D: bestD || 58, assisted: !!bestD, tgt };
+    }
+    function shoot(r, spread) {
+      if (!r.hold.length || r.cd > 0) return;
+      const def = ROBOTS[r.type];
+      let idx = r.hold.indexOf('y'); if (idx < 0) idx = 0;
+      const c = r.hold.splice(idx, 1)[0]; const dir = def.turret ? r.ta : r.a; const a = dir + (Math.random() - 0.5) * spread;
+      const as = assistRange(r, dir), D = as.D + (Math.random() - .5) * spread * 26;
+      const Dh = Math.max(4, D - (R + 2)), T = clamp(Dh / 85, 0.95, 1.3), vh = Dh / T, vz0 = (Z_CELL + 0.5 - Z0 + 0.5 * GRAV * T * T) / T;
+      G.balls.push({ x: r.x + Math.cos(dir) * (R + 2), y: r.y + Math.sin(dir) * (R + 2), vx: Math.cos(a) * vh + r.vx * .3, vy: Math.sin(a) * vh + r.vy * .3, z: Z0, pz: Z0, vz: vz0, st: 'fly', c, life: 3, by: r });
+      r.cd = def.reload * (r.human ? 1 : 2.4); r.shots++; r.recoil = 1;
+      for (let i = 0; i < 6; i++) G.fx.push({ x: r.x + Math.cos(dir) * (R + 1), y: r.y + Math.sin(dir) * (R + 1), vx: Math.cos(a + (Math.random() - .5)) * 40, vy: Math.sin(a + (Math.random() - .5)) * 40, life: .25, c });
+    }
+    function tipHive(al) {
+      const H = G.hive[al], c = CELLS[al][H.up], out = c.x < 72 ? -1 : 1;
+      H.cell.forEach((e) => G.balls.push({ x: c.x + out * 5, y: c.y + (Math.random() - .5) * 10, vx: out * (26 + Math.random() * 30), vy: (Math.random() - .5) * 46, z: 16 + Math.random() * 6, vz: 30 + Math.random() * 50, st: 'spill', c: e, life: 0 }));
+      H.cell = []; H.up = 1 - H.up; H.tips++; H.flash = 1; H.v += (H.up ? 1 : -1) * 2.2;
+      G.rings.push({ x: c.x, y: c.y, t: 0, c: al }); G.shake = Math.max(G.shake, 0.5);
+      pop(c.x, c.y, '+' + PT.tip + ' HIVE TIP', al);
+      if (G.nq[al] > 0) G.release.push({ al, at: G.t + 1.0 });
+    }
+    function stepBalls(dt) {
+      const out = [];
+      for (const b of G.balls) {
+        if (b.st === 'spill') {
+          b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt; b.vz -= 150 * dt;
+          const f2 = Math.exp(-dt * 1.2); b.vx *= f2; b.vy *= f2;
+          b.x = clamp(b.x, 1.5, IN - 1.5); b.y = clamp(b.y, 1.5, IN - 1.5);
+          if (b.z <= 0) { b.z = 0; if (b.vz < -45) { b.vz *= -0.38; b.vx *= .6; b.vy *= .6; } else { b.st = 'floor'; b.vx *= .5; b.vy *= .5; } }
+          out.push(b); continue;
+        }
+        if (b.st === 'fly') {
+          b.pz = b.z; b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt; b.vz -= GRAV * dt;
+          let used = false;
+          const bounceOff = (al) => { const o = b.x < 72 ? -1 : 1; b.vz = -Math.abs(b.vz) * .3; b.vx = o * 34; b.vy = (b.y < (al === 'blue' ? 59 : 85) ? -1 : 1) * 14; b.z = Math.max(b.z, Z_CELL_MIN - 1); if (!b.miss) { b.miss = 1; pop(b.x, b.y, '✗', al); } };
+          for (const al of ['red', 'blue']) {
+            const H = G.hive[al];
+            if (inCell(b, al, H.up)) {
+              const inward = b.vx * (CELLS[al][H.up].x < 72 ? -1 : 1) < -Math.abs(b.vy) * 0.5;
+              if (b.vz < 0 && b.pz > Z_CELL && b.z <= Z_CELL && inward) { H.cell.push(b.c); H.pulse = 1; if (b.by) b.by.hits++; used = true; if (H.cell.length >= TIP_AT) tipHive(al); break; }
+              if (b.z <= Z_CELL && (b.z >= Z_CELL_MIN || (b.vz < 0 && b.pz > Z_CELL))) { bounceOff(al); break; }
+            }
+            if (inCell(b, al, 1 - H.up) && b.z <= Z_CELL && b.z >= Z_CELL_MIN) { bounceOff(al); break; }
+          }
+          if (used) { for (let i = 0; i < 8; i++) { const a = Math.random() * TAU; G.fx.push({ x: b.x, y: b.y, vx: Math.cos(a) * 40, vy: Math.sin(a) * 40, life: .35, c: b.c }); } continue; }
+          if (b.x < 1 || b.x > IN - 1) { b.vx *= -0.35; b.x = clamp(b.x, 1, IN - 1); }
+          if (b.y < 1 || b.y > IN - 1) { b.vy *= -0.35; b.y = clamp(b.y, 1, IN - 1); }
+          if (b.z <= 0) {
+            b.z = 0;
+            for (let i = 0; i < 5; i++) { const a2 = Math.random() * TAU; G.fx.push({ x: b.x, y: b.y, vx: Math.cos(a2) * 16, vy: Math.sin(a2) * 16, life: .28, c: 'dust' }); }
+            if (Math.abs(b.vz) > 55) { b.vz = -b.vz * .38; b.vx *= .62; b.vy *= .62; }
+            else { b.st = 'floor'; b.vx *= .55; b.vy *= .55; }
+          }
+        } else {
+          // ---- rolling ball on foam tiles ----
+          const rb = BALL_R[b.c] || 1.5;
+          b.x += b.vx * dt; b.y += b.vy * dt;
+          const f = Math.exp(-dt * 1.9); b.vx *= f; b.vy *= f;
+          const sp = Math.hypot(b.vx, b.vy); if (sp < 0.8) { b.vx = 0; b.vy = 0; }
+          b.rot = (b.rot || 0) + sp / rb * dt * .9;
+          // perimeter walls: bounce with energy loss
+          if (b.x < rb) { b.x = rb; b.vx = Math.abs(b.vx) * .55; } if (b.x > IN - rb) { b.x = IN - rb; b.vx = -Math.abs(b.vx) * .55; }
+          if (b.y < rb) { b.y = rb; b.vy = Math.abs(b.vy) * .55; } if (b.y > IN - rb) { b.y = IN - rb; b.vy = -Math.abs(b.vy) * .55; }
+          // anything that comes to rest under the hive is unreachable for robots, so it is kicked back out to the floor around it
+          if (b.x > FRAME.x0 - 1 && b.x < FRAME.x1 + 1 && b.y > FRAME.y0 - 1 && b.y < FRAME.y1 + 1) {
+            const dl = b.x - FRAME.x0, dr = FRAME.x1 - b.x, du = b.y - FRAME.y0, dd = FRAME.y1 - b.y, m = Math.min(dl, dr, du, dd);
+            const ox = m === dl ? -1 : m === dr ? 1 : 0, oy = m === du ? -1 : m === dd ? 1 : 0;
+            b.st = 'spill'; b.z = 4; b.vz = 70; b.vx = ox * 34; b.vy = oy * 34;
+            out.push(b); continue;
+          }
+          // HIVE frame: only the two triangular legs are solid at floor level (balls roll freely between them)
+          for (const lg of [[FRAME.y0 - 1.2, FRAME.y0 + 1.2], [FRAME.y1 - 1.2, FRAME.y1 + 1.2]]) {
+            const cx = clamp(b.x, FRAME.x0, FRAME.x1), cy = clamp(b.y, lg[0], lg[1]); let dx = b.x - cx, dy = b.y - cy, d = Math.hypot(dx, dy);
+            if (d < rb) {
+              if (d < 0.001) { dx = 0; dy = b.y < (lg[0] + lg[1]) / 2 ? -1 : 1; d = 1; }
+              const nx = dx / d, ny = dy / d; b.x = cx + nx * rb; b.y = cy + ny * rb;
+              const vn = b.vx * nx + b.vy * ny; if (vn < 0) { b.vx -= 1.5 * vn * nx; b.vy -= 1.5 * vn * ny; }
+            }
+          }
+          // robots: intake window on the front face, otherwise solid box
+          for (const r of G.robots) {
+            const c = Math.cos(r.a), sn = Math.sin(r.a), dx = b.x - r.x, dy = b.y - r.y;
+            const lx = dx * c + dy * sn, ly = -dx * sn + dy * c;
+            if (capOf(r) < HOLD && lx > HS - 1.5 && lx < HS + rb + 3.4 && Math.abs(ly) < 7.6) {
+              r.hold.push(b.c); b._gone = true; r.gotFlash = .35; r.boost = Math.max(r.boost, .25);
+              for (let i = 0; i < 6; i++) { const a2 = r.a + (Math.random() - .5) * 1.8; G.fx.push({ x: r.x + Math.cos(r.a) * (HS + 3), y: r.y + Math.sin(r.a) * (HS + 3), vx: Math.cos(a2) * 24, vy: Math.sin(a2) * 24, life: .28, c: b.c }); }
+              if (b.c === NECT[OPP[r.al]]) { // G408: don't control opponent nectar
+                if (G.warn[r.al]++ === 0) pop(r.x, r.y - 12, 'AVERTISMENT · G408', r.al);
+                else { G.pen[OPP[r.al]] += PT.minor; pop(r.x, r.y - 12, 'FAULT MINOR · G408', r.al); }
+              }
+              break;
+            }
+            const cx = clamp(lx, -HS, HS), cy = clamp(ly, -HS, HS); let nx = lx - cx, ny = ly - cy, dist = Math.hypot(nx, ny), pen;
+            if (dist >= rb) continue;
+            if (dist > 0.001) { nx /= dist; ny /= dist; pen = rb - dist; }
+            else { // centre inside the box: leave through the face the robot is driving into
+              const vlx = r.vx * c + r.vy * sn, vly = -r.vx * sn + r.vy * c;
+              if (Math.abs(vlx) >= Math.abs(vly) && Math.abs(vlx) > 1) { nx = Math.sign(vlx); ny = 0; pen = HS - nx * lx + rb; }
+              else if (Math.abs(vly) > 1) { nx = 0; ny = Math.sign(vly); pen = HS - ny * ly + rb; }
+              else if (HS - Math.abs(lx) < HS - Math.abs(ly)) { nx = Math.sign(lx) || 1; ny = 0; pen = HS - Math.abs(lx) + rb; }
+              else { nx = 0; ny = Math.sign(ly) || 1; pen = HS - Math.abs(ly) + rb; }
+            }
+            const nxw = nx * c - ny * sn, nyw = nx * sn + ny * c;
+            b.x += nxw * pen; b.y += nyw * pen;
+            // velocity of the robot at the contact point (translation + rotation)
+            const px = b.x - r.x, py = b.y - r.y, vrx = r.vx - r.w * py, vry = r.vy + r.w * px;
+            const relx = b.vx - vrx, rely = b.vy - vry, vn = relx * nxw + rely * nyw;
+            if (vn < 0) {
+              const e = 0.45; b.vx -= (1 + e) * vn * nxw; b.vy -= (1 + e) * vn * nyw;
+              const tx = -nyw, ty = nxw, vt = relx * tx + rely * ty; b.vx -= tx * vt * .12; b.vy -= ty * vt * .12;
+            }
+          }
+          if (b._gone) continue;
+        }
+        out.push(b);
+      }
+      // ball-ball collisions (equal-ish elastic, mass by size: nectar is heavier than pollen)
+      const fl = out.filter((q) => q.st === 'floor');
+      for (let i = 0; i < fl.length; i++) for (let j = i + 1; j < fl.length; j++) {
+        const A = fl[i], B = fl[j], ra = BALL_R[A.c] || 1.5, rbb = BALL_R[B.c] || 1.5, dx = B.x - A.x, dy = B.y - A.y;
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) continue;
+        const d = Math.hypot(dx, dy), min = ra + rbb; if (d >= min || d < 1e-4) continue;
+        const nx = dx / d, ny = dy / d, ma = BALL_M[A.c] || 1, mb = BALL_M[B.c] || 1, pen = min - d;
+        A.x -= nx * pen * mb / (ma + mb); A.y -= ny * pen * mb / (ma + mb); B.x += nx * pen * ma / (ma + mb); B.y += ny * pen * ma / (ma + mb);
+        const vn = (B.vx - A.vx) * nx + (B.vy - A.vy) * ny;
+        if (vn < 0) { const imp = -(1 + 0.72) * vn / (1 / ma + 1 / mb); A.vx -= imp / ma * nx; A.vy -= imp / ma * ny; B.vx += imp / mb * nx; B.vy += imp / mb * ny; }
+      }
+      G.balls = out;
+    }
+    // human players enter nectar through the LOADING ZONE: one per HIVE tip, all the rest with 60 s left
+    function spawnNectar(al) {
+      if (G.nq[al] <= 0) return; G.nq[al]--;
+      const z = LZ[al];
+      G.balls.push({ x: z.x + 5 + Math.random() * (z.w - 10), y: z.y + 4 + Math.random() * (z.h - 8), vx: 0, vy: 0, st: 'floor', c: NECT[al], life: 0 });
+    }
+    function releases() {
+      for (let i = G.release.length - 1; i >= 0; i--) if (G.t >= G.release[i].at) { spawnNectar(G.release[i].al); G.release.splice(i, 1); }
+      if (!G.allReleased && !G.free && G.t >= MATCH_T - FLOWER_T) {
+        G.allReleased = true;
+        ['red', 'blue'].forEach((al) => { const n = G.nq[al]; for (let k = 0; k < n; k++) G.release.push({ al, at: G.t + 0.35 * (k + 1) }); });
+      }
+    }
+    function robotCollisions() {
+      const rs = G.robots;
+      for (let i = 0; i < rs.length; i++) for (let j = i + 1; j < rs.length; j++) {
+        const a = rs[i], b = rs[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), min = R * 2;
+        if (d < min && d > 0.001) {
+          const p = (min - d) / 2, nx = dx / d, ny = dy / d;
+          a.x -= nx * p; a.y -= ny * p; b.x += nx * p; b.y += ny * p;
+          const rel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+          if (rel < 0) { a.vx += nx * rel * .5; a.vy += ny * rel * .5; b.vx -= nx * rel * .5; b.vy -= ny * rel * .5; }
+        }
+      }
+    }
+    // ---------- scoring (live, per the manual's point table) ----------
+    function eval_() {
+      const P = { red: { tip: 0, lp: 0, cell: 0, flower: 0, garden: 0, foul: 0 }, blue: { tip: 0, lp: 0, cell: 0, flower: 0, garden: 0, foul: 0 } };
+      ['red', 'blue'].forEach((al) => {
+        P[al].tip = G.hive[al].tips * PT.tip;
+        P[al].cell = G.hive[al].cell.length * PT.cell;
+        P[al].foul = G.pen[al];
+        P[al].lp = G.lp[al];
+      });
+      // end-of-teleop PARK is assessed live while teleop runs
+      if (G.t >= AUTO_T) for (const r of G.robots) if (nearRect(r, LZ[r.al], R * .7)) P[r.al].lp += PT.park;
+      for (const f of G.flowers) {
+        let top = null, bottom = null;
+        f.stack.forEach((c) => { if (c !== 'y') { if (!bottom) bottom = c; top = c; } });
+        if (top) { const al = top === 'r' ? 'red' : 'blue'; P[al].flower += f.stack.length * PT.flowerEach; }
+        if (bottom) P[bottom === 'r' ? 'red' : 'blue'].flower += PT.bottomNectar;
+      }
+      for (const b of G.balls) {
+        if (b.st !== 'floor') continue;
+        for (const al of ['red', 'blue']) { const g = GARDEN[al]; if (b.x > g.x - 1 && b.x < g.x + g.w + 1 && b.y > g.y - 1 && b.y < g.y + g.h + 1) P[al].garden += PT.garden; }
+      }
+      G.parts = P;
+      G.score.red = Object.values(P.red).reduce((a, b) => a + b, 0) + 0;
+      G.score.blue = Object.values(P.blue).reduce((a, b) => a + b, 0) + 0;
+    }
+    // penalties are credited to the opponent
+    function scoreOf(al) { return G.score[al]; }
+    function autoEnd() {
+      G.autoDone = true;
+      for (const r of G.robots) {
+        const touching = r.x < R + 0.6 || r.x > IN - R - 0.6 || r.y < R + 0.6 || r.y > IN - R - 0.6;
+        if (!touching) { G.lp[r.al] += PT.leave; pop(r.x, r.y - 12, '+' + PT.leave + ' LEAVE', r.al); }
+        if (nearRect(r, LZ[r.al], R * .7)) { G.lp[r.al] += PT.park; pop(r.x, r.y + 12, '+' + PT.park + ' PARK', r.al); }
+      }
+    }
+
+    // ---------- AI ----------
+    function segHitsFrame(ax, ay, bx, by) {
+      const pad = R + 3, x0 = FRAME.x0 - pad, x1 = FRAME.x1 + pad, y0 = FRAME.y0 - pad, y1 = FRAME.y1 + pad;
+      for (let t = 0; t <= 1; t += 0.05) { const x = ax + (bx - ax) * t, y = ay + (by - ay) * t; if (x > x0 && x < x1 && y > y0 && y < y1) return true; }
+      return false;
+    }
+    function steerTo(r, tx, ty) {
+      if (!segHitsFrame(r.x, r.y, tx, ty)) return [tx, ty];
+      const pad = R + 6, cs = [[FRAME.x0 - pad, FRAME.y0 - pad], [FRAME.x1 + pad, FRAME.y0 - pad], [FRAME.x0 - pad, FRAME.y1 + pad], [FRAME.x1 + pad, FRAME.y1 + pad]];
+      let bestC = null, bl = 1e9;
+      for (const [cx, cy] of cs) { if (segHitsFrame(r.x, r.y, cx, cy)) continue; const l = Math.hypot(cx - r.x, cy - r.y) + Math.hypot(tx - cx, ty - cy); if (l < bl) { bl = l; bestC = [cx, cy]; } }
+      return bestC || [tx, ty];
+    }
+    function standNearFlower(f) { const dx = IN / 2 - f.x, dy = IN / 2 - f.y, d = Math.hypot(dx, dy); return { x: f.x + dx / d * 16, y: f.y + dy / d * 16 }; }
+    function botThink(r, dt) {
+      const al = r.al, mine = NECT[al], opn = NECT[OPP[al]], tLeft = MATCH_T - G.t, ph = phaseOf(G.t);
+      r.thought -= dt;
+      if (r.thought <= 0) {
+        r.thought = 0.25; r.fl = null;
+        const hasN = r.hold.includes(mine), hasY = r.hold.includes('y');
+        const late = !G.free && tLeft <= FLOWER_T;
+        const owned = (f) => { let top = null; f.stack.forEach((c) => { if (c !== 'y') top = c; }); return top === mine; };
+        const collect = () => {
+          let bb = null, bd = 1e9;
+          for (const b of G.balls) { if (b.st !== 'floor' || b.c === opn) continue; if (b.x > FRAME.x0 - 8 && b.x < FRAME.x1 + 8 && b.y > FRAME.y0 - 8 && b.y < FRAME.y1 + 8) continue; const d = Math.hypot(b.x - r.x, b.y - r.y) + Math.random() * 8 + (r.slot ? Math.abs(b.y - 72) * .08 : 0); if (d < bd) { bd = d; bb = b; } }
+          if (bb) { r.role = 'collect'; r.tx = bb.x + (bb.x < 6 ? 7 : bb.x > IN - 6 ? -7 : 0); r.ty = bb.y + (bb.y < 6 ? 7 : bb.y > IN - 6 ? -7 : 0); return true; }
+          let bf = null; bd = 1e9;
+          G.flowers.forEach((f) => { if (f.stack[0] !== 'y') return; const d = Math.hypot(f.x - r.x, f.y - r.y); if (d < bd) { bd = d; bf = f; } });
+          if (bf) { r.role = 'pull'; r.fl = bf; const p = standNearFlower(bf); r.tx = p.x; r.ty = p.y; return true; }
+          return false;
+        };
+        if (!G.free && ph === 'auto' && G.t > AUTO_T - 6) { r.role = 'park'; const z = LZ[al]; r.tx = z.x + z.w / 2; r.ty = z.y + z.h / 2 + (al === 'red' ? -4 : 4); }
+        else if (!G.free && tLeft < 8) { r.role = 'park'; const z = LZ[al]; r.tx = z.x + z.w / 2; r.ty = z.y + z.h / 2 + (al === 'red' ? -4 : 4); }
+        else if (late && (hasN || hasY)) {
+          let fl = null, bd = 1e9;
+          if (hasN) G.flowers.forEach((f) => { if (f.stack.length >= 7) return; const d = Math.hypot(f.x - r.x, f.y - r.y) + (owned(f) ? 40 : 0) + (r.slot ? (f.x < 72 ? 0 : 25) : 0); if (d < bd) { bd = d; fl = f; } });
+          else G.flowers.forEach((f) => { if (!owned(f) || f.stack.length >= 7) return; const d = Math.hypot(f.x - r.x, f.y - r.y); if (d < bd) { bd = d; fl = f; } });
+          if (fl) { r.role = 'flower'; r.fl = fl; const p = standNearFlower(fl); r.tx = p.x; r.ty = p.y; } else { r.role = 'launch'; }
+        } else if (r.hold.length >= 3 || (r.hold.length >= 1 && !collect())) r.role = 'launch';
+        else if (!collect()) { r.role = 'launch'; }
+        if (r.role === 'launch') { const c = upCell(al), out = c.x < 72 ? -1 : 1; r.tx = clamp(c.x + out * 27, R + 2, IN - R - 2); r.ty = c.y; }
+      }
+      const [wx, wy] = steerTo(r, r.tx, r.ty);
+      const dx = wx - r.x, dy = wy - r.y, d = Math.hypot(dx, dy);
+      const fd = Math.hypot(r.tx - r.x, r.ty - r.y);
+      const inp = { mx: 0, my: 0, rot: 0, shoot: false, slow: false, dep: false, take: false };
+      let want = r.a;
+      if (r.role === 'flower' && r.fl && fd < 26) want = Math.atan2(r.fl.y - r.y, r.fl.x - r.x);
+      else if (r.role === 'pull' && r.fl && fd < 26) want = Math.atan2(r.fl.y - r.y, r.fl.x - r.x);
+      else if (r.role === 'launch' && fd < 24 && !ROBOTS[r.type].turret) { const c = upCell(al); want = Math.atan2(c.y - r.y, c.x - r.x); }
+      else if (d > 1) want = Math.atan2(dy, dx);
+      const da = ((want - r.a + Math.PI) % TAU + TAU) % TAU - Math.PI;
+      inp.rot = clamp(da * 2.2, -1, 1);
+      if (r.role === 'pull' && r.fl && fd < 22) { const ex = r.fl.x - r.x, ey = r.fl.y - r.y, e = Math.hypot(ex, ey); if (e > R + 3) { inp.mx = ex / e * .5; inp.my = -ey / e * .5; } }
+      else if (d > 3) { const m = clamp(d / 18, 0.25, 1); inp.mx = dx / d * m; inp.my = -dy / d * m; }
+      const aimed = Math.abs(da) < 0.14;
+      const tAim = ROBOTS[r.type].turret ? Math.abs(((Math.atan2(upCell(al).y - r.y, upCell(al).x - r.x) - r.ta + Math.PI) % TAU + TAU) % TAU - Math.PI) < 0.1 : aimed;
+      if (r.role === 'flower' && r.fl && fd < 22 && aimed) inp.dep = true;
+      if (r.role === 'pull' && r.fl && aimed && flowerAhead(r) === r.fl) inp.take = true;
+      if (r.role === 'launch' && fd < 16 && tAim && r.hold.length) inp.shoot = true;
+      return inp;
+    }
+
+    // ---------- loop ----------
+    function update(dt) {
+      G.t += dt;
+      const ph = G.free ? 'tele' : phaseOf(G.t), frozen = ph === 'inter';
+      if (!G.free && !G.autoDone && G.t >= AUTO_T) autoEnd();
+      const inp = frozen ? ZERO : readInput();
+      for (const r of G.robots) {
+        const i = frozen ? ZERO : (r.human ? inp : botThink(r, dt));
+        driveRobot(r, i, dt);
+        if (!frozen) { if (i.dep) deposit(r); if (i.take) takeFlower(r); }
+        if (i.shoot) shoot(r, r.human ? (ROBOTS[r.type].turret ? 0.02 : 0.04) : 0.3);
+      }
+      robotCollisions();
+      stepBalls(dt); stepTokens(dt); releases();
+      G.flowers.forEach((f) => { f.pulse = Math.max(0, f.pulse - dt * 2); });
+      ['red', 'blue'].forEach((al) => {
+        const H = G.hive[al];
+        if (H.flash) H.flash = Math.max(0, H.flash - dt * 1.5);
+        if (H.pulse) H.pulse = Math.max(0, H.pulse - dt * 5);
+        // underdamped spring: the see-saw snaps over and settles with a small bounce
+        H.v += (115 * (H.up - H.p) - 9.5 * H.v) * dt; H.p = clamp(H.p + H.v * dt, -0.12, 1.12);
+      });
+      G.rings.forEach((r) => { r.t += dt; }); G.rings = G.rings.filter((r) => r.t < 0.8);
+      G.shake = Math.max(0, G.shake - dt * 1.6);
+      G.fx.forEach((p) => { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }); G.fx = G.fx.filter((p) => p.life > 0);
+      G.pops.forEach((p) => { p.t += dt; p.y -= 12 * dt; }); G.pops = G.pops.filter((p) => p.t < 1.3);
+      eval_();
+      if (!G.free && G.t >= MATCH_T) endMatch();
+    }
+
+    function bumpEl(id, v) { const el = $(id); if (el.textContent !== String(v)) { el.textContent = v; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } }
+    function hud() {
+      const me = G.robots[0], ph = phaseOf(G.t), al = me.al, P = G.parts[al] || {};
+      bumpEl('sRed', G.score.red); bumpEl('sBlue', G.score.blue);
+      if (G.free) { $('time').textContent = '∞'; $('phase').textContent = 'FREE DRIVE'; $('bar').style.width = '0%'; }
+      else {
+        const t = Math.max(0, MATCH_T - G.t);
+        $('time').textContent = Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+        $('phase').textContent = ph === 'auto' ? 'AUTONOM' : ph === 'inter' ? 'PAUZĂ' : (MATCH_T - G.t <= FLOWER_T ? 'FLORI DESCHISE' : 'TELEOP');
+        $('bar').style.width = (G.t / MATCH_T * 100) + '%';
+      }
+      $('rbName').textContent = ROBOTS[me.type].name;
+      [...$('pips').children].forEach((p, i) => { p.className = 'pip' + (me.hold[i] ? ' ' + me.hold[i] : ''); });
+      $('cdBar').style.transform = 'scaleX(' + (1 - me.cd / (ROBOTS[me.type].reload)) + ')';
+      $('spd').textContent = Math.round(Math.hypot(me.vx, me.vy)) + ' in/s';
+      $('myShots').textContent = G.hive[al].tips; $('acc').textContent = me.shots ? Math.round(me.hits / me.shots * 100) + '%' : '–';
+      const f = (k) => (P[k] || 0);
+      $('bkTip').textContent = f('tip'); $('bkLP').textContent = f('lp'); $('bkCell').textContent = f('cell'); $('bkFl').textContent = f('flower'); $('bkGd').textContent = f('garden'); $('bkFoul').textContent = f('foul');
+      $('bkNq').textContent = G.nq[al];
+    }
+
+    // ---------- render ----------
+    function hexPath(cx, cy, rad) { ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 3 * i + Math.PI / 6; const x = cx + Math.cos(a) * rad, y = cy + Math.sin(a) * rad; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.closePath(); }
+    function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+    // FLOWER as in the manual: lower hex ring on the floor, top ring held up by 4 pipes, backstop on the wall side.
+    function drawFlower(f, hot) {
+      const x = f.x * S, y = f.y * S, rad = 4.1 * S;
+      let top = null; f.stack.forEach((c) => { if (c !== 'y') top = c; });
+      const toward = Math.atan2(IN / 2 - f.y, IN / 2 - f.x);
+      ctx.save();
+      // square extrusion to the wall + lower ring
+      ctx.strokeStyle = '#6f6a52'; ctx.lineWidth = 3 * S * .5;
+      const wallAng = toward + Math.PI; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(wallAng) * 6 * S, y + Math.sin(wallAng) * 6 * S); ctx.stroke();
+      hexPath(x, y, rad * (1 + f.pulse * .12)); ctx.fillStyle = '#d9b43c'; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = '#8a6f1a'; ctx.stroke();
+      // floor hole where pollen rests
+      ctx.fillStyle = '#17140a'; ctx.beginPath(); ctx.arc(x, y, rad * .58, 0, TAU); ctx.fill();
+      // 4 pipes and the top ring above them
+      ctx.strokeStyle = '#efe7c6'; ctx.lineWidth = 1.6;
+      for (let i = 0; i < 4; i++) { const a2 = i * Math.PI / 2 + Math.PI / 4; ctx.beginPath(); ctx.moveTo(x + Math.cos(a2) * rad * .58, y + Math.sin(a2) * rad * .58); ctx.lineTo(x + Math.cos(a2) * rad * .86, y + Math.sin(a2) * rad * .86); ctx.stroke(); }
+      ctx.lineWidth = 3; ctx.strokeStyle = top ? COL[top] : '#efe7c6'; ctx.beginPath(); ctx.arc(x, y, rad * .58, 0, TAU); ctx.stroke();
+      // backstop (short arc on the wall side of the top ring)
+      ctx.lineWidth = 4; ctx.strokeStyle = '#8a8470'; ctx.beginPath(); ctx.arc(x, y, rad * .74, wallAng - .8, wallAng + .8); ctx.stroke();
+      // what is inside: the top-most element seen from above
+      const t = f.stack[f.stack.length - 1];
+      if (t) { ctx.fillStyle = COL[t]; ctx.beginPath(); ctx.arc(x, y, (t === 'y' ? 1.5 : 1.9) * S, 0, TAU); ctx.fill(); }
+      if (hot) {
+        ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.arc(x, y, rad * 1.45, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+        const lx0 = -Math.sin(toward), ly0 = Math.cos(toward), sg = (Math.hypot(f.x + lx0 * 20 - IN / 2, f.y + ly0 * 20 - IN / 2) < Math.hypot(f.x - lx0 * 20 - IN / 2, f.y - ly0 * 20 - IN / 2)) ? 1 : -1;
+        G.label = { x: clamp(f.x + lx0 * 21 * sg, 24, IN - 24) * S, y: clamp(f.y + ly0 * 21 * sg, 6, IN - 6) * S };
+      }
+      ctx.restore();
+      // stack gauge (bottom -> top), drawn toward the field centre
+      const gx = x + Math.cos(toward) * (rad + 5 * S), gy = y + Math.sin(toward) * (rad + 5 * S), seg = 2.3 * S, gap = .7 * S;
+      ctx.save(); ctx.translate(gx, gy); ctx.rotate(toward);
+      for (let i = 0; i < 7; i++) {
+        const c = f.stack[i]; ctx.fillStyle = c ? COL[c] : 'rgba(255,255,255,.09)';
+        rr(i * (seg + gap) - 2 * S, -seg / 2, seg, seg, seg * .3); ctx.fill();
+      }
+      ctx.restore();
+    }
+    function drawCells() {
+      ctx.save();
+      const tNow = G ? G.t : 0;
+      ctx.strokeStyle = 'rgba(200,200,210,.55)'; ctx.lineWidth = 3;
+      ctx.strokeRect(FRAME.x0 * S, FRAME.y0 * S, (FRAME.x1 - FRAME.x0) * S, (FRAME.y1 - FRAME.y0) * S);
+      ctx.beginPath(); ctx.moveTo(72 * S, FRAME.y0 * S); ctx.lineTo(72 * S, FRAME.y1 * S); ctx.stroke();
+      ctx.fillStyle = 'rgba(40,40,46,.9)'; ctx.fillRect(70 * S, FRAME.y0 * S, 4 * S, (FRAME.y1 - FRAME.y0) * S);
+      ['blue', 'red'].forEach((al) => {
+        const H = G ? G.hive[al] : { up: al === 'blue' ? 0 : 1, cell: [], flash: 0, p: al === 'blue' ? 0 : 1 };
+        const mid = CELLS[al][0].y;
+        const sh = (H.p - 0.5) * 3.2 * S;   // the yellow arms shift toward the rising side
+        ctx.fillStyle = '#ffc933'; ctx.globalAlpha = .9;
+        ctx.fillRect(67 * S + sh, (mid - 11) * S, 3.2 * S, 22 * S); ctx.fillRect(74 * S + sh, (mid - 11) * S, 3.2 * S, 22 * S); ctx.globalAlpha = 1;
+        CELLS[al].forEach((c, idx) => {
+          const h = clamp(idx === 0 ? 1 - H.p : H.p, 0, 1.12);   // 0 = tilted down, 1 = facing up
+          const hv = clamp(h, 0, 1), sc = 0.84 + 0.3 * h + (idx === H.up ? (H.pulse || 0) * 0.07 : 0), w = CELL_W * S * sc, ht = CELL_H * S * sc, x = c.x * S - w / 2, y = c.y * S - ht / 2;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = 8 + 26 * hv; ctx.shadowOffsetY = 3 + 14 * hv;
+          ctx.fillStyle = COL[al] + (hv > .5 ? '66' : '22'); rr(x, y, w, ht, 10 * sc); ctx.fill();
+          ctx.shadowColor = 'transparent';
+          ctx.globalAlpha = 0.45 + 0.55 * hv; ctx.lineWidth = 3 + 3 * hv; ctx.strokeStyle = COL[al]; rr(x, y, w, ht, 10 * sc); ctx.stroke(); ctx.globalAlpha = 1;
+          ctx.fillStyle = 'rgba(0,0,0,' + (0.5 * (1 - hv)) + ')'; rr(x + 4, y + 4, w - 8, ht - 8, 8 * sc); ctx.fill();
+          if (idx === H.up && hv > .3) {
+            const pu = .5 + .5 * Math.sin(tNow * 5);
+            ctx.strokeStyle = 'rgba(255,255,255,' + (0.15 + 0.2 * pu) + ')'; ctx.lineWidth = 2; rr(x - 4, y - 4, w + 8, ht + 8, 12 * sc); ctx.stroke();
+            if (H.flash) { ctx.fillStyle = 'rgba(255,255,255,' + (H.flash * .55) + ')'; rr(x, y, w, ht, 10 * sc); ctx.fill(); }
+            H.cell.forEach((e, i) => { const col = i % 3, row = Math.floor(i / 3); ctx.fillStyle = COL[e]; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x + w * (.25 + col * .25), y + ht * (.22 + row * .2), (e === 'y' ? 1.9 : 2.4) * S * sc * .8, 0, TAU); ctx.fill(); ctx.stroke(); });
+            ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fillRect(x + 6, y + ht - 9, w - 12, 4);
+            ctx.fillStyle = COL[al]; ctx.fillRect(x + 6, y + ht - 9, (w - 12) * clamp(H.cell.length / TIP_AT, 0, 1), 4);
+          }
+          ctx.restore();
+        });
+      });
+      ctx.restore();
+    }
+    function drawRings() {
+      if (!G) return;
+      G.rings.forEach((r) => {
+        const k = r.t / 0.8; ctx.save(); ctx.globalAlpha = 1 - k; ctx.strokeStyle = COL[r.c]; ctx.lineWidth = 6 * (1 - k) + 1;
+        ctx.beginPath(); ctx.arc(r.x * S, r.y * S, (6 + k * 34) * S * .6, 0, TAU); ctx.stroke(); ctx.restore();
+      });
+    }
+    function drawField() {
+      ctx.fillStyle = '#050506'; ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.strokeStyle = 'rgba(190,190,200,.28)'; ctx.lineWidth = 2;
+      for (let i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(i * 24 * S, 0); ctx.lineTo(i * 24 * S, cv.height); ctx.moveTo(0, i * 24 * S); ctx.lineTo(cv.width, i * 24 * S); ctx.stroke(); }
+      ['red', 'blue'].forEach((al) => {
+        const z = LZ[al], c = COL[al], g = GARDEN[al];
+        ctx.fillStyle = c + '1c'; ctx.fillRect(z.x * S, z.y * S, z.w * S, z.h * S);
+        ctx.strokeStyle = c; ctx.lineWidth = 6; ctx.lineJoin = 'miter'; ctx.beginPath();
+        if (al === 'blue') { ctx.moveTo(z.x * S, 0); ctx.lineTo(z.x * S, z.h * S); ctx.lineTo((z.x + z.w) * S, z.h * S); ctx.lineTo((z.x + z.w) * S, 0); }
+        else { ctx.moveTo(z.x * S, cv.height); ctx.lineTo(z.x * S, z.y * S); ctx.lineTo((z.x + z.w) * S, z.y * S); ctx.lineTo((z.x + z.w) * S, cv.height); }
+        ctx.stroke();
+        ctx.fillStyle = c; ctx.fillRect(g.x * S, g.y * S, g.w * S, g.h * S);
+      });
+      drawCells();
+      const hot = G && mode === 'run' ? flowerAhead(G.robots[0]) : null;
+      (G ? G.flowers : FLOWER_POS.map(([x, y]) => ({ x, y, stack: ['y', 'y', 'y', 'y'], pulse: 0 }))).forEach((f) => drawFlower(f, f === hot));
+      ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 4; ctx.strokeRect(2, 2, cv.width - 4, cv.height - 4);
+    }
+    function drawBall(b) {
+      const x = b.x * S, y = b.y * S, c = COL[b.c] || '#fff', fly = b.st === 'fly' || b.st === 'spill', nectar = b.c !== 'y', lift = b.st === 'spill' ? b.z * S * .55 : (b.st === 'fly' ? b.z * S * .3 : 0);
+      const r2 = (nectar ? 2.3 : 1.8) * S * (b.st === 'fly' ? 1 + b.z / 85 : (fly ? 1.2 : 1));
+      ctx.save(); ctx.shadowColor = c; ctx.shadowBlur = fly ? 22 : 8;
+      ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y - lift, r2, 0, TAU); ctx.fill(); ctx.restore();
+      { const rt = b.rot || 0, cx2 = Math.cos(rt) * r2 * .62, cy2 = Math.sin(rt) * r2 * .62; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y - lift, r2 * .5, 0, TAU); ctx.moveTo(x - cx2, y - lift - cy2); ctx.lineTo(x + cx2, y - lift + cy2); ctx.stroke(); }
+      if (fly) { const hgt = b.st === 'fly' ? b.z : b.z * 1.4; ctx.fillStyle = 'rgba(0,0,0,' + clamp(.5 - hgt / 160, .12, .5) + ')'; ctx.beginPath(); ctx.ellipse(x, y + 3, r2 * (.9 + hgt / 120), r2 * .45 * (.9 + hgt / 120), 0, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.beginPath(); ctx.ellipse(x, y + 1, r2 * .8, r2 * .35, 0, 0, TAU); ctx.fill(); }
+    }
+    // Flat, technical top-down look: few shapes, one accent colour, detail only where it has a function.
+    function drawWheel(cx, cy, w, h, phase, flip) {
+      ctx.save(); ctx.translate(cx, cy);
+      ctx.fillStyle = '#121316'; rr(-w / 2, -h / 2, w, h, w * .2); ctx.fill();
+      ctx.save(); rr(-w / 2, -h / 2, w, h, w * .2); ctx.clip();
+      const gap = h / 4, off = (((phase % 1) + 1) % 1) * gap;
+      ctx.strokeStyle = '#2c2f36'; ctx.lineWidth = w * .26;
+      for (let i = -1; i < 6; i++) {
+        const y = -h / 2 + i * gap + off, d = w * .45 * (flip ? -1 : 1);
+        ctx.beginPath(); ctx.moveTo(-w / 2, y + d); ctx.lineTo(w / 2, y - d); ctx.stroke();
+      }
+      ctx.restore();
+      ctx.restore();
+    }
+    // Top-down FTC robot: extrusion frame (floor visible between rails), exposed mecanum wheels, front intake,
+    // clear ball ramp, battery + hub on the rear plate. The turret variant carries a compact launcher on a bearing ring.
+    function drawRobot(r) {
+      const col = COL[r.al], s = 18 * S, tur = ROBOTS[r.type].turret;
+      const flash = Math.max(0, 1 - r.cd * 5);
+      ctx.save(); ctx.translate(r.x * S, r.y * S); ctx.rotate(r.a + Math.PI / 2); ctx.translate(0, (r.recoil || 0) * s * .035);
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 7; ctx.fillStyle = 'rgba(0,0,0,.55)'; rr(-s * .42, -s * .44, s * .84, s * .88, s * .04); ctx.fill(); ctx.restore();
+      // wheels with alliance hub caps
+      const ww = s * .11, wh = s * .24, wx = s * .5 - ww * .5, wy = s * .29;
+      [[-wx, -wy, 0, false], [wx, -wy, 1, true], [-wx, wy, 2, true], [wx, wy, 3, false]].forEach(([x, y, i, fl]) => {
+        drawWheel(x, y, ww, wh, r.wph[i], fl);
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, ww * .2, 0, TAU); ctx.fill();
+      });
+      // chassis: alliance-coloured rails with a lighter top edge, dark cross braces
+      const rail = (x) => { ctx.fillStyle = col; ctx.globalAlpha = .92; rr(x - s * .04, -s * .44, s * .08, s * .88, s * .015); ctx.fill(); ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.fillRect(x - s * .04, -s * .44, s * .014, s * .88); ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(x + s * .026, -s * .44, s * .014, s * .88); };
+      rail(-s * .31); rail(s * .31);
+      ctx.fillStyle = '#2a2d34'; [-0.4, -0.12, 0.2, 0.41].forEach((y) => { rr(-s * .31, y * s - s * .022, s * .62, s * .044, s * .01); ctx.fill(); });
+      // front gussets in alliance colour
+      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(-s * .35, -s * .44); ctx.lineTo(-s * .2, -s * .44); ctx.lineTo(-s * .35, -s * .3); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(s * .35, -s * .44); ctx.lineTo(s * .2, -s * .44); ctx.lineTo(s * .35, -s * .3); ctx.closePath(); ctx.fill();
+      // clear ramp / magazine floor and the balls on it
+      ctx.fillStyle = 'rgba(200,225,240,.2)'; rr(-s * .17, -s * .4, s * .34, s * .5, s * .03); ctx.fill();
+      ctx.strokeStyle = 'rgba(210,230,245,.55)'; ctx.lineWidth = 1.2; rr(-s * .17, -s * .4, s * .34, s * .5, s * .03); ctx.stroke();
+      r.hold.forEach((h, i) => { ctx.fillStyle = COL[h]; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, -s * .33 + i * s * .1, s * (h === 'y' ? .04 : .052), 0, TAU); ctx.fill(); ctx.stroke(); });
+      if (r.gotFlash > 0) { ctx.fillStyle = 'rgba(255,214,90,' + (r.gotFlash * 1.4) + ')'; rr(-s * .17, -s * .4, s * .34, s * .12, s * .03); ctx.fill(); }
+      // intake: arms + roller with grip flights
+      ctx.fillStyle = col; ctx.fillRect(-s * .31, -s * .5, s * .03, s * .1); ctx.fillRect(s * .28, -s * .5, s * .03, s * .1);
+      ctx.fillStyle = '#17191d'; rr(-s * .3, -s * .56, s * .6, s * .085, s * .025); ctx.fill();
+      ctx.save(); rr(-s * .3, -s * .56, s * .6, s * .085, s * .025); ctx.clip();
+      ctx.strokeStyle = r.boost > 0 ? '#ffd65a' : '#8d93a0'; ctx.lineWidth = s * .016;
+      const g2 = s * .075, o2 = ((r.ip * .3) % 1) * g2;
+      for (let x = -s * .36 + o2; x < s * .36; x += g2) { ctx.beginPath(); ctx.moveTo(x, -s * .57); ctx.lineTo(x - s * .02, -s * .47); ctx.stroke(); }
+      ctx.restore();
+      // rear plate in alliance tint: battery, control hub, flag
+      ctx.fillStyle = col; ctx.globalAlpha = .55; rr(-s * .3, s * .15, s * .6, s * .3, s * .02); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = col; ctx.lineWidth = 2; rr(-s * .3, s * .15, s * .6, s * .3, s * .02); ctx.stroke();
+      ctx.fillStyle = '#14161a'; rr(-s * .26, s * .19, s * .18, s * .22, 3); ctx.fill(); rr(s * .06, s * .19, s * .2, s * .22, 3); ctx.fill();
+      ctx.fillStyle = '#3a3e47'; ctx.fillRect(-s * .26, s * .19, s * .18, s * .022);
+      ctx.fillStyle = '#fff'; ctx.globalAlpha = .9; rr(-s * .05, s * .26, s * .1, s * .14, 2); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.fillStyle = col; rr(-s * .035, s * .275, s * .07, s * .11, 2); ctx.fill();
+      if (!tur) {
+        ctx.fillStyle = '#353941'; rr(-s * .19, -s * .1, s * .38, s * .22, s * .03); ctx.fill();
+        ctx.fillStyle = col; ctx.globalAlpha = .9; rr(-s * .19, -s * .1, s * .04, s * .22, s * .015); ctx.fill(); rr(s * .15, -s * .1, s * .04, s * .22, s * .015); ctx.fill(); ctx.globalAlpha = 1;
+        ctx.fillStyle = '#101114'; rr(-s * .11, -s * .1, s * .045, s * .22, s * .015); ctx.fill(); rr(s * .065, -s * .1, s * .045, s * .22, s * .015); ctx.fill();
+        ctx.fillStyle = '#4c515c'; rr(-s * .05, -s * .06, s * .1, s * .14, s * .02); ctx.fill();
+        if (flash > 0.02) { ctx.fillStyle = 'rgba(255,214,90,' + flash + ')'; ctx.fillRect(-s * .03, -s * .2, s * .06, s * .1 * (1 + flash)); }
+      } else {
+        ctx.fillStyle = '#17191d'; ctx.beginPath(); ctx.arc(0, 0, s * .21, 0, TAU); ctx.fill();
+      }
+      ctx.restore();
+      if (tur) {
+        ctx.save(); ctx.translate(r.x * S, r.y * S);
+        ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, s * .2, 0, TAU); ctx.stroke();
+        ctx.rotate(r.ta);
+        ctx.fillStyle = '#2f333b'; rr(-s * .15, -s * .135, s * .3, s * .27, s * .03); ctx.fill();
+        ctx.fillStyle = '#121316'; rr(-s * .02, -s * .125, s * .15, s * .04, s * .015); ctx.fill(); rr(-s * .02, s * .085, s * .15, s * .04, s * .015); ctx.fill();
+        ctx.fillStyle = col; ctx.globalAlpha = .95; rr(-s * .15, -s * .135, s * .13, s * .27, s * .03); ctx.fill(); ctx.globalAlpha = 1;
+        ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(-s * .13, -s * .1, s * .02, s * .2);
+        ctx.fillStyle = '#9aa0ab'; ctx.fillRect(-s * .17, -s * .09, s * .03, s * .06); ctx.fillRect(-s * .17, s * .03, s * .03, s * .06);
+        ctx.fillStyle = '#fff'; ctx.fillRect(s * .13, -s * .016, s * .03, s * .032);
+        if (flash > 0.02) { ctx.fillStyle = 'rgba(255,214,90,' + flash + ')'; ctx.fillRect(s * .16, -s * .03, s * .09 * (1 + flash), s * .06); }
+        ctx.restore();
+      }
+      if (r.human) { ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(r.x * S, r.y * S, s * .78, 0, TAU); ctx.setLineDash([3, 9]); ctx.stroke(); ctx.setLineDash([]); }
+    }
+    function aimLine() {
+      const me = G.robots[0]; if (!me.hold.length) return;
+      const d = ROBOTS[me.type].turret ? me.ta : me.a, as = assistRange(me, d);
+      ctx.strokeStyle = 'rgba(255,201,51,.4)'; ctx.lineWidth = 2; ctx.setLineDash([6, 10]); ctx.beginPath();
+      ctx.moveTo(me.x * S, me.y * S); ctx.lineTo((me.x + Math.cos(d) * as.D) * S, (me.y + Math.sin(d) * as.D) * S); ctx.stroke(); ctx.setLineDash([]);
+      // landing marker: ring grows when the lob is locked on a live cell
+      const lx = (me.x + Math.cos(d) * as.D) * S, ly = (me.y + Math.sin(d) * as.D) * S;
+      ctx.strokeStyle = as.assisted ? 'rgba(120,255,170,.9)' : 'rgba(255,201,51,.55)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(lx, ly, (as.assisted ? 3.2 : 2) * S, 0, TAU); ctx.stroke();
+      if (as.assisted) { ctx.beginPath(); ctx.arc(lx, ly, 1 * S, 0, TAU); ctx.fillStyle = 'rgba(120,255,170,.9)'; ctx.fill(); }
+    }
+    function render() {
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.save(); if (G && G.shake > 0) ctx.translate((Math.random() - .5) * G.shake * 14, (Math.random() - .5) * G.shake * 14);
+      drawField();
+      if (!G) { ctx.restore(); return; }
+      drawRings();
+      G.balls.filter((b) => b.st === 'floor').forEach(drawBall);
+      if (mode === 'run') aimLine();
+      G.robots.forEach(drawRobot);
+      G.balls.filter((b) => b.st === 'fly' || b.st === 'spill').forEach(drawBall);
+      G.tokens.forEach((k) => {
+        const e = k.t / k.dur, out = k.k === 'out';
+        for (let j = 3; j >= 0; j--) {
+          const q = clamp(e - j * 0.07, 0, 1), ease = out ? 1 - Math.pow(1 - q, 2) : q * q * (3 - 2 * q);
+          const x = k.x0 + (k.x1 - k.x0) * ease, y = k.y0 + (k.y1 - k.y0) * ease, lift = Math.sin(q * Math.PI) * (out ? 5 : 11);
+          const sc = out ? .75 + .25 * q : 1 - .35 * q;
+          ctx.globalAlpha = j ? .22 / j : 1; ctx.fillStyle = COL[k.c]; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(x * S, (y - lift) * S, (k.c === 'y' ? 1.7 : 2.2) * S * sc, 0, TAU); ctx.fill(); if (!j) ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      });
+      G.fx.forEach((p) => { ctx.globalAlpha = clamp(p.life * 3, 0, 1); ctx.fillStyle = COL[p.c] || '#fff'; ctx.beginPath(); ctx.arc(p.x * S, p.y * S, S, 0, TAU); ctx.fill(); }); ctx.globalAlpha = 1;
+      G.pops.forEach((p) => { ctx.globalAlpha = clamp(1.3 - p.t, 0, 1); ctx.fillStyle = /FAULT|AVERT/.test(p.txt) ? '#ff6b7a' : '#fff'; const k2 = 1 + .6 * Math.max(0, 1 - p.t * 5); ctx.font = '800 ' + (5.2 * S * k2) + 'px Bricolage Grotesque, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(p.txt, clamp(p.x * S, 110, cv.width - 110), clamp(p.y * S, 40, cv.height - 10)); }); ctx.globalAlpha = 1;
+      if (G.label) {
+        const L = G.label, w = 31 * S * .5 * 2, h = 6.4 * S; ctx.fillStyle = 'rgba(9,9,11,.88)'; rr(L.x - w / 2, L.y - h / 2, w, h, 9); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1; rr(L.x - w / 2, L.y - h / 2, w, h, 9); ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = '600 ' + (2.7 * S) + 'px JetBrains Mono, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('F depune  ·  C ia', L.x, L.y + 1); ctx.textBaseline = 'alphabetic'; G.label = null;
+      }
+      if (mode === 'run' && !G.free && phaseOf(G.t) === 'inter') {
+        ctx.fillStyle = 'rgba(9,9,11,.6)'; ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = '800 ' + (14 * S) + 'px Bricolage Grotesque, sans-serif'; ctx.fillText('PAUZĂ', cv.width / 2, cv.height / 2);
+        ctx.font = '500 ' + (4 * S) + 'px JetBrains Mono, monospace'; ctx.fillStyle = '#ffc933'; ctx.fillText('TELEOP ÎN ' + Math.ceil(AUTO_T + INTER_T - G.t) + 's', cv.width / 2, cv.height / 2 + 9 * S);
+      }
+      ctx.restore();
+    }
+
+    function frame(ts) {
+      const dt = Math.min(0.033, (ts - last) / 1000 || 0); last = ts;
+      if (mode === 'run') { update(dt); hud(); }
+      render();
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- flow ----------
+    const show = (id, on) => $(id).classList.toggle('hidden', !on);
+    function startCountdown() {
+      G = newGame(); eval_(); hud(); mode = 'count'; show('menu', false); show('end', false); show('countdown', true);
+      let n = 3; $('cdText').textContent = n;
+      const iv = setInterval(() => {
+        n--; if (n <= 0) { clearInterval(iv); show('countdown', false); mode = 'run'; return; }
+        $('cdText').textContent = n;
+      }, 1000);
+    }
+    function togglePause() { if (mode === 'run') { mode = 'pause'; show('paused', true); } else if (mode === 'pause') { mode = 'run'; show('paused', false); } }
+    function endMatch() {
+      mode = 'end'; eval_(); hud();
+      const me = cfg.alliance, my = G.score[me], op = G.score[OPP[me]];
+      // ranking points per Table 10-2 / 10-3 ("all other events" thresholds)
+      const lp = G.parts[me].lp, tips = G.hive[me].tips;
+      let rp = my > op ? 3 : my === op ? 1 : 0; const tags = [];
+      if (lp >= 16) { rp++; tags.push('SWARM'); } if (tips >= 4) { rp++; tags.push('POLLINATOR 1'); } if (tips >= 7) { rp++; tags.push('POLLINATOR 2'); }
+      $('fRed').textContent = G.score.red; $('fBlue').textContent = G.score.blue;
+      const key = me + '-' + cfg.mode; const prev = best[key] || 0; const nb = my > prev; if (nb) { best[key] = my; localStorage.setItem('fieldSimBest', JSON.stringify(best)); }
+      $('endTitle').textContent = my > op ? 'AI CÂȘTIGAT' : my < op ? 'AI PIERDUT' : 'EGALITATE';
+      $('endNote').innerHTML = 'Tips: ' + tips + ' · RP: ' + rp + (tags.length ? ' (' + tags.join(', ') + ')' : '') + '<br>' + (nb ? 'Nou record personal: ' : 'Record personal: ') + (best[key] || 0);
+      show('end', true);
+    }
+    function bestLine() { const b = best[cfg.alliance + '-' + cfg.mode]; $('bestLine').textContent = cfg.mode === 'free' ? 'Free drive: fără cronometru, exersează liber' : (b ? 'Record personal: ' + b : 'Încă niciun meci în acest format'); }
+    function seg(id, attr, key) {
+      $(id).addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; cfg[key] = b.dataset[attr]; [...$(id).children].forEach((x) => { x.classList.toggle('on', x === b); if (id !== 'segAlliance') x.classList.toggle('pink', x === b); }); bestLine(); });
+    }
+    seg('segAlliance', 'al', 'alliance'); seg('segRobot', 'rb', 'robot'); seg('segMode', 'mode', 'mode');
+    $('btnStart').onclick = startCountdown; $('btnAgain').onclick = startCountdown;
+    $('btnMenu').onclick = () => { show('end', false); show('menu', true); mode = 'menu'; G = newGame(); eval_(); bestLine(); };
+    $('btnResume').onclick = togglePause;
+    $('optSpd').oninput = () => { $('spdVal').textContent = $('optSpd').value + '%'; };
+
+    // touch controls
+    const joy = $('joy'), knob = $('joyKnob'); let jid = null;
+    const jmove = (e) => { const r = joy.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2; let dx = (e.clientX - cx) / (r.width / 2), dy = (e.clientY - cy) / (r.height / 2); const m = Math.hypot(dx, dy); if (m > 1) { dx /= m; dy /= m; } touch.mx = dx; touch.my = -dy; knob.style.transform = 'translate(' + dx * 40 + 'px,' + dy * 40 + 'px)'; };
+    joy.addEventListener('pointerdown', (e) => { jid = e.pointerId; joy.setPointerCapture(jid); jmove(e); });
+    joy.addEventListener('pointermove', (e) => { if (e.pointerId === jid) jmove(e); });
+    const jend = (e) => { if (e.pointerId !== jid) return; jid = null; touch.mx = touch.my = 0; knob.style.transform = ''; };
+    joy.addEventListener('pointerup', jend); joy.addEventListener('pointercancel', jend);
+    const hold = (id, on, off) => { const el = $(id); el.addEventListener('pointerdown', (e) => { el.setPointerCapture(e.pointerId); on(); el.classList.add('on'); }); const up = () => { off(); el.classList.remove('on'); }; el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); };
+    hold('tDep', () => touch.dep = true, () => touch.dep = false); hold('tTake', () => touch.take = true, () => touch.take = false);
+    hold('tL', () => touch.rot = -1, () => touch.rot = 0); hold('tR', () => touch.rot = 1, () => touch.rot = 0); hold('tShoot', () => touch.shoot = true, () => touch.shoot = false);
+
+    bestLine(); G = newGame(); eval_(); requestAnimationFrame(frame);
+  })();
+  </script>
+</body>
+
+</html>

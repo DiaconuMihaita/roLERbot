@@ -2,218 +2,147 @@
 <html lang="ro">
 
 <head>
-  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title data-i18n="pageTitleBlog">roLERbot - Blog & Activități</title>
+  <meta name="description" content="Echipa roLERbot — proiect de robotică al Liceului Teoretic Emil Racoviță Vaslui." />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="icon" type="image/png" href="assets/img/Design fără titlu (41).png" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-  <meta name="description" content="Echipa roLERbot — proiect de robotică al Liceului Teoretic Emil Racoviță Vaslui." />
-  <meta name="author" content="" />
-  <title data-i18n="pageTitleBlog">Rolerbot - Blog & Activitati</title>
-  <!-- Favicon-->
-  <link rel="icon" type="image/x-icon" href="assets/img/Design fără titlu (15).png" />
-  <!-- Font Awesome icons-->
-  <script defer src="https://use.fontawesome.com/releases/v5.15.3/js/all.js" crossorigin="anonymous"></script>
-  <!-- Google fonts-->
-  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css" />
-  <link href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700" rel="stylesheet" type="text/css" />
-  <!-- Core theme CSS -->
-  <link href="css/styles.css?v=20260309j" rel="stylesheet" />
-  <link href="css/blog-redesign.css?v=20260310i" rel="stylesheet" />
-  <link href="css/mobile-responsive.css?v=20260310i" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link href="css/modern.css?v=9" rel="stylesheet" />
 </head>
 
-<body id="page-top" class="blog-page blog-intro-pending">
+<body id="page-top" class="blog-page">
+  <a class="skip-link" href="#team-members" data-i18n="blog.skipLink">Mergi la conținut</a>
+  <div class="scroll-progress" aria-hidden="true"></div>
 
-  <a class="skip-link" href="#team-members" data-i18n="blog.skipLink">Mergi la continut</a>
-
-  <!-- Navigation-->
-  <nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav">
-    <div class="container morph-nav-shell">
-      <a class="navbar-brand" href="#page-top">
-        <img src="assets/img/Design fără titlu (41).png" alt="Logo">
-      </a>
-
-      <button class="navbar-toggler morph-menu-toggle" id="morphMenuToggle" type="button"
-        aria-controls="navbarResponsive" aria-expanded="false" aria-label="Deschide meniul principal">
-        <span class="morph-toggle-icon" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </span>
-      </button>
-
-      <div class="collapse navbar-collapse morph-menu-panel" id="navbarResponsive">
-        <ul class="navbar-nav text-uppercase morph-menu-links">
-          <li class="nav-item"><a class="nav-link" href="index.html" data-i18n="nav.home">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="#team-members" data-i18n="nav.team">Echipa</a></li>
-          <li class="nav-item"><a class="nav-link" href="#activities-section" data-i18n="nav.activities">Activități</a>
-          </li>
-          <li class="nav-item"><a class="nav-link" href="#footer" data-i18n="nav.contact">Contact</a></li>
-          
-          <li class="nav-item">
-            <button id="rain-button" class="nav-link"
-              style="background: none; border: none; cursor: pointer;">🐥</button>
-          </li>
-          <li class="nav-item">
-            <div class="language-switcher" aria-label="Selecteaza limba site-ului">
-              <button type="button" class="lang-side" data-set-lang="ro" aria-label="Seteaza limba romana">RO</button>
-              <label class="language-toggle" for="languageToggleInput"
-                aria-label="Comuta limba intre romana si engleza">
-                <input type="checkbox" id="languageToggleInput" class="language-toggle-input" />
-                <span class="language-toggle-thumb" aria-hidden="true"></span>
-              </label>
-              <button type="button" class="lang-side" data-set-lang="en" aria-label="Seteaza limba engleza">EN</button>
-            </div>
-          </li>
-           <li class="nav-item"><a class="nav-link" href="https://lervs.ro/" data-i18n="nav.ftcGame">Inapoi</a>
-          </li>
-        </ul>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="nav-bar">
+      <a class="nav-logo" href="index.html" aria-label="roLERbot"><img src="assets/img/Design fără titlu (41).png"
+          alt="roLERbot"></a>
+      <nav class="nav-links" aria-label="Principal">
+        <span class="nav-pill" aria-hidden="true"></span>
+        <a href="index.html" data-page="index.html" data-i18n="nav.home">Acasă</a>
+        <a href="#team-members" data-i18n="nav.team">Echipa</a>
+        <a href="#activities-section" data-i18n="nav.activities">Activități</a>
+        <a href="#contact" data-i18n="nav.contact">Contact</a>
+      </nav>
+      <button id="rain-button" class="nav-duck" aria-label="🐥" type="button">🐥</button>
+      <div class="lang" role="group" aria-label="Limba">
+        <button type="button" data-set-lang="ro">RO</button>
+        <button type="button" data-set-lang="en">EN</button>
       </div>
+      <button class="nav-toggle" type="button" aria-label="Meniu" aria-expanded="false"><span></span><span></span></button>
     </div>
-  </nav>
-
-  <header class="masthead masthead-blog" id="blogHero">
-    <div class="container hero-intro-shell">
-      <div class="hero-intro-copy" aria-live="polite">
-        <svg class="blog-handwrite-logo" viewBox="0 0 820 250" role="img" aria-label="BLOG">
-          <text id="blogHandText" x="0" y="56%" text-anchor="start" dominant-baseline="middle">BLOG</text>
-        </svg>
-        <a id="blogReadBtn" class="btn btn-xl btn-start-hero text-uppercase" href="#team-members"
-          style="opacity:0;transform:translateY(12px);pointer-events:none;">
-          Citeste blogul
-        </a>
-      </div>
-
-      <figure class="blog-newspaper" id="blogNewspaper">
-        <img class="blog-newspaper-img" src="teren/ziar.png" alt="Newspaper" />
-      </figure>
-    </div>
-
-    <a class="hero-scroll-indicator" href="#team-members" aria-label="Mergi la sectiunea Echipa">
-      <span></span>
-    </a>
   </header>
 
-  <!-- Team Members Section -->
-  <section class="page-section team-members-section" id="team-members">
-    <div class="container">
-      <div class="text-center mb-5">
-        <h2 class="section-heading text-uppercase animate-on-scroll" data-i18n="blog.teamTitle">Cunoaște Echipa</h2>
-        <h3 class="section-subheading text-muted" data-i18n="blog.teamSubtitle">Membrii roLERbot</h3>
+  <div class="menu-sheet">
+    <a href="index.html" style="--i:0" data-i18n="nav.home">Acasă</a>
+    <a href="#team-members" style="--i:1" data-i18n="nav.team">Echipa</a>
+    <a href="#activities-section" style="--i:2" data-i18n="nav.activities">Activități</a>
+    <a href="#contact" style="--i:3" data-i18n="nav.contact">Contact</a>
+    <div class="menu-foot">FTC TEAM 21031 · VASLUI, RO</div>
+  </div>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero hero--blog" id="blogHero">
+      <div class="hero-grid"></div>
+      <div class="wrap" style="width:100%">
+        <div class="blog-hero-grid">
+          <div class="blog-hero-copy">
+            <span class="tag-pill" data-reveal data-i18n="blog.masthead">Bloguri</span>
+            <h1 class="hero-title" data-split data-pink-from="2" style="margin-top:24px">BLOG</h1>
+            <div class="hero-actions" data-reveal style="--d:3;margin-top:36px">
+              <a class="btn" href="#team-members" data-magnetic><span data-i18n="blog.teamTitle">Cunoaște Echipa</span>
+                <span class="btn-dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span></a>
+            </div>
+          </div>
+          <img class="paper" src="teren/ziar.png" alt="">
+        </div>
       </div>
+    </section>
 
-      <div class="row justify-content-center">
-        <div class="col-12">
-          <div class="team-carousel-container">
-            <button class="carousel-btn prev-btn" onclick="changeSlide(-1)"><i class="fas fa-chevron-left"></i></button>
-
-            <div class="carousel-cards-wrapper">
-              <div class="team-card side-card left-card" data-member="8">
-                <div class="card-pink-bg">
-                  <img src="memb/8.png" alt="Membru 8" class="member-photo">
-                  <h4 class="member-name">Nume Prenume</h4>
-                  <p class="member-department">Departamentul Business</p>
-                </div>
-              </div>
-              <div class="team-card center-card active" data-member="1">
-                <div class="card-pink-bg">
-                  <img src="memb/1.png" alt="Membru 1" class="member-photo">
-                  <h4 class="member-name">Nume Prenume</h4>
-                  <p class="member-department">Departamentul Programare</p>
-                </div>
-              </div>
-              <div class="team-card side-card right-card" data-member="2">
-                <div class="card-pink-bg">
-                  <img src="memb/2.png" alt="Membru 2" class="member-photo">
-                  <h4 class="member-name">Nume Prenume</h4>
-                  <p class="member-department">Departamentul Design</p>
-                </div>
-              </div>
-            </div>
-
-            <button class="carousel-btn next-btn" onclick="changeSlide(1)"><i class="fas fa-chevron-right"></i></button>
-
-            <div class="carousel-indicators">
-              <span class="indicator active" onclick="goToSlide(0)"></span>
-              <span class="indicator" onclick="goToSlide(1)"></span>
-              <span class="indicator" onclick="goToSlide(2)"></span>
-              <span class="indicator" onclick="goToSlide(3)"></span>
-              <span class="indicator" onclick="goToSlide(4)"></span>
-              <span class="indicator" onclick="goToSlide(5)"></span>
-              <span class="indicator" onclick="goToSlide(6)"></span>
-              <span class="indicator" onclick="goToSlide(7)"></span>
-              <span class="indicator" onclick="goToSlide(8)"></span>
-              <span class="indicator" onclick="goToSlide(9)"></span>
-            </div>
+    <!-- MEMBERS -->
+    <section class="section" id="team-members" style="padding-inline:0">
+      <div class="wrap">
+        <div class="rail-head">
+          <div class="sec-head" style="margin:0">
+            <span class="mono-label" data-reveal>01 / <span data-i18n="blog.teamSubtitle">Membrii roLERbot</span></span>
+            <h2 class="h-lg" data-reveal style="--d:1" data-i18n="blog.teamTitle">Cunoaște Echipa</h2>
+          </div>
+          <div class="rail-ctrl" data-reveal>
+            <button class="rail-btn" type="button" data-rail-prev aria-label="‹"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+            <button class="rail-btn" type="button" data-rail-next aria-label="›"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
           </div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- New Activities & Seasons Section -->
-  <section class="page-section" id="activities-section">
-    <div class="container">
-      <div class="text-center mb-5">
-        <h2 class="section-heading text-uppercase animate-on-scroll" data-i18n="blog.activitiesTitle">Activitati &
-          Competitii</h2>
-        <h3 class="section-subheading text-muted" data-i18n="blog.activitiesSubtitle">Exploreaza documentatia fiecarui
-          sezon.</h3>
+      <div data-rail-box>
+        <div class="rail" data-rail>
+          <article class="member"><div class="member-pic" data-n="01"><img src="memb/1.png" alt="" loading="lazy" draggable="false"></div><div class="member-info"><h3 class="member-name" data-i18n="member.1.name">Ina Cioata</h3><p class="member-dept" data-i18n="member.1.dept">Departamentul PR&Fotograf</p></div></article>
+          <article class="member"><div class="member-pic" data-n="02"><img src="memb/2.png" alt="" loading="lazy" draggable="false"></div><div class="member-info"><h3 class="member-name" data-i18n="member.2.name">Ahire Simona</h3><p class="member-dept" data-i18n="member.2.dept">Departamentul Marketing&PR</p></div></article>
+          <article class="member"><div class="member-pic" data-n="03"><img src="memb/3.png" alt="" loading="lazy" draggable="false"></div><div class="member-info"><h3 class="member-name" data-i18n="member.3.name">Tocariuc Nicoleta</h3><p class="member-dept" data-i18n="member.3.dept">Departamentul Marketing&PR</p></div></article>
+          <article class="member"><div class="member-pic" data-n="04"><img src="memb/4.png" alt="" loading="lazy" draggable="false"></div><div class="member-info"><h3 class="member-name" data-i18n="member.4.name">Diaconu Mihaita</h3><p class="member-dept" data-i18n="member.4.dept">Departamentul Hardware&Web Developer</p></div></article>
+          <article class="member"><div class="member-pic" data-n="05"><img src="memb/5.png" alt="" loading="lazy" draggable="false"></div><div class="member-info"><h3 class="member-name" data-i18n="member.5.name">Gospodin Rares</h3><p class="member-dept" data-i18n="member.5.dept">Departamentul Hardware</p></div></article>
+          <article class="member"><div class="member-pic" data-n="06"><img src="memb/6.png" alt="" loading="lazy" draggable="false"></div><div class="member-info"><h3 class="member-name" data-i18n="member.6.name">Padurarau Natalia</h3><p class="member-dept" data-i18n="member.6.dept">Departamentul Software</p></div></article>
+          <article class="member"><div class="member-pic" data-n="07"><img src="memb/7.png" alt="" loading="lazy" draggable="false"></div><div class="member-info"><h3 class="member-name" data-i18n="member.7.name">Mandru Stefan</h3><p class="member-dept" data-i18n="member.7.dept">Departamentul Hardware</p></div></article>
+          <article class="member"><div class="member-pic" data-n="08"><img src="memb/8.png" alt="" loading="lazy" draggable="false"></div><div class="member-info"><h3 class="member-name" data-i18n="member.8.name">Arnaut Crina</h3><p class="member-dept" data-i18n="member.8.dept">Departamentul Hardware</p></div></article>
+          <article class="member"><div class="member-pic" data-n="09"><img src="memb/9.png" alt="" loading="lazy" draggable="false"></div><div class="member-info"><h3 class="member-name" data-i18n="member.9.name">Averchi Radu</h3><p class="member-dept" data-i18n="member.9.dept">Departamentul Designer Grafic</p></div></article>
+          <article class="member"><div class="member-pic" data-n="10"><img src="memb/10.png" alt="" loading="lazy" draggable="false"></div><div class="member-info"><h3 class="member-name" data-i18n="member.10.name">Rascanu Maria</h3><p class="member-dept" data-i18n="member.10.dept">Departamentul Marketing&PR</p></div></article>
+        </div>
+        <div class="rail-bar" aria-hidden="true"><i></i></div>
       </div>
-      <div class="season-grid">
-        <!-- Season 2023-2024 -->
-        <div class="folder-item animate-on-scroll" onclick="triggerFolderAnimation(this, '2023-2024')">
-          <div class="folder-wrapper">
-            <div class="folder-back"></div>
-            <div class="folder-paper"></div>
-            <div class="folder-tab"></div>
-            <div class="folder-front">
-              <div class="folder-icon">📁</div>
-              <div class="folder-year"><span data-i18n="modal.seasonPrefix">Sezon</span> 2023-2024</div>
-            </div>
-          </div>
+    </section>
+
+    <!-- SEASONS -->
+    <section class="section" id="activities-section" style="background:var(--bg-2)">
+      <div class="wrap">
+        <div class="sec-head">
+          <span class="mono-label" data-reveal>02 / <span data-i18n="nav.activities">Activități</span></span>
+          <h2 class="h-lg" data-reveal style="--d:1" data-i18n="blog.activitiesTitle">Activități & Competiții</h2>
+          <p class="sub" data-reveal style="--d:2" data-i18n="blog.activitiesSubtitle">Explorează documentația fiecărui sezon.</p>
         </div>
-        <!-- Season 2024-2025 -->
-        <div class="folder-item animate-on-scroll" onclick="triggerFolderAnimation(this, '2024-2025')">
-          <div class="folder-wrapper">
-            <div class="folder-back"></div>
-            <div class="folder-paper"></div>
-            <div class="folder-tab"></div>
-            <div class="folder-front">
-              <div class="folder-icon">📁</div>
-              <div class="folder-year"><span data-i18n="modal.seasonPrefix">Sezon</span> 2024-2025</div>
-            </div>
-          </div>
-        </div>
-        <!-- Season 2025-2026 -->
-        <div class="folder-item animate-on-scroll" onclick="triggerFolderAnimation(this, '2025-2026')">
-          <div class="folder-wrapper">
-            <div class="folder-back"></div>
-            <div class="folder-paper"></div>
-            <div class="folder-tab"></div>
-            <div class="folder-front">
-              <div class="folder-icon">📁</div>
-              <div class="folder-year"><span data-i18n="modal.seasonPrefix">Sezon</span> 2025-2026</div>
-            </div>
-          </div>
+
+        <div class="seasons">
+          <button class="season" type="button" data-season="2023-2024" data-reveal style="--d:0">
+            <span class="season-pic"><span class="season-n">01</span><img src="assets/roboti/2024.png" alt="" loading="lazy"></span>
+            <span class="season-info"><span class="season-y">2023—2024<small>FTC · CENTERSTAGE</small></span>
+            <span class="season-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+          </button>
+          <button class="season" type="button" data-season="2024-2025" data-reveal style="--d:1">
+            <span class="season-pic"><span class="season-n">02</span><img src="assets/roboti/2025.png" alt="" loading="lazy"></span>
+            <span class="season-info"><span class="season-y">2024—2025<small>FTC · INTO THE DEEP</small></span>
+            <span class="season-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+          </button>
+          <button class="season" type="button" data-season="2025-2026" data-reveal style="--d:2">
+            <span class="season-pic"><span class="season-n">03</span><img src="assets/roboti/2026.png" alt="" loading="lazy"></span>
+            <span class="season-info"><span class="season-y">2025—2026<small>FTC · DECODE</small></span>
+            <span class="season-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+          </button>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </main>
 
-  <!-- Seasons Modal -->
-  <div class="modal-overlay" id="seasonModal">
+    <!-- Seasons modal -->
+  <div class="modal-overlay" id="seasonModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-window">
       <div class="modal-header">
         <h3 class="modal-title" id="modalTitle"><span data-i18n="modal.seasonPrefix">Sezon</span>&nbsp;<span id="modalSeasonYear">...</span></h3>
-        <button class="modal-close" onclick="closeSeasonModal()">✕</button>
+        <button class="modal-close" type="button" onclick="closeSeasonModal()" aria-label="✕">✕</button>
       </div>
       <div class="modal-tabs">
-        <button class="tab-btn active" onclick="switchTab('proba')" data-i18n="modal.tab.proba">Proba</button>
-        <button class="tab-btn" onclick="switchTab('robot')" data-i18n="modal.tab.robot">Robot</button>
-        <button class="tab-btn" onclick="switchTab('activitati')" data-i18n="modal.tab.activitati">Activitati</button>
-        <button class="tab-btn" onclick="switchTab('meeturi')" data-i18n="modal.tab.meeturi">Meeturi</button>
+        <button class="tab-btn active" type="button" data-tab="proba" data-i18n="modal.tab.proba">Proba</button>
+        <button class="tab-btn" type="button" data-tab="robot" data-i18n="modal.tab.robot">Robot</button>
+        <button class="tab-btn" type="button" data-tab="activitati" data-i18n="modal.tab.activitati">Activitati</button>
+        <button class="tab-btn" type="button" data-tab="meeturi" data-i18n="modal.tab.meeturi">Meeturi</button>
       </div>
       <div class="modal-body">
         <div id="tab-proba" class="tab-content active"></div>
@@ -224,508 +153,64 @@
     </div>
   </div>
 
-  <script>
-    function openSeasonModal(season) {
-      document.getElementById('modalSeasonYear').textContent = season;
-      modal.classList.add('active');
-      documentBody.style.overflow = 'hidden'; // Stop scrolling
+  <!-- FOOTER -->
+  <footer class="footer" id="contact">
+    <div class="wrap">
+      <h2 class="footer-talk" data-reveal><a href="mailto:rolerbotintl@gmail.com" data-i18n="footer.talk">Hai să construim ceva împreună.</a></h2>
 
-      // Load Content from i18n dictionaries
-      const tabs = ['proba', 'robot', 'activitati', 'meeturi'];
-      tabs.forEach(tab => {
-        const el = document.getElementById('tab-' + tab);
-        const key = `season.${season}.${tab}`;
-        el.setAttribute('data-i18n', key);
-        el.innerHTML = window.translate(key);
-      });
-
-      // Auto switch to Proba tab first
-      switchTab('proba');
-    }
-
-    const modal = document.getElementById('seasonModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const documentBody = document.body;
-
-    // Function to handle animation + open logic
-    function triggerFolderAnimation(element, season) {
-      const wrapper = element.querySelector('.folder-wrapper');
-
-      // 1. Add "open" class to animate folder
-      wrapper.classList.add('open');
-
-      // 2. Wait for animation, then open modal
-      setTimeout(() => {
-        openSeasonModal(season);
-
-        // Reset folder state after modal is open
-        setTimeout(() => {
-          wrapper.classList.remove('open');
-        }, 500);
-      }, 600);
-    }
-
-    function closeSeasonModal() {
-      modal.classList.remove('active');
-      documentBody.style.overflow = ''; // Restore scrolling
-    }
-
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-
-      document.getElementById('tab-' + tabName).classList.add('active');
-      // Button activation logic
-      const tabs = ['proba', 'robot', 'activitati', 'meeturi'];
-      const index = tabs.indexOf(tabName);
-      if (index >= 0) {
-        const btns = document.querySelectorAll('.tab-btn');
-        if (btns[index]) btns[index].classList.add('active');
-      }
-    }
-
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeSeasonModal();
-    });
-  </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/i18n.js"></script>
-  <script src="js/scripts.js?v=20260309j"></script>
-  <script>
-    (function () {
-      const body = document.body;
-      const hero = document.getElementById('blogHero');
-      const handText = document.getElementById('blogHandText');
-      const readBtn = document.getElementById('blogReadBtn');
-
-      if (!hero || !handText || !readBtn || !body.classList.contains('blog-page')) {
-        return;
-      }
-
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      const syncBlogTextPlacement = () => {
-        const isMobile = window.matchMedia('(max-width: 767px)').matches;
-        if (isMobile) {
-          handText.setAttribute('x', '43%');
-          handText.setAttribute('y', '50%');
-          handText.setAttribute('text-anchor', 'middle');
-        } else {
-          handText.setAttribute('x', '0');
-          handText.setAttribute('y', '56%');
-          handText.setAttribute('text-anchor', 'start');
-        }
-      };
-
-      syncBlogTextPlacement();
-      window.addEventListener('resize', syncBlogTextPlacement);
-
-      const wheelOpts = { passive: false };
-      const touchOpts = { passive: false };
-      let targetProgress = 0;
-      let currentProgress = 0;
-      let rafId = 0;
-      let introStarted = false;
-      let introDone = false;
-      let touchStartY = null;
-      let lockTicking = false;
-
-      const lockScroll = () => {
-        body.classList.remove('blog-intro-pending');
-        body.classList.add('blog-intro-lock');
-        window.scrollTo(0, 0);
-      };
-
-      const unlockScroll = () => {
-        body.classList.remove('blog-intro-lock');
-      };
-
-      const cleanupListeners = () => {
-        window.removeEventListener('wheel', onWheel, wheelOpts);
-        window.removeEventListener('keydown', onKeydown);
-        window.removeEventListener('touchstart', onTouchStart, touchOpts);
-        window.removeEventListener('touchmove', onTouchMove, touchOpts);
-        window.removeEventListener('scroll', keepTop);
-      };
-
-      const completeIntro = () => {
-        if (introDone) return;
-        introDone = true;
-        hero.classList.add('intro-done');
-        readBtn.removeAttribute('aria-hidden');
-        readBtn.style.opacity = '1';
-        readBtn.style.transform = 'translateY(0px)';
-        readBtn.style.pointerEvents = 'auto';
-        unlockScroll();
-        cleanupListeners();
-      };
-
-      const updateReadButtonProgress = (progress) => {
-        const safeProgress = Math.max(0, Math.min(progress, 1));
-        const visualProgress = Math.max(0, Math.min(1, safeProgress * 1.35));
-        readBtn.style.setProperty('opacity', visualProgress.toFixed(3), 'important');
-        readBtn.style.setProperty('transform', `translateY(${((1 - visualProgress) * 12).toFixed(2)}px)`, 'important');
-        readBtn.style.pointerEvents = 'auto';
-        readBtn.removeAttribute('aria-hidden');
-      };
-
-      const applyFrame = () => {
-        const lerp = (start, end, amt) => start + (end - start) * amt;
-        currentProgress = lerp(currentProgress, targetProgress, 0.15);
-
-        hero.style.setProperty('--blog-handwrite-progress', currentProgress.toFixed(4));
-        hero.style.setProperty('--blog-intro-progress', currentProgress.toFixed(4));
-        updateReadButtonProgress(currentProgress);
-
-        // Show newspaper as we start
-        if (currentProgress > 0.001 && !hero.classList.contains('intro-playing')) {
-          hero.classList.add('intro-playing');
-        }
-
-        // Reveal writing/button early to keep them in tandem with the newspaper fall
-        if (currentProgress > 0.2 && !hero.classList.contains('typing-start')) {
-          hero.classList.add('typing-start');
-        }
-
-        if (currentProgress >= 0.992 && targetProgress >= 0.995) {
-          hero.classList.add('typing-done');
-          window.setTimeout(completeIntro, 120);
-          rafId = 0;
-          return;
-        }
-
-        if (Math.abs(currentProgress - targetProgress) > 0.0001) {
-          rafId = window.requestAnimationFrame(applyFrame);
-        } else {
-          rafId = 0;
-        }
-      };
-
-      const nudge = (delta) => {
-        if (introDone) return;
-        // Higher sensitivity so the CTA visibly reacts on small wheel/touch gestures.
-        const step = Math.min(Math.max(Math.abs(delta) / 260, 0.015), 0.22);
-        targetProgress = Math.min(targetProgress + step, 1);
-        if (!rafId) rafId = window.requestAnimationFrame(applyFrame);
-      };
-
-      const keepTop = () => {
-        if (introDone || window.scrollY === 0 || lockTicking) {
-          return;
-        }
-
-        lockTicking = true;
-        window.requestAnimationFrame(() => {
-          window.scrollTo(0, 0);
-          lockTicking = false;
-        });
-      };
-
-      const onWheel = (event) => {
-        if (introDone) {
-          return;
-        }
-
-        event.preventDefault();
-        if (event.deltaY > 0) {
-          nudge(event.deltaY);
-        }
-      };
-
-      const onKeydown = (event) => {
-        if (introDone) {
-          return;
-        }
-
-        if (!['ArrowDown', 'PageDown', ' ', 'Enter'].includes(event.key)) {
-          return;
-        }
-
-        event.preventDefault();
-        nudge(300);
-      };
-
-      const onTouchStart = (event) => {
-        if (introDone) {
-          return;
-        }
-
-        touchStartY = event.touches[0] ? event.touches[0].clientY : null;
-      };
-
-      const onTouchMove = (event) => {
-        if (introDone) {
-          return;
-        }
-
-        event.preventDefault();
-
-        if (!event.touches[0] || touchStartY === null) {
-          return;
-        }
-
-        const deltaY = touchStartY - event.touches[0].clientY;
-        touchStartY = event.touches[0].clientY;
-        if (deltaY > 0) {
-          nudge(deltaY * 2.5);
-        }
-      };
-
-      if (prefersReducedMotion) {
-        body.classList.remove('blog-intro-pending', 'blog-intro-lock');
-        hero.classList.add('intro-done', 'typing-done');
-        hero.style.setProperty('--blog-handwrite-progress', '1');
-        readBtn.removeAttribute('aria-hidden');
-        readBtn.style.opacity = '1';
-        readBtn.style.transform = 'translateY(0px)';
-        readBtn.style.pointerEvents = 'auto';
-        return;
-      }
-
-      if (window.scrollY <= 5) {
-        lockScroll();
-        hero.classList.remove('intro-playing', 'typing-start', 'typing-done', 'intro-done');
-        hero.style.setProperty('--blog-handwrite-progress', '0');
-        readBtn.setAttribute('aria-hidden', 'true');
-        updateReadButtonProgress(0);
-        window.addEventListener('wheel', onWheel, wheelOpts);
-        window.addEventListener('keydown', onKeydown);
-        window.addEventListener('touchstart', onTouchStart, touchOpts);
-        window.addEventListener('touchmove', onTouchMove, touchOpts);
-        window.addEventListener('scroll', keepTop, { passive: true });
-      } else {
-        body.classList.remove('blog-intro-pending');
-        hero.classList.add('intro-done', 'typing-done');
-        hero.style.setProperty('--blog-handwrite-progress', '1');
-        readBtn.removeAttribute('aria-hidden');
-        readBtn.style.opacity = '1';
-        readBtn.style.transform = 'translateY(0px)';
-        readBtn.style.pointerEvents = 'auto';
-      }
-
-      window.addEventListener('beforeunload', () => {
-        if (rafId) {
-          window.cancelAnimationFrame(rafId);
-        }
-      });
-    })();
-  </script>
-  <script>
-    (function () {
-      if (window.changeSlide && window.goToSlide && window.changeSlide.toString().includes('updateCarousel')) return;
-
-      const teamMembers = [
-        { id: 1, image: "memb/1.png", name: "Ina Cioata", dept: "Departamentul PR&Fotograf" },
-        { id: 2, image: "memb/2.png", name: "Ahire Simona", dept: "Departamentul Marketing&PR" },
-        { id: 3, image: "memb/3.png", name: "Tocariuc Nicoleta", dept: "Departamentul Marketing&PR" },
-        { id: 4, image: "memb/4.png", name: "Diaconu Mihaita", dept: "Departamentul Hardware&Web Developer" },
-        { id: 5, image: "memb/5.png", name: "Gospodin Rares", dept: "Departamentul Hardware" },
-        { id: 6, image: "memb/6.png", name: "Padurarau Natalia", dept: "Departamentul Software" },
-        { id: 7, image: "memb/7.png", name: "Mandru Stefan", dept: "Departamentul Hardware" },
-        { id: 8, image: "memb/8.png", name: "Arnaut  Crina", dept: "Departamentul Hardware" },
-        { id: 9, image: "memb/9.png", name: "Averchi Radu", dept: "Departamentul Designer Grafic" },
-        { id: 10, image: "memb/10.png", name: "Rascanu Maria", dept: "Departamentul Marketing&PR" },
-      ];
-
-      let currentSlide = 0;
-      const totalSlides = teamMembers.length;
-
-      function getCardIndex(offset) {
-        let index = currentSlide + offset;
-        if (index < 0) index = totalSlides + index;
-        if (index >= totalSlides) index = index - totalSlides;
-        return index;
-      }
-
-      function updateCarousel() {
-        const containers = document.querySelectorAll('.team-carousel-container');
-        containers.forEach(container => {
-          const leftIndex = getCardIndex(-1);
-          const centerIndex = currentSlide;
-          const rightIndex = getCardIndex(1);
-
-          const leftCard = container.querySelector('.left-card');
-          const centerCard = container.querySelector('.center-card');
-          const rightCard = container.querySelector('.right-card');
-
-          if (leftCard && centerCard && rightCard) {
-            const leftMember = teamMembers[leftIndex];
-            const centerMember = teamMembers[centerIndex];
-            const rightMember = teamMembers[rightIndex];
-
-            const updateCard = (card, member) => {
-              card.setAttribute('data-member', member.id);
-              const img = card.querySelector('.member-photo');
-              const name = card.querySelector('.member-name');
-              const dept = card.querySelector('.member-department');
-              if (img) {
-                img.src = member.image;
-                img.alt = `Membru ${member.id}`;
-              }
-              if (name) {
-                name.setAttribute('data-i18n', `member.${member.id}.name`);
-                name.textContent = window.translate(`member.${member.id}.name`);
-              }
-              if (dept) {
-                dept.setAttribute('data-i18n', `member.${member.id}.dept`);
-                dept.textContent = window.translate(`member.${member.id}.dept`);
-              }
-            };
-
-            updateCard(leftCard, leftMember);
-            updateCard(centerCard, centerMember);
-            updateCard(rightCard, rightMember);
-          }
-
-          // Update indicators
-          const section = container.closest('.team-members-section');
-          if (section) {
-            const indicators = section.querySelectorAll('.indicator');
-            indicators.forEach((indicator, index) => {
-              indicator.classList.toggle('active', index === currentSlide);
-            });
-          }
-        });
-      }
-
-      window.changeSlide = function (direction) {
-        currentSlide += direction;
-        if (currentSlide < 0) currentSlide = totalSlides - 1;
-        if (currentSlide >= totalSlides) currentSlide = 0;
-        updateCarousel();
-      };
-
-      window.goToSlide = function (slideIndex) {
-        currentSlide = slideIndex;
-        updateCarousel();
-      };
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', updateCarousel);
-      } else {
-        updateCarousel();
-      }
-    })();
-  </script>
-
-  <!-- Footer-->
-  <footer class="modern-footer" id="footer">
-    <div class="footer-waves">
-      <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-        viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
-        <defs>
-          <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
-        </defs>
-        <g class="parallax">
-          <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(249, 5, 108, 0.7)" />
-          <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(255, 52, 136, 0.5)" />
-          <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(249, 5, 108, 0.3)" />
-          <use xlink:href="#gentle-wave" x="48" y="7" fill="#fff" />
-        </g>
-      </svg>
-    </div>
-
-    <div class="footer-content">
-      <div class="container">
-        <div class="row g-4">
-          <!-- About Section -->
-          <div class="col-lg-4 col-md-6">
-            <div class="footer-section">
-              <h3 class="footer-title">
-                <img src="assets/img/Design fără titlu (40).png" alt="roLERbot Logo" class="footer-logo">
-                roLERbot
-              </h3>
-              <p class="footer-description">
-                Echipa de robotică a Liceului Teoretic „Emil Racoviță" Vaslui.
-                Pasionați de tehnologie, inovație și competiții FIRST Tech Challenge.
-              </p>
-              <div class="footer-social">
-                <a href="https://www.facebook.com/rolerbot/" class="social-link" aria-label="Facebook">
-                  <i class="fab fa-facebook-f"></i>
-                </a>
-                <a href="https://www.instagram.com/rolerbot/" class="social-link" aria-label="Instagram">
-                  <i class="fab fa-instagram"></i>
-                </a>
-                <a href="https://www.tiktok.com/@rolerbot" class="social-link" aria-label="TikTok">
-                  <i class="fab fa-tiktok"></i>
-                </a>
-                <a href="#!" class="social-link" aria-label="Email">
-                  <i class="fas fa-envelope"></i>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <!-- Quick Links -->
-          <div class="col-lg-2 col-md-6">
-            <div class="footer-section">
-              <h4 class="footer-heading" data-i18n="footer.nav">Navigare</h4>
-              <ul class="footer-links">
-                <li><a href="index.html#services" data-i18n="nav.team">Echipa</a></li>
-                <li><a href="index.html#portfolio" data-i18n="nav.sponsors">Sponsori</a></li>
-                <li><a href="index.html#about" data-i18n="nav.progress">Progres</a></li>
-                <li><a href="blog.html" data-i18n="nav.blog">Blog</a></li>
-                <li><a href="#footer" data-i18n="nav.contact">Contact</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- Resources -->
-          <div class="col-lg-3 col-md-6">
-            <div class="footer-section">
-              <h4 class="footer-heading" data-i18n="footer.resources">Resurse</h4>
-              <ul class="footer-links">
-                <li><a href="puiu-cross.html">Puiu-cross.exe</a></li>
-                <li><a href="puiu-invaders.html">Puiu-invaders.exe</a></li>
-                <li><a href="puiu-run.html">Puiu-run.exe</a></li>
-                <li><a href="https://ftc-events.firstinspires.org/team/21031">Competiții</a></li>
-                <li><a href="#!">Înscriere Echipă</a></li>
-                <li><a href="#!">Devino Sponsor</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- Contact Info -->
-          <div class="col-lg-3 col-md-6">
-            <div class="footer-section">
-              <h4 class="footer-heading" data-i18n="footer.contact">Contact</h4>
-              <ul class="footer-contact">
-                <li>
-                  <i class="fas fa-map-marker-alt"></i>
-                  <span data-i18n="footer.location">Liceul Teoretic<br>„Emil Racoviță" Vaslui</span>
-                </li>
-                <li>
-                  <i class="fas fa-envelope"></i>
-                  <span>rolerbotintl@gmail.com</span>
-                </li>
-
-              </ul>
-            </div>
+      <div class="footer-cols">
+        <div>
+          <h4>roLERbot</h4>
+          <p class="footer-desc" data-i18n="footer.desc">Echipa de robotică a Liceului Teoretic „Emil Racoviță" Vaslui. Pasionați de tehnologie, inovație și competiții FIRST Tech Challenge.</p>
+          <div class="socials">
+            <a href="https://www.instagram.com/rolerbot/" target="_blank" rel="noopener">Instagram</a>
+            <a href="https://www.facebook.com/rolerbot/" target="_blank" rel="noopener">Facebook</a>
+            <a href="https://www.tiktok.com/@rolerbot" target="_blank" rel="noopener">TikTok</a>
           </div>
         </div>
-
-        <!-- Footer Bottom -->
-        <div class="footer-bottom">
-          <div class="row align-items-center">
-            <div class="col-md-6 text-center text-md-start">
-              <p class="footer-copyright" data-i18n="footer.copyright">&copy; 2024 roLERbot. Toate drepturile rezervate.</p>
-              <p class="footer-creator mb-0" data-i18n="footer.creator">Site realizat de Diaconu Mihaita</p>
-            </div>
-            <div class="col-md-6 text-center text-md-end">
-              <div class="footer-legal">
-                <a href="#!" data-i18n="footer.privacy">Politica de Confidențialitate</a>
-                <span class="separator">|</span>
-                <a href="#!" data-i18n="footer.terms">Termeni și Condiții</a>
-              </div>
-            </div>
-          </div>
+        <div>
+          <h4 data-i18n="footer.nav">Navigare</h4>
+          <ul class="footer-list">
+            <li><a href="index.html#services" data-i18n="nav.team">Echipa</a></li>
+            <li><a href="index.html#portfolio" data-i18n="nav.sponsors">Sponsori</a></li>
+            <li><a href="index.html#about" data-i18n="nav.progress">Progres</a></li>
+            <li><a href="blog.html" data-i18n="nav.blog">Blog</a></li>
+          </ul>
         </div>
+        <div>
+          <h4 data-i18n="footer.resources">Resurse</h4>
+          <ul class="footer-list">
+            <li><a href="puiu-cross.html">Puiu-cross.exe</a></li>
+            <li><a href="puiu-invaders.html">Puiu-invaders.exe</a></li>
+            <li><a href="puiu-run.html">Puiu-run.exe</a></li>
+            <li><a href="field-sim.html">Field Sim</a></li>
+            <li><a href="field-sim-3d.html">Field Sim 3D</a></li>
+            <li><a href="ftc-decode-1v1.html">FTC Decode 1v1</a></li>
+            <li><a href="https://fieldsim.org/" target="_blank" rel="noopener">fieldsim.org ↗</a></li>
+            <li><a href="https://ftc-events.firstinspires.org/team/21031" target="_blank" rel="noopener">FTC Events ↗</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 data-i18n="footer.contact">Contact</h4>
+          <ul class="footer-list">
+            <li><span data-i18n="footer.location">Liceul Teoretic<br>„Emil Racoviță" Vaslui</span></li>
+            <li><a href="mailto:rolerbotintl@gmail.com">rolerbotintl@gmail.com</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-mark" aria-hidden="true">roLERbot</div>
+
+      <div class="footer-bottom">
+        <span data-i18n="footer.copyright">&copy; 2024 roLERbot. Toate drepturile rezervate.</span>
+        <span data-i18n="footer.creator">Site realizat de Diaconu Mihaita</span>
+        <a class="to-top" href="#page-top">↑ TOP</a>
       </div>
     </div>
   </footer>
 
-  <!-- Vercel Analytics -->
+  <script src="js/i18n.js"></script>
+  <script src="js/modern.js?v=8"></script>
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </body>
 

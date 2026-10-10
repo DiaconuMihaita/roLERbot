@@ -2,747 +2,324 @@
 <html lang="ro">
 
 <head>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" as="style">
-  <link rel="preload" href="css/styles.css?v=20260309j" as="style">
-  <link rel="preload" href="css/blog-redesign.css" as="style">
-  <link rel="preload" href="assets/img/Design fără titlu (41).png" as="image">
-  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>roLERbot - Echipa de Robotică</title>
   <meta name="description"
     content="Echipa de robotică a Liceului Teoretic „Emil Racoviță” Vaslui. Pasionați de tehnologie, inovație și competiții FTC." />
   <meta name="author" content="Diaconu Mihaita" />
+  <meta name="theme-color" content="#09090b" />
   <meta property="og:title" content="roLERbot - Echipa de Robotică">
   <meta property="og:description"
     content="Echipa de robotică a Liceului Teoretic „Emil Racoviță” Vaslui. Pasionați de tehnologie, inovație și competiții FIRST Tech Challenge.">
-  <meta property="og:image" content="assets/img/Design%20fără%20titlu%20(41).png">
+  <meta property="og:image" content="assets/img/echip.png">
   <meta property="og:type" content="website">
-  <title>Rolerbot</title>
+  <link rel="icon" type="image/png" href="assets/img/Design fără titlu (41).png" />
 
-  <!-- Blog Carousel Functions - Global Scope -->
-  <script>
-    window.currentBlogSlide = 0;
-    window.totalBlogSlides = 5;
-
-    window.updateBlogCarousel = function () {
-      const cards = document.querySelectorAll('.blog-card');
-      const indicators = document.querySelectorAll('.blog-indicator');
-
-      cards.forEach((card, index) => {
-        card.classList.remove('active');
-        if (index === window.currentBlogSlide) {
-          card.classList.add('active');
-        }
-      });
-
-      indicators.forEach((indicator, index) => {
-        indicator.classList.remove('active');
-        if (index === window.currentBlogSlide) {
-          indicator.classList.add('active');
-        }
-      });
-    };
-
-    window.changeBlogSlide = function (direction) {
-      window.currentBlogSlide += direction;
-      if (window.currentBlogSlide < 0) {
-        window.currentBlogSlide = window.totalBlogSlides - 1;
-      }
-      if (window.currentBlogSlide >= window.totalBlogSlides) {
-        window.currentBlogSlide = 0;
-      }
-      window.updateBlogCarousel();
-    };
-
-    window.goToBlogSlide = function (slideIndex) {
-      window.currentBlogSlide = slideIndex;
-      window.updateBlogCarousel();
-    };
-  </script>
-
-  <link rel="icon" type="image/x-icon" href="assets/img/Design fără titlu (15).png" />
-
-  <script defer src="https://use.fontawesome.com/releases/v5.15.3/js/all.js" crossorigin="anonymous"></script>
-
-  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css" />
-  <link href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700" rel="stylesheet" type="text/css" />
-
-  <link href="css/styles.css?v=20260309j" rel="stylesheet" />
-  <link href="css/blog-redesign.css" rel="stylesheet" />
-  <link href="css/mobile-responsive.css" rel="stylesheet" />
-  <link href="css/curved-timeline.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link href="css/modern.css?v=8" rel="stylesheet" />
 </head>
 
-<body id="page-top" class="topo-canvas-enhanced">
-  <!-- NAVBAR-->
-  <nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav">
-    <div class="container morph-nav-shell">
-      <a class="navbar-brand" href="#page-top">
-        <img src="assets/img/Design fără titlu (41).png" alt="Logo">
-      </a>
+<body id="page-top">
+  <div class="scroll-progress" aria-hidden="true"></div>
 
-      <button class="navbar-toggler morph-menu-toggle" id="morphMenuToggle" type="button"
-        aria-controls="navbarResponsive" aria-expanded="false" aria-label="Deschide meniul principal">
-        <span class="morph-toggle-icon" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </span>
-      </button>
-
-      <div class="collapse navbar-collapse morph-menu-panel" id="navbarResponsive">
-        <ul class="navbar-nav text-uppercase morph-menu-links">
-          <li class="nav-item"><a class="nav-link" href="#page-top" data-i18n="nav.home">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="#services" data-i18n="nav.team">Echipa</a></li>
-          <li class="nav-item"><a class="nav-link" href="#portfolio" data-i18n="nav.sponsors">Sponsori</a></li>
-          <li class="nav-item"><a class="nav-link" href="#about" data-i18n="nav.progress">Progres</a></li>
-          <li class="nav-item"><a class="nav-link" href="blog.html" data-section="team" data-i18n="nav.blog">Blog</a></li>
-          <li class="nav-item"><a class="nav-link" href="#contact" data-i18n="nav.contact">Contact</a></li>
-          
-          <li class="nav-item">
-            <button id="rain-button" class="nav-link"
-              style="background: none; border: none; cursor: pointer;">🐥</button>
-          </li>
-          <li class="nav-item">
-            <div class="language-switcher" aria-label="Selecteaza limba site-ului">
-              <button type="button" class="lang-side" data-set-lang="ro" aria-label="Seteaza limba romana">RO</button>
-              <label class="language-toggle" for="languageToggleInput"
-                aria-label="Comuta limba intre romana si engleza">
-                <input type="checkbox" id="languageToggleInput" class="language-toggle-input" />
-                <span class="language-toggle-thumb" aria-hidden="true"></span>
-              </label>
-              <button type="button" class="lang-side" data-set-lang="en" aria-label="Seteaza limba engleza">EN</button>
-            </div>
-          </li>
-           </li>
-          <li class="nav-item"><a class="nav-link" href="https://lervs.ro/" data-i18n="nav.ftcGame">Inapoi</a>
-          </li>
-        </ul>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="nav-bar">
+      <a class="nav-logo" href="#page-top" aria-label="roLERbot"><img src="assets/img/Design fără titlu (41).png"
+          alt="roLERbot"></a>
+      <nav class="nav-links" aria-label="Principal">
+        <span class="nav-pill" aria-hidden="true"></span>
+        <a href="#services" data-i18n="nav.team">Echipa</a>
+        <a href="#portfolio" data-i18n="nav.sponsors">Sponsori</a>
+        <a href="#about" data-i18n="nav.progress">Progres</a>
+        <a href="#team" data-i18n="nav.blog">Blog</a>
+        <a href="#contact" data-i18n="nav.contact">Contact</a>
+      </nav>
+      <button id="rain-button" class="nav-duck" aria-label="🐥" type="button">🐥</button>
+      <div class="lang" role="group" aria-label="Limba">
+        <button type="button" data-set-lang="ro">RO</button>
+        <button type="button" data-set-lang="en">EN</button>
       </div>
+      <button class="nav-toggle" type="button" aria-label="Meniu" aria-expanded="false"><span></span><span></span></button>
     </div>
-  </nav>
-
-  <header class="masthead has-video">
-    <video class="masthead-video" autoplay muted loop playsinline preload="metadata" poster="assets/index.png"
-      aria-hidden="true">
-      <source media="(max-width: 768px)" src="video/AuraPuiu_compressed.mp4" type="video/mp4">
-      <source media="(min-width: 769px)" src="video/hero-with-audio.mp4" type="video/mp4">
-      <source src="video/hero-with-audio.mp4" type="video/mp4">
-      <source src="video/REGIO_2026.mov" type="video/quicktime">
-    </video>
-    <div class="masthead-overlay" aria-hidden="true"></div>
-    <div class="container masthead-content d-flex flex-column align-items-center">
-      <svg class="hero-handwrite-logo" viewBox="0 0 1000 260" role="img" aria-label="ROLERBOT">
-        <text id="rolerbotHandText" x="50%" y="58%" text-anchor="middle" dominant-baseline="middle">ROLERBOT</text>
-      </svg>
-      <div class="hero-actions hero-under-video-cta">
-        <a class="btn btn-xl btn-start-hero" href="#services" data-i18n="hero.learnMore">Afla mai multe</a>
-      </div>
-    </div>
-    <button id="heroSoundToggle" class="hero-sound-toggle" type="button" aria-pressed="false"
-      aria-label="Activeaza sunetul videoclipului" title="Sunet OFF" style="display:inline-flex;">
-      <span class="hero-sound-glyph" aria-hidden="true">&#128263;</span>
-    </button>
-    <a class="hero-scroll-indicator" href="#services" aria-label="Mergi la sectiunea Echipa">
-      <span></span>
-    </a>
   </header>
 
-  <!-- DESCRIERE-->
-  <section class="page-section" id="services">
-    <div class="container">
-      <div class="text-center mb-5">
-        <h2 class="section-heading text-uppercase animate-on-scroll" data-i18n="section.team">Echipa</h2>
-        <h3 class="section-subheading text-muted" data-i18n="section.teamSubtitle">Suntem născuți pentru inovație.</h3>
+  <div class="menu-sheet" aria-hidden="false">
+    <a href="#services" style="--i:0" data-i18n="nav.team">Echipa</a>
+    <a href="#portfolio" style="--i:1" data-i18n="nav.sponsors">Sponsori</a>
+    <a href="#about" style="--i:2" data-i18n="nav.progress">Progres</a>
+    <a href="blog.html" style="--i:3" data-i18n="nav.blog">Blog</a>
+    <a href="#contact" style="--i:4" data-i18n="nav.contact">Contact</a>
+    <div class="menu-foot">FTC TEAM 21031 · VASLUI, RO</div>
+  </div>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero" id="hero">
+      <div class="hero-media" aria-hidden="true">
+        <video autoplay muted loop playsinline preload="metadata" poster="assets/index.png">
+          <source media="(max-width: 768px)" src="video/hero.mp4" type="video/mp4">
+          <source src="video/hero-with-audio.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="hero-shade"></div>
+      <div class="hero-tint"></div>
+      <div class="hero-grid"></div>
+
+      <div class="hero-top">
+        <div class="wrap">
+          <span class="tag-pill" data-i18n="hero.tag">Echipa de robotică · Vaslui</span>
+          <div class="hud hud-r" aria-hidden="true">
+            FTC · TEAM <b>21031</b><br>
+            <span class="clock" data-clock>2:30</span>
+            <span class="phase" data-phase>AUTONOMOUS</span>
+            <span class="hud-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          </div>
+        </div>
       </div>
 
-      <div class="row align-items-center team-section">
-        <div class="col-md-6">
-          <div class="team-text animate-on-scroll">
+      <div class="wrap" style="width:100%">
+        <h1 class="hero-title" data-split data-pink-from="3">ROLERBOT</h1>
+        <div class="hero-row">
+          <p class="hero-lead" data-reveal data-i18n="section.teamSubtitle">Suntem născuți pentru inovație.</p>
+          <div class="hero-actions" data-reveal style="--d:2">
+            <button class="sound-toggle" id="heroSoundToggle" type="button" aria-pressed="false"
+              aria-label="Sunet" title="Sunet">
+              <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>
+              <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+            </button>
+            <a class="btn" href="#services" data-magnetic><span data-i18n="hero.learnMore">Află mai multe</span>
+              <span class="btn-dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track">
+        <div class="marquee-item"><span>FIRST Tech Challenge</span><span class="star">✦</span><span class="o">Autonomous</span><span class="star">✦</span><span>TeleOp</span><span class="star">✦</span><span class="o">Mecanum</span><span class="star">✦</span><span>Puiu</span><span class="star">✦</span><span class="o">STEAM</span><span class="star">✦</span><span>Vaslui</span><span class="star">✦</span></div>
+        <div class="marquee-item"><span>FIRST Tech Challenge</span><span class="star">✦</span><span class="o">Autonomous</span><span class="star">✦</span><span>TeleOp</span><span class="star">✦</span><span class="o">Mecanum</span><span class="star">✦</span><span>Puiu</span><span class="star">✦</span><span class="o">STEAM</span><span class="star">✦</span><span>Vaslui</span><span class="star">✦</span></div>
+      </div>
+    </div>
+
+    <!-- TEAM -->
+    <section class="section" id="services">
+      <div class="wrap">
+        <div class="sec-head">
+          <span class="mono-label" data-reveal>01 / <span data-i18n="section.team">Echipa</span></span>
+          <h2 class="h-lg" data-reveal style="--d:1" data-i18n="section.teamSubtitle">Suntem născuți pentru inovație.</h2>
+        </div>
+
+        <div class="team-grid">
+          <div class="team-copy" data-reveal>
             <p data-i18n="team.desc1"><span class="highlight">roLERbot</span>, echipa de robotică a Liceului Teoretic
-              „Emil Racoviță” Vaslui,
-              reunește 12 membri oficiali și voluntari pasionați de tehnologie, inginerie și inovație.</p>
+              „Emil Racoviță” Vaslui, reunește 12 membri oficiali și voluntari pasionați de tehnologie, inginerie și
+              inovație.</p>
             <p data-i18n="team.desc2">Cu o abordare colaborativă și o viziune axată pe performanță, echipa proiectează,
-              construiește și
-              programează robotul <strong></strong> pentru competiția First Tech Challenge, în timp ce promovează
+              construiește și programează robotul pentru competiția First Tech Challenge, în timp ce promovează
               educația STEAM în comunitatea locală.</p>
             <p data-i18n="team.desc3"><span class="highlight">roLERbot</span> îmbină creativitatea cu rigurozitatea
-              tehnică, reflectând
-              spiritul inovator al elevilor liceului.</p>
+              tehnică, reflectând spiritul inovator al elevilor liceului.</p>
+          </div>
+          <div class="team-visual" data-reveal="right">
+            <div class="team-photo" data-parallax="0">
+              <img src="assets/img/echip.png" alt="Echipa roLERbot" loading="lazy" />
+            </div>
+            <div class="team-badge-wrap" aria-hidden="true">
+              <svg viewBox="0 0 100 100"><defs><path id="circ" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0"/></defs>
+                <text><textPath href="#circ">ROBOTICĂ · VASLUI · FTC · 21031 ·</textPath></text></svg>
+              <span class="core"><img src="assets/img/Design fără titlu (41).png" alt=""></span>
+            </div>
           </div>
         </div>
-        <div class="col-md-6 text-center">
-          <div class="team-image animate-on-scroll">
-            <picture>
-              <source media="(max-width: 768px)" srcset="assets/img/echip.png">
-              <img src="assets/img/echip.png" alt="Imagine echipa roLERbot" class="img-fluid" />
-            </picture>
+
+        <div class="stats">
+          <div class="stat" data-reveal><div class="stat-n" data-count="2018" data-from="2000"></div><div class="stat-l" data-i18n="stat.founded">Înființare</div></div>
+          <div class="stat" data-reveal style="--d:1"><div class="stat-n" data-count="12"><sup>+</sup></div><div class="stat-l" data-i18n="stat.members">Membri</div></div>
+          <div class="stat" data-reveal style="--d:2"><div class="stat-n" data-count="5"></div><div class="stat-l" data-i18n="stat.meets">Meet-uri în 2026</div></div>
+          <div class="stat" data-reveal style="--d:3"><div class="stat-n" data-count="2"></div><div class="stat-l" data-i18n="stat.awards">Premii câștigate</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SPONSORS -->
+    <section class="section section--bone" id="portfolio">
+      <div class="wrap">
+        <div class="sec-head">
+          <span class="mono-label" data-reveal>02 / <span data-i18n="section.sponsors">Sponsori</span></span>
+          <h2 class="h-lg" data-reveal style="--d:1" data-i18n="section.sponsorsSub">Cei care ne țin roțile în mișcare.</h2>
+        </div>
+
+        <div class="sponsors">
+          <a class="sponsor" data-tilt data-reveal style="--d:0" href="https://recumedclinic.ro/" target="_blank" rel="noopener" aria-label="Recumed"><span class="sponsor-num">01</span><img src="assets/img/portfolio/recumed.png" alt="Recumed" loading="lazy"><span class="sponsor-meta">Recumed <span class="arr">↗</span></span></a>
+          <a class="sponsor" data-tilt data-reveal style="--d:1" href="https://primariavs.ro/" target="_blank" rel="noopener" aria-label="Primăria Vaslui"><span class="sponsor-num">02</span><img src="assets/img/portfolio/vaslui.png" alt="Primăria Vaslui" loading="lazy"><span class="sponsor-meta">Primăria Vaslui <span class="arr">↗</span></span></a>
+          <a class="sponsor" data-tilt data-reveal style="--d:2" href="https://domeniile-averesti.ro/ro" target="_blank" rel="noopener" aria-label="Domeniile Averești"><span class="sponsor-num">03</span><img src="assets/img/portfolio/domnav.png" alt="Domeniile Averești" loading="lazy"><span class="sponsor-meta">Domeniile Averești <span class="arr">↗</span></span></a>
+          <a class="sponsor" data-tilt data-reveal style="--d:3" href="https://woodlinemob.ro/" target="_blank" rel="noopener" aria-label="WoodlineMob"><span class="sponsor-num">04</span><img src="assets/img/portfolio/woodline.png" alt="WoodlineMob" loading="lazy"><span class="sponsor-meta">WoodlineMob <span class="arr">↗</span></span></a>
+          <a class="sponsor" data-tilt data-reveal style="--d:0" href="http://specialistul.ro/" target="_blank" rel="noopener" aria-label="Specialistul"><span class="sponsor-num">05</span><img src="assets/img/portfolio/specialistu.png" alt="Specialistul" loading="lazy"><span class="sponsor-meta">Specialistul <span class="arr">↗</span></span></a>
+          <a class="sponsor" data-tilt data-reveal style="--d:1" href="https://mixcod.ro/" target="_blank" rel="noopener" aria-label="Mixcod"><span class="sponsor-num">06</span><img src="assets/img/portfolio/mixcod.png" alt="Mixcod" loading="lazy"><span class="sponsor-meta">Mixcod <span class="arr">↗</span></span></a>
+          <a class="sponsor" data-tilt data-reveal style="--d:2" href="https://www.facebook.com/goldmag.ro/?locale=ro_RO" target="_blank" rel="noopener" aria-label="Gold Studio"><span class="sponsor-num">07</span><img src="assets/img/portfolio/gold.png" alt="Gold Studio" loading="lazy"><span class="sponsor-meta">Gold Studio <span class="arr">↗</span></span></a>
+          <a class="sponsor" data-tilt data-reveal style="--d:3" href="https://www.facebook.com/cursfestivevents.iasi/" target="_blank" rel="noopener" aria-label="Curs Festiv Events"><span class="sponsor-num">08</span><img src="assets/img/portfolio/cfe.png" alt="Curs Festiv Events" loading="lazy"><span class="sponsor-meta">Curs Festiv Events <span class="arr">↗</span></span></a>
+          <a class="sponsor" data-tilt data-reveal style="--d:0" href="https://apisrom.ro/" target="_blank" rel="noopener" aria-label="Apisrom"><span class="sponsor-num">09</span><img src="assets/img/portfolio/apis.png" alt="Apisrom" loading="lazy"><span class="sponsor-meta">Apisrom <span class="arr">↗</span></span></a>
+          <a class="sponsor" data-tilt data-reveal style="--d:1" href="https://www.safir.ro/" target="_blank" rel="noopener" aria-label="Safir"><span class="sponsor-num">10</span><img src="assets/img/portfolio/safir.png" alt="Safir" loading="lazy"><span class="sponsor-meta">Safir <span class="arr">↗</span></span></a>
+          <a class="sponsor sponsor-cta" data-tilt data-reveal style="--d:2" href="mailto:rolerbotintl@gmail.com?subject=Sponsorizare%20roLERbot"><span class="t" data-i18n="footer.join">Devino sponsor</span><span class="sponsor-meta">rolerbotintl@gmail.com <span class="arr">↗</span></span></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- TIMELINE -->
+    <section class="section" id="about">
+      <div class="wrap">
+        <div class="sec-head">
+          <span class="mono-label" data-reveal>03 / <span data-i18n="section.progress">Progres</span></span>
+          <h2 class="h-lg" data-reveal style="--d:1" data-i18n="section.progressSub">Șapte ani de roboți, meciuri și prieteni.</h2>
+        </div>
+
+        <div class="tl">
+          <div class="tl-rail" aria-hidden="true"><i></i></div>
+
+          <article class="tl-item">
+            <div class="tl-year" aria-hidden="true">2018</div>
+            <div class="tl-body">
+              <span class="tl-date" data-i18n="timeline.1.date">14 Octombrie 2018</span>
+              <h3 class="tl-title" data-i18n="timeline.1.title">Pasiunea care ne-a unit</h3>
+              <p class="tl-desc" data-i18n="timeline.1.desc">Echipa roLERbot a apărut în 2018, din dorința unor tineri pasionați de științele exacte de a-și transforma ideile în realitate. Cine suntem noi? Suntem roLERbot – motivați, ambițioși și uniți de pasiunea pentru tehnologie. Prin programul Rover Ruckus am intrat în lumea Tech Challenge-urilor, hotărâți să lăsăm o amprentă în domeniul inovației.</p>
+              <div class="tl-img"><img src="assets/img/about/11.png" alt="" loading="lazy"></div>
+            </div>
+          </article>
+
+          <article class="tl-item">
+            <div class="tl-year" aria-hidden="true">2019</div>
+            <div class="tl-body">
+              <span class="tl-date" data-i18n="timeline.2.date">20 Februarie 2019</span>
+              <h3 class="tl-title" data-i18n="timeline.2.title">Primul pas, primul succes</h3>
+              <p class="tl-desc" data-i18n="timeline.2.desc">În 2019, echipa roLERbot, formată din 15 elevi, a obținut prima calificare la etapa națională a competiției BRD First Tech Challenge România. După trei zile intense la Iași, emoțiile au fost înlocuite de bucuria reușitei. Robotul nostru, construit cu multă muncă și dedicare, a funcționat impecabil, reflectând efortul zilnic depus de echipă, chiar și în vacanțe. Cu mult entuziasm, simț al umorului (dovedit și de numele robotului – „Puiu”) și dorința de a evolua, am pornit spre finala de la București, gata să demonstrăm că pasiunea și spiritul de echipă pot duce departe, chiar și la primul contact cu acest univers tehnologic.</p>
+              <div class="tl-img"><img src="assets/img/about/22.png" alt="" loading="lazy"></div>
+            </div>
+          </article>
+
+          <article class="tl-item">
+            <div class="tl-year" aria-hidden="true">2024</div>
+            <div class="tl-body">
+              <span class="tl-date" data-i18n="timeline.3.date">11 Martie 2024</span>
+              <h3 class="tl-title" data-i18n="timeline.3.title">O nouă zi, un nou premiu</h3>
+              <p class="tl-desc" data-i18n="timeline.3.desc">Ziua a treia, 11 martie 2024, ne-a adus zâmbetul pe buze! După două zile pline de emoții, provocări și momente intense, Regionala 4 de la Iași s-a încheiat cu o mare bucurie pentru echipa roLERbot: am câștigat The Judges Award. Suntem foarte mândri de evoluția noastră, de robotul construit și de tot ceea ce am reușit să realizăm în acest sezon. În cele trei zile, am legat prietenii, am râs, ne-am enervat, am dansat și am trăit fiecare clipă la intensitate maximă. Am plecat acasă obosiți, dar cu inimile pline de recunoștință și cu echipa mai unită ca niciodată.</p>
+              <div class="tl-img"><img src="assets/img/about/33.png" alt="" loading="lazy"></div>
+            </div>
+          </article>
+
+          <article class="tl-item">
+            <div class="tl-year" aria-hidden="true">2025</div>
+            <div class="tl-body">
+              <span class="tl-date" data-i18n="timeline.4.date">19 Ianuarie 2025</span>
+              <h3 class="tl-title" data-i18n="timeline.4.title">O reușită care ne inspiră</h3>
+              <p class="tl-desc" data-i18n="timeline.4.desc">Astăzi, 19 ianuarie 2025, încheiem competiția regională cu capul sus, după ce am câștigat 4 din cele 6 meciuri și am demonstrat determinare, creativitate și spirit de echipă. Suntem extrem de mândri să anunțăm că am obținut Design Award – Locul 3, o distincție care evidențiază echilibrul dintre funcționalitate și estetică în construcția robotului nostru. Acest premiu recunoaște echipele care transformă un robot într-o veritabilă operă tehnologică, printr-un design inovator, bine planificat și executat cu grijă și precizie.</p>
+              <div class="tl-img"><img src="assets/img/about/44.png" alt="" loading="lazy"></div>
+            </div>
+          </article>
+
+          <div class="tl-end" data-reveal>
+            <a href="#contact"><span data-i18n="timeline.final">Fii parte<br>din<br>poveste</span> <em>→</em></a>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-
-
-  <!-- SONSOR Grid-->
-  <section class="page-section bg-light" id="portfolio">
-    <div class="container">
-      <div class="text-center">
-        <h2 class="section-heading text-uppercase animate-on-scroll" data-i18n="section.sponsors">Sponsori</h2>
-
-      </div>
-      <div class="row">
-        <div class="col-lg-4 col-sm-6 mb-4">
-          <!-- RECUMED -->
-          <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://recumedclinic.ro/" target="_blank" rel="noopener"
-              aria-label="Sponsor Recumed">
-              <div class="portfolio-hover">
-
-              </div>
-              <img class="img-fluid" src="assets/img/portfolio/recumed.png" alt="Recumed sponsor" />
-            </a>
-            <div class="portfolio-caption">
-              <div class="portfolio-caption-heading">Recumed</div>
-
-            </div>
+    <!-- BLOG -->
+    <section class="section" id="team" style="background:var(--bg-2);padding-inline:0">
+      <div class="wrap">
+        <div class="rail-head">
+          <div class="sec-head" style="margin:0">
+            <span class="mono-label" data-reveal>04 / <span data-i18n="section.blog">Blog</span></span>
+            <h2 class="h-lg" data-reveal style="--d:1" data-i18n="section.blogSubtitle">Articole și actualizări din echipa roLERbot</h2>
           </div>
-        </div>
-        <div class="col-lg-4 col-sm-6 mb-4">
-          <!-- PLANT AGRO -->
-          <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://primariavs.ro/" target="_blank" rel="noopener"
-              aria-label="Sponsor Plant Agro">
-              <div class="portfolio-hover">
-
-              </div>
-              <img class="img-fluid" src="assets/img/portfolio/vaslui.png" alt="Plant Agro sponsor" />
-            </a>
-            <div class="portfolio-caption">
-              <div class="portfolio-caption-heading">Primaria Vaslui</div>
-
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-sm-6 mb-4">
-          <!-- DOMNIILE AVERESTI -->
-          <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://domeniile-averesti.ro/ro" target="_blank" rel="noopener"
-              aria-label="Sponsor Domniile Averesti">
-              <div class="portfolio-hover">
-
-              </div>
-              <img class="img-fluid" src="assets/img/portfolio/domnav.png" alt="Domniile Averesti sponsor" />
-            </a>
-            <div class="portfolio-caption">
-              <div class="portfolio-caption-heading">Domeniile Averesti</div>
-
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-sm-6 mb-4">
-          <!-- DOMNIILE AVERESTI -->
-          <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://woodlinemob.ro/" target="_blank" rel="noopener"
-              aria-label="Sponsor Domniile Averesti">
-              <div class="portfolio-hover">
-
-              </div>
-              <img class="img-fluid" src="assets/img/portfolio/woodline.png" alt="Domniile Averesti sponsor" />
-            </a>
-            <div class="portfolio-caption">
-              <div class="portfolio-caption-heading">WoodlineMob</div>
-
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-sm-6 mb-4 mb-sm-0">
-          <!-- APISROM -->
-          <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="http://specialistul.ro/" target="_blank" rel="noopener"
-              aria-label="Sponsor ApisRom">
-              <div class="portfolio-hover">
-
-              </div>
-              <img class="img-fluid" src="assets/img/portfolio/specialistu.png" alt="..." />
-            </a>
-            <div class="portfolio-caption">
-              <div class="portfolio-caption-heading">Specialistul</div>
-
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-sm-6">
-          <!-- MIXCOD -->
-          <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://mixcod.ro/" target="_blank" rel="noopener"
-              aria-label="Sponsor Mixcod">
-              <div class="portfolio-hover">
-
-              </div>
-              <img class="img-fluid" src="assets/img/portfolio/mixcod.png" alt="..." />
-            </a>
-            <div class="portfolio-caption">
-              <div class="portfolio-caption-heading">Mixcod</div>
-
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-sm-6 mb-4">
-          <!-- GOLDSTUDIO -->
-          <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://www.facebook.com/goldmag.ro/?locale=ro_RO" target="_blank"
-              rel="noopener" aria-label="Sponsor Gold Studio">
-              <div class="portfolio-hover">
-
-              </div>
-              <img class="img-fluid" src="assets/img/portfolio/gold.png" alt="..." />
-            </a>
-            <div class="portfolio-caption">
-              <div class="portfolio-caption-heading">Gold Studio</div>
-
-            </div>
-          </div>
-        </div>
-
-
-
-        <div class="col-lg-4 col-sm-6 mb-4">
-          <!-- CURS FESTIV -->
-          <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://www.facebook.com/cursfestivevents.iasi/" target="_blank"
-              rel="noopener" aria-label="Sponsor Curs Festiv Events">
-              <div class="portfolio-hover">
-
-              </div>
-              <img class="img-fluid" src="assets/img/portfolio/cfe.png" alt="..." />
-            </a>
-            <div class="portfolio-caption">
-              <div class="portfolio-caption-heading">Curs Festiv Events</div>
-
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-4 col-sm-6 mb-4">
-          <!-- APSROM -->
-          <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://apisrom.ro/" target="_blank" rel="noopener"
-              aria-label="Sponsor APSROM">
-              <div class="portfolio-hover">
-
-              </div>
-              <img class="img-fluid" src="assets/img/portfolio/apis.png" alt="APSROM sponsor" />
-            </a>
-            <div class="portfolio-caption">
-              <div class="portfolio-caption-heading">Apisrom</div>
-
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-sm-6 mb-4 mx-auto">
-          <!-- SAFIR -->
-          <div class="portfolio-item">
-            <a class="portfolio-link no-modal" href="https://www.safir.ro/" target="_blank" rel="noopener"
-              aria-label="Sponsor SAFIR">
-              <div class="portfolio-hover">
-
-              </div>
-              <img class="img-fluid" src="assets/img/portfolio/safir.png" alt="safir sponsor" />
-            </a>
-            <div class="portfolio-caption">
-              <div class="portfolio-caption-heading">Safir</div>
-
-            </div>
+          <div class="rail-ctrl" data-reveal>
+            <button class="rail-btn" type="button" data-rail-prev aria-label="‹"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+            <button class="rail-btn" type="button" data-rail-next aria-label="›"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
           </div>
         </div>
       </div>
-    </div>
-  </section>
-  <!-- ISTORIC -->
-  <section class="page-section" id="about">
-    <div class="container">
-      <div class="text-center">
-        <h2 class="section-heading text-uppercase animate-on-scroll" data-i18n="section.progress">Progres</h2>
-        <h3 class="section-subheading text-muted">............</h3>
-      </div>
-      <div class="timeline-container-curved">
-        <!-- Vertical Wavy Timeline -->
-        <ul class="timeline animate-on-scroll">
-          <li class="animate-on-scroll">
-            <div class="timeline-image"><img class="rounded-circle img-fluid" src="assets/img/about/11.png" alt="..." />
-            </div>
-            <div class="timeline-panel">
-              <div class="timeline-heading">
-                <h4 data-i18n="timeline.1.date">14 Octombrie 2018</h4>
-                <h4 class="subheading" data-i18n="timeline.1.title">Pasiunea care ne-a unit</h4>
-              </div>
-              <div class="timeline-body">
-                <p class="text-muted" data-i18n="timeline.1.desc">Echipa roLERbot a apărut în 2018, din dorința unor
-                  tineri pasionați de științele
-                  exacte de a-și transforma ideile în realitate. Cine suntem noi? Suntem roLERbot – motivați, ambițioși
-                  și
-                  uniți de pasiunea pentru tehnologie. Prin programul Rover Ruckus am intrat în lumea Tech
-                  Challenge-urilor, hotărâți să lăsăm o amprentă în domeniul inovației.</p>
-              </div>
-            </div>
-          </li>
-          <li class="timeline-inverted animate-on-scroll">
-            <div class="timeline-image"><img class="rounded-circle img-fluid" src="assets/img/about/22.png" alt="..." />
-            </div>
-            <div class="timeline-panel">
-              <div class="timeline-heading">
-                <h4 data-i18n="timeline.2.date">20 Februarie 2019</h4>
-                <h4 class="subheading" data-i18n="timeline.2.title">Primul pas, primul succes</h4>
-              </div>
-              <div class="timeline-body">
-                <p class="text-muted" data-i18n="timeline.2.desc">În 2019, echipa roLERbot, formată din 15 elevi, a
-                  obținut prima calificare la
-                  etapa
-                  națională a competiției BRD First Tech Challenge România. După trei zile intense la Iași, emoțiile au
-                  fost înlocuite de bucuria reușitei. Robotul nostru, construit cu multă muncă și dedicare, a funcționat
-                  impecabil, reflectând efortul zilnic depus de echipă, chiar și în vacanțe. Cu mult entuziasm, simț al
-                  umorului (dovedit și de numele robotului – „Puiu”) și dorința de a evolua, am pornit spre finala de la
-                  București, gata să demonstrăm că pasiunea și spiritul de echipă pot duce departe, chiar și la primul
-                  contact cu acest univers tehnologic.</p>
-              </div>
-            </div>
-          </li>
-          <li class="animate-on-scroll">
-            <div class="timeline-image"><img class="rounded-circle img-fluid" src="assets/img/about/33.png" alt="..." />
-            </div>
-            <div class="timeline-panel">
-              <div class="timeline-heading">
-                <h4 data-i18n="timeline.3.date">11 Martie 2024</h4>
-                <h4 class="subheading" data-i18n="timeline.3.title">O nouă zi, un nou premiu</h4>
-              </div>
-              <div class="timeline-body">
-                <p class="text-muted" data-i18n="timeline.3.desc">Ziua a treia, 11 martie 2024, ne-a adus zâmbetul pe
-                  buze! După două zile pline de
-                  emoții, provocări și momente intense, Regionala 4 de la Iași s-a încheiat cu o mare bucurie pentru
-                  echipa roLERbot: am câștigat The Judges Award. Suntem foarte mândri de evoluția noastră, de robotul
-                  construit și de tot ceea ce am reușit să realizăm în acest sezon. În cele drie zile, am legat
-                  prietenii,
-                  am râs, ne-am enervat, am dansat și am trăit fiecare clipă la intensitate maximă. Am plecat acasă
-                  obosiți, dar cu inimile pline de recunoștință și cu echipa mai unită ca niciodată.</p>
-              </div>
-            </div>
-          </li>
-          <li class="timeline-inverted animate-on-scroll">
-            <div class="timeline-image"><img class="rounded-circle img-fluid" src="assets/img/about/44.png" alt="..." />
-            </div>
-            <div class="timeline-panel">
-              <div class="timeline-heading">
-                <h4 data-i18n="timeline.4.date">19 Ianuarie 2025</h4>
-                <h4 class="subheading" data-i18n="timeline.4.title">O reușită care ne inspiră</h4>
-              </div>
-              <div class="timeline-body">
-                <p class="text-muted" data-i18n="timeline.4.desc">Astăzi, 19 ianuarie 2025, încheiem competiția
-                  regională cu capul sus, după ce am
-                  câștigat 4 din cele 6 meciuri și am demonstrat determinare, creativitate și spirit de echipă. Suntem
-                  extrem de mândri să anunțăm că am obținut Design Award – Locul 3, o distincție care evidențiază
-                  echilibrul dintre funcționalitate și estetică în construcția robotului nostru. Acest premiu recunoaște
-                  echipele care transformă un robot într-o veritabilă operă tehnologică, printr-un design inovator, bine
-                  planificat și executat cu grijă și precizie.</p>
-              </div>
-            </div>
-          </li>
-          <li class="timeline-end-marker animate-on-scroll">
-            <div class="timeline-image timeline-image-final">
-              <div class="timeline-final-text">
-                <span data-i18n="timeline.final">Fii parte<br>din<br>poveste</span>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </section>
-  <!-- BLOG CAROUSEL -->
-  <section class="page-section" id="team">
-    <div class="container">
-      <div class="text-center mb-5">
-        <h2 class="section-heading text-uppercase animate-on-scroll" data-i18n="section.blog">Blog</h2>
-        <h3 class="section-subheading text-muted" data-i18n="section.blogSubtitle">Articole și actualizări din echipa
-          roLERbot</h3>
+
+      <div data-rail-box>
+        <div class="rail" data-rail>
+          <a class="post" href="blog.html"><div class="post-img"><img src="bloguri/piatra.png" alt="" loading="lazy" draggable="false"><span class="post-tag">Meet</span><span class="post-n">01</span></div><div class="post-body"><span class="post-date" data-i18n="blog.card0.date">10 ianuarie 2026</span><h3 class="post-title" data-i18n="blog.card0.title">MEET #1 - Piatra Neamt</h3><p class="post-desc" data-i18n="blog.card0.desc">Meet-ul „Jurassic Peaks”, organizat la Piatra Neamț pe 10 ianuarie, a fost primul nostru meet din acest sezon. Am reușit să câștigăm 4 meciuri din 6.</p></div></a>
+          <a class="post" href="blog.html"><div class="post-img"><img src="bloguri/iasi.png" alt="" loading="lazy" draggable="false"><span class="post-tag">Meet</span><span class="post-n">02</span></div><div class="post-body"><span class="post-date" data-i18n="blog.card1.date">11 ianuarie 2026</span><h3 class="post-title" data-i18n="blog.card1.title">MEET #2 - Iasi</h3><p class="post-desc" data-i18n="blog.card1.desc">Meet-ul „Defrost”, organizat la Iași pe 11 ianuarie, a fost al doilea meet la care am participat.</p></div></a>
+          <a class="post" href="blog.html"><div class="post-img"><img src="bloguri/focsani.png" alt="" loading="lazy" draggable="false"><span class="post-tag">Meet</span><span class="post-n">03</span></div><div class="post-body"><span class="post-date" data-i18n="blog.card2.date">24 ianuarie 2026</span><h3 class="post-title" data-i18n="blog.card2.title">MEET #3 - Focșani</h3><p class="post-desc" data-i18n="blog.card2.desc">La meet-ul „Focșani Tech Challenge”, organizat pe 24 ianuarie, ne-am îmbunătățit strategia, câștigând 3/6 meciuri.</p></div></a>
+          <a class="post" href="blog.html"><div class="post-img"><img src="bloguri/galati.png" alt="" loading="lazy" draggable="false"><span class="post-tag">Meet</span><span class="post-n">04</span></div><div class="post-body"><span class="post-date" data-i18n="blog.card3.date">31 ianuarie 2026</span><h3 class="post-title" data-i18n="blog.card3.title">MEET #4 - Galati</h3><p class="post-desc" data-i18n="blog.card3.desc">Meet-ul „Ice Age”, organizat pe 31 ianuarie, ne-a dat verdictul în sensul viabilității robotului, reușind să câștigăm 5/6 meciuri.</p></div></a>
+          <a class="post" href="blog.html"><div class="post-img"><img src="bloguri/botosani.png" alt="" loading="lazy" draggable="false"><span class="post-tag">Meet</span><span class="post-n">05</span></div><div class="post-body"><span class="post-date" data-i18n="blog.card4.date">7 februarie 2026</span><h3 class="post-title" data-i18n="blog.card4.title">MEET #5 - Botosani</h3><p class="post-desc" data-i18n="blog.card4.desc">Ultimul meet la care am participat a fost „Royal Stars”, organizat pe 7 februarie la Botoșani. Am câștigat 4/6 meciuri.</p></div></a>
+        </div>
+        <div class="rail-bar" aria-hidden="true"><i></i></div>
       </div>
 
-      <div class="blog-carousel-container">
-        <button class="blog-carousel-btn prev-btn" onclick="changeBlogSlide(-1)">
-          <i class="fas fa-chevron-left"></i>
-        </button>
+      <div class="blog-cta" data-reveal>
+        <a class="btn btn--ghost" href="blog.html" data-magnetic><span data-i18n="blog.viewAll">Vezi toate articolele</span>
+          <span class="btn-dot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+      </div>
+    </section>
+  </main>
 
-        <div class="blog-cards-wrapper">
-          <div class="blog-card active" data-blog="0">
-            <div class="blog-card-image">
-              <picture>
-                <source media="(max-width: 768px)" srcset="bloguri/piatra.png">
-                <img src="bloguri/piatra.png" alt="Articol 1">
-              </picture>
-              <div class="blog-card-overlay">
-                <span class="blog-tag">Meet</span>
-              </div>
-            </div>
-            <div class="blog-card-content">
-              <div class="blog-card-date" data-i18n="blog.card0.date">10 ianuarie 2026</div>
-              <h3 class="blog-card-title" data-i18n="blog.card0.title">MEET #1 - Piatra Neamt</h3>
-              <p class="blog-card-description" data-i18n="blog.card0.desc">Meet-ul "Jurassic Peaks" , organizat la
-                Piatra Neamț pe 10 ianuarie, a
-                fost primul nostru meet din acest sezon.
-                Am reușit să câștigăm 4 meciuri din 6, fiind un start bun. Robotul nostru s-a mișcat bine atât pe partea
-                de teleoperare, cât și pe cea de autonomie, rezultat al nenumăratelor teste pe care le-am făcut.
-                La început am avut probleme cu ping-ul, dar le-am rezolvat destul de repede. Astfel, "Jurassic Peaks" a
-                fost un meet în care ne-am dezvoltat o strategie bună de scorare, ceea ce ne-a permis să avansăm în
-                clasamentul Ligii (de Est).</p>
+  <!-- FOOTER -->
+  <footer class="footer" id="contact">
+    <div class="wrap">
+      <h2 class="footer-talk" data-reveal><a href="mailto:rolerbotintl@gmail.com" data-i18n="footer.talk">Hai să construim ceva împreună.</a></h2>
 
-            </div>
-          </div>
-
-          <div class="blog-card" data-blog="1">
-            <div class="blog-card-image">
-              <picture>
-                <source media="(max-width: 768px)" srcset="bloguri/iasi.png">
-                <img src="bloguri/iasi.png" alt="Articol 2">
-              </picture>
-              <div class="blog-card-overlay">
-                <span class="blog-tag">Meet</span>
-              </div>
-            </div>
-            <div class="blog-card-content">
-              <div class="blog-card-date" data-i18n="blog.card1.date">11 ianuarie 2026</div>
-              <h3 class="blog-card-title" data-i18n="blog.card1.title">MEET #2 - Iasi</h3>
-              <p class="blog-card-description" data-i18n="blog.card1.desc">Meet-ul "Defrost", organizat la Iași pe 11
-                ianuarie, a fost al doilea
-                meet la care am participat. Deși am câștigat doar 2/6 meciuri și a fost o performanță mai slabă față de
-                meet-ul precedent, am observat mai multe lipsuri în design-ul robotului.
-                În primul meci ni s-a defectat push arm-ul, fapt ce ne-a îngreunat posibilitatea de scorare pe tot
-                parcursul meet-ului, neavând resursele pentru a-l repara complet. Deși sistemul era defectat, avea
-                momente când reușea să facă tranziția dintre indexer și shooter, iar în acele perioade de timp robotul
-                nostru, cu ajutorul strategiei îmbunătățite de la meet-ul anterior, s-a mișcat rapid și eficient.
-                Astfel, am remarcat fragilitatea subsistemului și am pus un perete de aluminiu în spatele robotului,
-                lângă push arm. </p>
-
-            </div>
-          </div>
-
-          <div class="blog-card" data-blog="2">
-            <div class="blog-card-image">
-              <picture>
-                <source media="(max-width: 768px)" srcset="bloguri/focsani.png">
-                <img src="bloguri/focsani.png" alt="Articol 3">
-              </picture>
-              <div class="blog-card-overlay">
-                <span class="blog-tag">Meet</span>
-              </div>
-            </div>
-            <div class="blog-card-content">
-              <div class="blog-card-date" data-i18n="blog.card2.date">24 ianuarie 2026</div>
-              <h3 class="blog-card-title" data-i18n="blog.card2.title">MEET #3 - Focșani</h3>
-              <p class="blog-card-description" data-i18n="blog.card2.desc">La meet-ul "Focșani Tech Challenge",
-                organizat pe 24 ianuarie, ne-am
-                îmbunătățit strategia, câștigând 3/6 meciuri.
-                Deschiderea evenimentului a fost realizată prin prezența președintelui României, Nicușor Dan, în onoarea
-                celor 160 de ani de la fondarea Colegiului "Unirea". Robotul ni s-a mișcat bine și eficient, iar tactica
-                noastră de scorare a rămas consistentă.</p>
-
-            </div>
-          </div>
-
-          <div class="blog-card" data-blog="3">
-            <div class="blog-card-image">
-              <picture>
-                <source media="(max-width: 768px)" srcset="bloguri/galati.png">
-                <img src="bloguri/galati.png" alt="Articol 4">
-              </picture>
-              <div class="blog-card-overlay">
-                <span class="blog-tag">MEET</span>
-              </div>
-            </div>
-            <div class="blog-card-content">
-              <div class="blog-card-date" data-i18n="blog.card3.date">31 ianuarie 2026</div>
-              <h3 class="blog-card-title" data-i18n="blog.card3.title">MEET #4 - Galati</h3>
-              <p class="blog-card-description" data-i18n="blog.card3.desc">Meet-ul "Ice Age", organizat pe 31 ianuarie,
-                ne-a dat verdictul în sensul
-                viabilității robotului și a eficienței de mișcare, reușind să câștigăm 5/6 meciuri, fiind cea mai bună
-                performanță a noastră de până acum. </p>
-
-            </div>
-          </div>
-
-          <div class="blog-card" data-blog="4">
-            <div class="blog-card-image">
-              <picture>
-                <source media="(max-width: 768px)" srcset="bloguri/botosani.png">
-                <img src="bloguri/botosani.png" alt="Articol 5">
-              </picture>
-              <div class="blog-card-overlay">
-                <span class="blog-tag">MEET</span>
-              </div>
-            </div>
-            <div class="blog-card-content">
-              <div class="blog-card-date" data-i18n="blog.card4.date">7 februarie 2026</div>
-              <h3 class="blog-card-title" data-i18n="blog.card4.title">MEET #5 - Botosani</h3>
-              <p class="blog-card-description" data-i18n="blog.card4.desc">Ultimul meet la care am participat a fost
-                ,,Royal Stars”, organizat pe 7
-                februarie la Botoșani. În cadrul acestuia am câștigat 4/6 meciuri, fapt care ne-a asigurat o poziție mai
-                bună în clasamentul ligii. În urma meet-ului am stabilit ultimele schimbări ce țin de design-ul
-                robotului pentru a optimiza și facilita funcționarea acestuia. Astfel, am evoluat de la competiție la
-                competiție, îmbunătățind atât tactica de joc, cât și funcționalitățile hardware.</p>
-
-            </div>
+      <div class="footer-cols">
+        <div>
+          <h4>roLERbot</h4>
+          <p class="footer-desc" data-i18n="footer.desc">Echipa de robotică a Liceului Teoretic „Emil Racoviță" Vaslui. Pasionați de tehnologie, inovație și competiții FIRST Tech Challenge.</p>
+          <div class="socials">
+            <a href="https://www.instagram.com/rolerbot/" target="_blank" rel="noopener">Instagram</a>
+            <a href="https://www.facebook.com/rolerbot/" target="_blank" rel="noopener">Facebook</a>
+            <a href="https://www.tiktok.com/@rolerbot" target="_blank" rel="noopener">TikTok</a>
           </div>
         </div>
-
-        <button class="blog-carousel-btn next-btn" onclick="changeBlogSlide(1)">
-          <i class="fas fa-chevron-right"></i>
-        </button>
-      </div>
-
-      <div class="blog-carousel-indicators">
-        <span class="blog-indicator active" onclick="goToBlogSlide(0)"></span>
-        <span class="blog-indicator" onclick="goToBlogSlide(1)"></span>
-        <span class="blog-indicator" onclick="goToBlogSlide(2)"></span>
-        <span class="blog-indicator" onclick="goToBlogSlide(3)"></span>
-        <span class="blog-indicator" onclick="goToBlogSlide(4)"></span>
-      </div>
-
-      <div class="text-center mt-5">
-        <a href="blog.html" class="btn btn-primary btn-lg">
-          <i class="fas fa-arrow-right me-2"></i>
-          <span data-i18n="blog.viewAll">Vezi toate articolele</span>
-        </a>
-      </div>
-    </div>
-  </section>
-
-
-
-  <!-- Footer-->
-  <footer class="modern-footer" id="contact">
-    <div class="footer-waves">
-      <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-        viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
-        <defs>
-          <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
-        </defs>
-        <g class="parallax">
-          <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(249, 5, 108, 0.7)" />
-          <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(255, 52, 136, 0.5)" />
-          <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(249, 5, 108, 0.3)" />
-          <use xlink:href="#gentle-wave" x="48" y="7" fill="#fff" />
-        </g>
-      </svg>
-    </div>
-
-    <div class="footer-content">
-      <div class="container">
-        <div class="row g-4">
-          <!-- About Section -->
-          <div class="col-lg-4 col-md-6">
-            <div class="footer-section">
-              <h3 class="footer-title">
-                <img src="assets/img/Design fără titlu (40).png" alt="roLERbot Logo" class="footer-logo">
-                roLERbot
-              </h3>
-              <p class="footer-description" data-i18n="footer.desc">
-                Echipa de robotică a Liceului Teoretic „Emil Racoviță" Vaslui.
-                Pasionați de tehnologie, inovație și competiții FIRST Tech Challenge.
-              </p>
-              <div class="footer-social">
-                <a href="https://www.facebook.com/rolerbot/" class="social-link" aria-label="Facebook">
-                  <i class="fab fa-facebook-f"></i>
-                </a>
-                <a href="https://www.instagram.com/rolerbot/" class="social-link" aria-label="Instagram">
-                  <i class="fab fa-instagram"></i>
-                </a>
-                <a href="https://www.tiktok.com/@rolerbot" class="social-link" aria-label="TikTok">
-                  <i class="fab fa-tiktok"></i>
-                </a>
-                <a href="#!" class="social-link" aria-label="Email">
-                  <i class="fas fa-envelope"></i>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <!-- Quick Links -->
-          <div class="col-lg-2 col-md-6">
-            <div class="footer-section">
-              <h4 class="footer-heading" data-i18n="footer.nav">Navigare</h4>
-              <ul class="footer-links">
-                <li><a href="index.html#services" data-i18n="nav.team">Echipa</a></li>
-                <li><a href="index.html#portfolio" data-i18n="nav.sponsors">Sponsori</a></li>
-                <li><a href="index.html#about" data-i18n="nav.progress">Progres</a></li>
-                <li><a href="blog.html" data-i18n="nav.blog">Blog</a></li>
-                <li><a href="index.html#contact" data-i18n="nav.contact">Contact</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- Resources -->
-          <div class="col-lg-3 col-md-6">
-            <div class="footer-section">
-              <h4 class="footer-heading" data-i18n="footer.resources">Resurse</h4>
-              <ul class="footer-links">
-                <li><a href="puiu-cross.html">Puiu-cross.exe</a></li>
-                <li><a href="puiu-invaders.html">Puiu-invaders.exe</a></li>
-                <li><a href="puiu-run.html">Puiu-run.exe</a></li>
-                <li><a href="https://ftc-events.firstinspires.org/team/21031">Competiții</a></li>
-                <li><a href="#!">Înscriere Echipă</a></li>
-                <li><a href="#!">Devino Sponsor</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- Contact Info -->
-          <div class="col-lg-3 col-md-6">
-            <div class="footer-section">
-              <h4 class="footer-heading" data-i18n="footer.contact">Contact</h4>
-              <ul class="footer-contact">
-                <li>
-                  <i class="fas fa-map-marker-alt"></i>
-                  <span data-i18n="footer.location">Liceul Teoretic<br>„Emil Racoviță" Vaslui</span>
-                </li>
-                <li>
-                  <i class="fas fa-envelope"></i>
-                  <span>rolerbotintl@gmail.com</span>
-                </li>
-
-              </ul>
-            </div>
-          </div>
+        <div>
+          <h4 data-i18n="footer.nav">Navigare</h4>
+          <ul class="footer-list">
+            <li><a href="#services" data-i18n="nav.team">Echipa</a></li>
+            <li><a href="#portfolio" data-i18n="nav.sponsors">Sponsori</a></li>
+            <li><a href="#about" data-i18n="nav.progress">Progres</a></li>
+            <li><a href="blog.html" data-i18n="nav.blog">Blog</a></li>
+          </ul>
         </div>
-
-        <!-- Footer Bottom -->
-        <div class="footer-bottom">
-          <div class="row align-items-center">
-            <div class="col-md-6 text-center text-md-start">
-              <p class="footer-copyright" data-i18n="footer.copyright">&copy; 2024 roLERbot. Toate drepturile rezervate.</p>
-              <p class="footer-creator mb-0" data-i18n="footer.creator">Site realizat de Diaconu Mihaita</p>
-            </div>
-            <div class="col-md-6 text-center text-md-end">
-              <div class="footer-legal">
-                <a href="#!" data-i18n="footer.privacy">Politica de Confidențialitate</a>
-                <span class="separator">|</span>
-                <a href="#!" data-i18n="footer.terms">Termeni și Condiții</a>
-              </div>
-            </div>
-          </div>
+        <div>
+          <h4 data-i18n="footer.resources">Resurse</h4>
+          <ul class="footer-list">
+            <li><a href="puiu-cross.html">Puiu-cross.exe</a></li>
+            <li><a href="puiu-invaders.html">Puiu-invaders.exe</a></li>
+            <li><a href="puiu-run.html">Puiu-run.exe</a></li>
+            <li><a href="field-sim.html">Field Sim</a></li>
+            <li><a href="field-sim-3d.html">Field Sim 3D</a></li>
+            <li><a href="ftc-decode-1v1.html">FTC Decode 1v1</a></li>
+            <li><a href="https://fieldsim.org/" target="_blank" rel="noopener">fieldsim.org ↗</a></li>
+            <li><a href="https://ftc-events.firstinspires.org/team/21031" target="_blank" rel="noopener">FTC Events ↗</a></li>
+          </ul>
         </div>
+        <div>
+          <h4 data-i18n="footer.contact">Contact</h4>
+          <ul class="footer-list">
+            <li><span data-i18n="footer.location">Liceul Teoretic<br>„Emil Racoviță" Vaslui</span></li>
+            <li><a href="mailto:rolerbotintl@gmail.com">rolerbotintl@gmail.com</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-mark" aria-hidden="true">roLERbot</div>
+
+      <div class="footer-bottom">
+        <span data-i18n="footer.copyright">&copy; 2024 roLERbot. Toate drepturile rezervate.</span>
+        <span data-i18n="footer.creator">Site realizat de Diaconu Mihaita</span>
+        <a class="to-top" href="#page-top">↑ TOP</a>
       </div>
     </div>
   </footer>
 
-
   <script src="js/i18n.js"></script>
-  <script src="js/scripts.js?v=20260309j"></script>
-
-  <script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>
-
-  <!-- Vercel Analytics -->
+  <script src="js/modern.js?v=8"></script>
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </body>
 

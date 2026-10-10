@@ -1,0 +1,79 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid && !data.exists()",
+        "name": { ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 16" },
+        "$other": { ".validate": false }
+      }
+    },
+
+    "usernames": {
+      "$name": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists()",
+        ".validate": "newData.isString() && newData.val() === auth.uid && $name.matches(/^[a-z0-9_]{3,16}$/)"
+      }
+    },
+
+    "presence": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.isString() && newData.val().length < 12"
+      }
+    },
+
+    "requests": {
+      "$to": {
+        ".read": "auth != null && auth.uid === $to",
+        "$from": {
+          ".read": "auth != null && auth.uid === $from",
+          ".write": "auth != null && (auth.uid === $from || auth.uid === $to)"
+        }
+      }
+    },
+
+    "friends": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$f": {
+          ".write": "auth != null && (auth.uid === $uid || (auth.uid === $f && (!newData.exists() || root.child('requests').child(auth.uid).child($uid).exists())))",
+          ".validate": "newData.val() === true"
+        }
+      }
+    },
+
+    "invites": {
+      "$to": {
+        ".read": "auth != null && auth.uid === $to",
+        "$from": {
+          ".write": "auth != null && (auth.uid === $to || (auth.uid === $from && root.child('friends').child($to).child($from).exists()))"
+        }
+      }
+    },
+
+    "rooms": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && data.child('meta/host').val() === auth.uid",
+        "meta": {
+          ".write": "auth != null && (!data.exists() || data.child('host').val() === auth.uid)"
+        },
+        "slots": {
+          "$s": {
+            ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)",
+            ".validate": "newData.child('uid').val() === auth.uid || newData.child('uid').val() === data.child('uid').val()"
+          }
+        },
+        "inputs": {
+          "$u": { ".write": "auth != null && auth.uid === $u" }
+        }
+      }
+    }
+  }
+}
