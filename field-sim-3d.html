@@ -1580,7 +1580,7 @@
     function resetEndButtons() { $('btnAgain').style.display = ''; $('btnMenu').textContent = 'Meniu'; $('btnAgain').textContent = 'Joacă din nou'; }
     const bsend = (o, event, payload) => { try { o.ch.send({ type: 'broadcast', event, payload }); } catch (e) { } };
     function mkONL(code, isHost, meta) {
-      return { room: code, host: isHost, uid: ACC.user.uid, meta, slots: {}, inp: {}, buf: [], ch: null, gotLobby: false, denied: '', acc: 0, bid: 0, tid: 0, seq: 0, rb: cfg.robot, playing: false, seenMid: 0, endTicks: 0, cd: 0, sendT: 0, n: 0, lastIn: '' };
+      return { room: code, host: isHost, uid: ACC.user.uid, meta, slots: {}, inp: {}, buf: [], ch: null, peers: {}, pc: null, dc: null, pend: [], qs: 0, lastQ: 0, gotLobby: false, denied: '', acc: 0, bid: 0, tid: 0, seq: 0, rb: cfg.robot, playing: false, seenMid: 0, endTicks: 0, cd: 0, sendT: 0, n: 0, lastIn: '' };
     }
     function subscribeCh(ch) { return new Promise((res) => { ch.subscribe((s) => { if (s === 'SUBSCRIBED') res(true); else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') res(false); }); }); }
     function dropRoom(o) { try { sb.removeChannel(o.ch); } catch (e) { } if (ONL === o) ONL = null; }
@@ -1602,7 +1602,58 @@
       const cur = slotOfUid(o, uid), prev = cur ? o.slots[cur] : null; if (cur) delete o.slots[cur];
       o.slots[id] = { uid, name: String(name || (prev && prev.name) || '?').slice(0, 16), rb: rb === 'turret' ? 'turret' : 'strafe' }; pushLobby();
     }
-    function freeUid(uid) { const o = ONL, s = o && slotOfUid(o, uid); if (!s) return; delete o.slots[s]; pushLobby(); }
+    function freeUid(uid) { const o = ONL, s = o && slotOfUid(o, uid); if (o) closePeer(o, uid); if (!s) return; delete o.slots[s]; pushLobby(); }
+    // ---------- direct peer-to-peer link (WebRTC data channel). Supabase = lobby + signalling + fallback ----------
+    const RTC_CFG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+    const dcOpen = (dc) => !!dc && dc.readyState === 'open';
+    const rtcSend = (o, to, k, extra) => bsend(o, 'rtc', Object.assign({ to, from: o.uid, k }, extra));
+    function hostInput(p) { const o = ONL; if (o && o.host && p && p.uid) o.inp[p.uid] = Object.assign({}, p, { rt: performance.now() }); }
+    function wireDc(o, dc) {
+      dc.onmessage = (e) => { const t = e.data; if (typeof t !== 'string' || ONL !== o) return; if (t[0] === 'S') onSnap(t.slice(1)); else if (t[0] === 'I') { try { hostInput(JSON.parse(t.slice(1))); } catch (x) { } } };
+      dc.onopen = () => queue(); dc.onclose = () => queue();
+    }
+    async function guestRtc(o) {
+      if (!window.RTCPeerConnection || o.pc) return;
+      try {
+        const pc = new RTCPeerConnection(RTC_CFG); o.pc = pc;
+        const dc = pc.createDataChannel('g', { ordered: false, maxRetransmits: 0 }); o.dc = dc; wireDc(o, dc);
+        pc.onicecandidate = (e) => { if (e.candidate) rtcSend(o, o.meta.hostUid, 'ice', { c: e.candidate.toJSON() }); };
+        await pc.setLocalDescription(await pc.createOffer());
+        rtcSend(o, o.meta.hostUid, 'offer', { sdp: pc.localDescription.sdp });
+      } catch (e) { console.warn('rtc offer failed', e); }
+    }
+    async function onRtc(p) {
+      const o = ONL; if (!o || !p || p.to !== o.uid) return;
+      try {
+        if (o.host) {
+          let r = o.peers[p.from];
+          if (p.k === 'offer') {
+            const prevQ = r ? r.q : []; if (r && r.pc) { try { r.pc.close(); } catch (e) { } }
+            const pc = new RTCPeerConnection(RTC_CFG); r = o.peers[p.from] = { pc, dc: null, q: prevQ };
+            pc.ondatachannel = (e) => { r.dc = e.channel; wireDc(o, e.channel); };
+            pc.onicecandidate = (e) => { if (e.candidate) rtcSend(o, p.from, 'ice', { c: e.candidate.toJSON() }); };
+            await pc.setRemoteDescription({ type: 'offer', sdp: p.sdp });
+            for (const c of r.q.splice(0)) await pc.addIceCandidate(c).catch(() => { });
+            await pc.setLocalDescription(await pc.createAnswer());
+            rtcSend(o, p.from, 'answer', { sdp: pc.localDescription.sdp });
+          } else if (p.k === 'ice') {
+            if (!r) r = o.peers[p.from] = { pc: null, dc: null, q: [] };
+            if (r.pc && r.pc.remoteDescription) await r.pc.addIceCandidate(p.c).catch(() => { }); else r.q.push(p.c);
+          }
+        } else if (o.pc) {
+          if (p.k === 'answer') { await o.pc.setRemoteDescription({ type: 'answer', sdp: p.sdp }); for (const c of o.pend.splice(0)) await o.pc.addIceCandidate(c).catch(() => { }); }
+          else if (p.k === 'ice') { if (o.pc.remoteDescription) await o.pc.addIceCandidate(p.c).catch(() => { }); else o.pend.push(p.c); }
+        }
+      } catch (e) { console.warn('rtc', e); }
+    }
+    function closePeer(o, uid) { const r = o.peers[uid]; if (r && r.pc) try { r.pc.close(); } catch (e) { } delete o.peers[uid]; }
+    function closeRtc(o) { try { if (o.pc) o.pc.close(); } catch (e) { } Object.keys(o.peers).forEach((u) => closePeer(o, u)); o.pc = o.dc = null; }
+    const guestsOf = (o) => Object.values(o.slots).filter((s) => s && s.uid !== o.uid);
+    const allP2P = (o) => { const g = guestsOf(o); return g.length > 0 && g.every((s) => o.peers[s.uid] && dcOpen(o.peers[s.uid].dc)); };
+    function sendIn(o, inp) {
+      if (dcOpen(o.dc)) { try { o.dc.send('I' + JSON.stringify(inp)); return; } catch (e) { } }
+      bsend(o, 'in', inp);
+    }
     function openChannel(code, o) {
       const ch = sb.channel('room:' + code, { config: { broadcast: { self: false }, presence: { key: ACC.user.uid } } });
       const live = () => ONL === o;
@@ -1612,8 +1663,9 @@
         if (o.meta.state === 'lobby' && o.playing) returnToLobbyUI();
         queue();
       });
-      ch.on('broadcast', { event: 'state' }, ({ payload }) => { if (live() && !o.host && payload) onSnap(payload.s); });
-      ch.on('broadcast', { event: 'in' }, ({ payload }) => { if (live() && o.host && payload && payload.uid) o.inp[payload.uid] = Object.assign({}, payload, { rt: performance.now() }); });
+      ch.on('broadcast', { event: 'state' }, ({ payload }) => { if (live() && !o.host && payload && !dcOpen(o.dc)) onSnap(payload.s); });
+      ch.on('broadcast', { event: 'rtc' }, ({ payload }) => { if (live()) onRtc(payload); });
+      ch.on('broadcast', { event: 'in' }, ({ payload }) => { if (live() && o.host) hostInput(payload); });
       ch.on('broadcast', { event: 'hello' }, ({ payload }) => { if (live() && o.host) hostHello(payload); });
       ch.on('broadcast', { event: 'claim' }, ({ payload }) => { if (live() && o.host && payload) hostClaim(payload.uid, payload.name, payload.slot, payload.rb); });
       ch.on('broadcast', { event: 'rb' }, ({ payload }) => { if (!live() || !o.host || !payload) return; const s = slotOfUid(o, payload.uid); if (s) { o.slots[s].rb = payload.rb === 'turret' ? 'turret' : 'strafe'; pushLobby(); } });
@@ -1655,7 +1707,7 @@
       for (let i = 0; i < 25 && !o.gotLobby && !o.denied; i++) await sleep(150);
       if (o.denied) return fail(o.denied);
       if (!o.gotLobby || !slotOfUid(o, uid)) return fail('Gazda nu a răspuns.');
-      finishEnter(o); return true;
+      guestRtc(o); finishEnter(o); return true;
     }
     function claimSlot(id) {
       const o = ONL; if (!o || mySlot() === id) return;
@@ -1672,7 +1724,7 @@
     }
     function leaveRoom(msg, remote) {
       const o = ONL; if (!o) return;
-      clearInterval(o.cdIv);
+      clearInterval(o.cdIv); closeRtc(o);
       if (!remote) bsend(o, o.host ? 'close' : 'leave', { uid: o.uid });
       setTimeout(() => { try { sb.removeChannel(o.ch); } catch (e) { } }, 250);
       ONL = null; resetEndButtons();
@@ -1723,7 +1775,7 @@
       for (const b of G.balls) if (!b.id) b.id = ++o.bid;
       for (const k of G.tokens) if (!k.id) k.id = ++o.tid;
       const d = {
-        m: mode, cd: o.cd, mid: G.mid, t: G.t, sc: G.score, pa: G.parts, nq: G.nq, pen: G.pen, warn: G.warn, lp: G.lp, shake: G.shake, free: G.free,
+        q: ++o.qs, m: mode, cd: o.cd, mid: G.mid, t: G.t, sc: G.score, pa: G.parts, nq: G.nq, pen: G.pen, warn: G.warn, lp: G.lp, shake: G.shake, free: G.free,
         hv: { red: pick(G.hive.red, HK), blue: pick(G.hive.blue, HK) },
         fl: G.flowers.map((f) => ({ s: f.stack, p: f.pulse })),
         r: G.robots.map((r) => pick(r, RK)),
@@ -1731,7 +1783,9 @@
         tk: G.tokens.map((k) => pick(k, ['id', 'k', 'x0', 'y0', 'x1', 'y1', 't', 'dur', 'c'])),
         ri: G.rings, po: G.pops, fx: G.fx.slice(0, 30).map((p) => pick(p, ['x', 'y', 'vx', 'vy', 'life', 'c']))
       };
-      bsend(o, 'state', { s: JSON.stringify(d, rnd) });
+      const str = JSON.stringify(d, rnd); let relay = false;
+      for (const s of guestsOf(o)) { const r = o.peers[s.uid]; if (r && dcOpen(r.dc)) { try { r.dc.send('S' + str); } catch (e) { relay = true; } } else relay = true; }
+      if (relay) bsend(o, 'state', { s: str });
     }
     const ZERO_IN = ZERO;
     function onlineInput(pid) {
@@ -1746,8 +1800,10 @@
       const o = ONL; if (!o || !str) return;
       let d; try { d = JSON.parse(str); } catch (e) { return; }
       const fresh = d.mid !== o.seenMid;
-      if (fresh) { if (d.m !== 'count') return; o.seenMid = d.mid; o.playing = true; o.buf = []; o.applied = 0; o.lastArr = 0; o.gapAvg = 0; o.jit = 0; o.delay = 120; }
+      if (fresh) { if (d.m !== 'count') return; o.seenMid = d.mid; o.playing = true; o.buf = []; o.applied = 0; o.lastQ = d.q || 0; o.lastArr = 0; o.gapAvg = 0; o.jit = 0; o.delay = 120; }
       else if (!o.playing) return;
+      else if (d.q && d.q <= o.lastQ) return;   // late / duplicate snapshot
+      if (d.q) o.lastQ = d.q;
       const ridx = {}, bidx = {}; d.r.forEach((r) => { ridx[r.id] = r; }); d.b.forEach((b) => { bidx[b.id] = b; });
       const now = performance.now();
       if (o.lastArr) { const gap = now - o.lastArr; o.gapAvg = o.gapAvg ? o.gapAvg * .9 + gap * .1 : gap; o.jit = (o.jit || 0) * .9 + Math.abs(gap - o.gapAvg) * .1; o.delay = clamp(o.gapAvg * 1.3 + o.jit * 2.5, 70, 200); }
@@ -1837,7 +1893,7 @@
       if (mode === 'run') {
         const inp = myInp;
         const key = JSON.stringify([inp.mx.toFixed(2), inp.my.toFixed(2), inp.rot.toFixed(2), inp.shoot, inp.slow, inp.dep, inp.take, inp.fc, inp.spd]);
-        if (key !== o.lastIn || t - o.sendT > 250) { o.lastIn = key; o.sendT = t; inp.n = ++o.n; inp.uid = o.uid; bsend(o, 'in', inp); }
+        if (key !== o.lastIn || t - o.sendT > 250) { o.lastIn = key; o.sendT = t; inp.n = ++o.n; inp.uid = o.uid; sendIn(o, inp); }
       }
     }
     function onlineFrame(dt) {
@@ -1845,7 +1901,7 @@
       if (o.host) {
         if (mode === 'run') { update(dt); hud(); }
         o.acc += dt;
-        if (o.acc >= .05 && o.playing && G && (mode === 'run' || (mode === 'end' && o.endTicks > 0))) { o.acc = 0; sendState(); if (mode === 'end') o.endTicks--; }
+        if (o.acc >= (allP2P(o) ? .033 : .05) && o.playing && G && (mode === 'run' || (mode === 'end' && o.endTicks > 0))) { o.acc = 0; sendState(); if (mode === 'end') o.endTicks--; }
       } else { guestFrame(dt); if (mode === 'run' || mode === 'count') hud(); }
     }
     function onlineAfterEnd() {
@@ -1941,6 +1997,13 @@
     // pill to reopen the room while the lobby is hidden in the menu
     { const pill = el('button', { class: 'onl-btn pri sm', style: 'position:fixed;left:14px;bottom:14px;z-index:80;display:none', onclick: openOnl }); document.body.append(pill);
       setInterval(() => { const on = !!(ONL && !onlOpen && !ONL.playing); pill.style.display = on ? '' : 'none'; if (on) pill.textContent = 'Cameră ' + ONL.room; }, 400); }
+    { const net = el('div', { style: 'position:fixed;left:14px;bottom:14px;z-index:70;font:600 11px JetBrains Mono,monospace;letter-spacing:.06em;color:#b9b5bd;background:rgba(9,9,11,.7);padding:4px 9px;border-radius:8px;pointer-events:none;display:none' }); document.body.append(net);
+      setInterval(() => {
+        const o = ONL, on = !!(o && o.playing && (mode === 'run' || mode === 'count'));
+        net.style.display = on ? '' : 'none'; if (!on) return;
+        if (o.host) { const g = guestsOf(o), n = g.filter((s) => o.peers[s.uid] && dcOpen(o.peers[s.uid].dc)).length; net.textContent = g.length ? 'CONEXIUNE ' + (n === g.length ? 'DIRECTĂ' : n + '/' + g.length + ' directe') : 'GAZDĂ'; net.style.color = n === g.length ? '#7be0a0' : '#ffc933'; }
+        else { const d = dcOpen(o.dc); net.textContent = d ? 'CONEXIUNE DIRECTĂ' : 'PRIN SERVER'; net.style.color = d ? '#7be0a0' : '#ffc933'; }
+      }, 500); }
     window.addEventListener('beforeunload', () => { if (ONL) bsend(ONL, ONL.host ? 'close' : 'leave', { uid: ONL.uid }); });
     // ================= /ONLINE =================
 
