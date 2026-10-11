@@ -1397,7 +1397,7 @@
     const SBC = window.SUPABASE_CONFIG || {};
     const SB_OK = !!(window.supabase && SBC.url && SBC.anonKey);
     let sb = null;
-    if (SB_OK) { try { sb = supabase.createClient(SBC.url, SBC.anonKey, { realtime: { params: { eventsPerSecond: 40 } } }); } catch (e) { console.warn('supabase init failed', e); } }
+    if (SB_OK) { try { sb = supabase.createClient(SBC.url, SBC.anonKey, { realtime: { params: { eventsPerSecond: 60 } } }); } catch (e) { console.warn('supabase init failed', e); } }
     const ACC = { user: null, name: null, view: 'auth', tab: 'login', friends: {}, reqs: {}, out: {}, invites: {}, sent: {}, pres: {}, err: '', ok: '', busy: false, booting: false };
     const UI = {};
     let onlOpen = false;
@@ -1729,7 +1729,7 @@
         r: G.robots.map((r) => pick(r, RK)),
         b: G.balls.map((b) => pick(b, ['id', 'x', 'y', 'z', 'c', 'st'])),
         tk: G.tokens.map((k) => pick(k, ['id', 'k', 'x0', 'y0', 'x1', 'y1', 't', 'dur', 'c'])),
-        ri: G.rings, po: G.pops, fx: G.fx.slice(0, 50).map((p) => pick(p, ['x', 'y', 'vx', 'vy', 'life', 'c']))
+        ri: G.rings, po: G.pops, fx: G.fx.slice(0, 30).map((p) => pick(p, ['x', 'y', 'vx', 'vy', 'life', 'c']))
       };
       bsend(o, 'state', { s: JSON.stringify(d, rnd) });
     }
@@ -1746,10 +1746,13 @@
       const o = ONL; if (!o || !str) return;
       let d; try { d = JSON.parse(str); } catch (e) { return; }
       const fresh = d.mid !== o.seenMid;
-      if (fresh) { if (d.m !== 'count') return; o.seenMid = d.mid; o.playing = true; o.buf = []; o.applied = 0; }
+      if (fresh) { if (d.m !== 'count') return; o.seenMid = d.mid; o.playing = true; o.buf = []; o.applied = 0; o.lastArr = 0; o.gapAvg = 0; o.jit = 0; o.delay = 120; }
       else if (!o.playing) return;
       const ridx = {}, bidx = {}; d.r.forEach((r) => { ridx[r.id] = r; }); d.b.forEach((b) => { bidx[b.id] = b; });
-      o.buf.push({ t: performance.now(), d, ridx, bidx, seq: ++o.seq }); if (o.buf.length > 6) o.buf.shift();
+      const now = performance.now();
+      if (o.lastArr) { const gap = now - o.lastArr; o.gapAvg = o.gapAvg ? o.gapAvg * .9 + gap * .1 : gap; o.jit = (o.jit || 0) * .9 + Math.abs(gap - o.gapAvg) * .1; o.delay = clamp(o.gapAvg * 1.3 + o.jit * 2.5, 70, 200); }
+      o.lastArr = now;
+      o.buf.push({ t: now, d, ridx, bidx, seq: ++o.seq }); if (o.buf.length > 8) o.buf.shift();
     }
     function gBuild(d) {
       G = {
@@ -1773,7 +1776,9 @@
       for (const rd of d.r) {
         let r = o.rmap.get(rd.id);
         if (!r) { r = mkRobot(rd.al, rd.x, rd.y, rd.a, rd.human, rd.type, rd.slot); r.id = rd.id; r.num = rd.num; o.rmap.set(rd.id, r); r.ta = rd.ta; }
-        r.pid = rd.pid; r.pname = rd.pname; r.human = rd.human; r.hold = rd.hold; r.cd = rd.cd; r.icd = rd.icd; r.recoil = rd.recoil; r.boost = rd.boost; r.gotFlash = rd.gotFlash; r.pend = rd.pend || 0; r.shots = rd.shots; r.hits = rd.hits; r.vx = rd.vx; r.vy = rd.vy; r.w = rd.w;
+        const isNew = r.pid === undefined && !r.id2; r.id2 = 1;
+        r.pid = rd.pid; r.pname = rd.pname; r.human = rd.human; r.hold = rd.hold; r.cd = rd.cd; r.icd = rd.icd; r.recoil = rd.recoil; r.boost = rd.boost; r.gotFlash = rd.gotFlash; r.pend = rd.pend || 0; r.shots = rd.shots; r.hits = rd.hits;
+        if (rd.pid !== o.uid || isNew) { r.vx = rd.vx; r.vy = rd.vy; r.w = rd.w; }
         list.push(r);
       }
       list.sort((a, b) => (b.pid === o.uid) - (a.pid === o.uid)); G.robots = list;
@@ -1791,17 +1796,31 @@
     }
     function guestFrame(dt) {
       const o = ONL, b = o.buf; if (!o.playing || !b.length) return;
-      const rt = performance.now() - 140; let i = b.length - 1; while (i > 0 && b[i].t > rt) i--;
+      const rt = performance.now() - (o.delay || 120); let i = b.length - 1; while (i > 0 && b[i].t > rt) i--;
       const s0 = b[i], s1 = b[Math.min(i + 1, b.length - 1)];
       const al = s1.t > s0.t ? clamp((rt - s0.t) / (s1.t - s0.t), 0, 1) : 1;
       if (o.applied !== s1.seq) { o.applied = s1.seq; gApply(s1.d); }
       G.t = lerp(s0.d.t, s1.d.t, al);
+      const me = G.robots.find((r) => r.pid === o.uid), predict = !!me && mode === 'run';
+      let myInp = null; if (mode === 'run') { myInp = readInput(); myInp.fc = !!$('optFC').checked; myInp.spd = +$('optSpd').value / 100; }
       for (const r of G.robots) {
+        if (predict && r === me) continue;   // own robot: driven locally, corrected below
         const a = s0.ridx[r.id], c = s1.ridx[r.id]; if (!c) continue;
         if (!a) { r.x = c.x; r.y = c.y; r.a = c.a; r.ta = c.ta; r.wph = c.wph; }
         else { r.x = lerp(a.x, c.x, al); r.y = lerp(a.y, c.y, al); r.a = lang(a.a, c.a, al); r.ta = lang(a.ta, c.ta, al); r.wph = c.wph.map((v, k) => lerp(a.wph[k], v, al)); }
         r.cd = Math.max(0, r.cd - dt); r.icd = Math.max(0, r.icd - dt); r.recoil = Math.max(0, r.recoil - dt * 7); r.boost = Math.max(0, r.boost - dt); r.gotFlash = Math.max(0, r.gotFlash - dt);
         r.ip += dt * (r.hold.length + r.pend < HOLD ? 14 : 3) + r.boost * dt * 40;
+      }
+      if (predict) {
+        const frozen = !G.free && phaseOf(G.t) === 'inter';
+        driveRobot(me, frozen ? ZERO : myInp, dt);
+        const last = b[b.length - 1], c = last.ridx[me.id];
+        if (c) {
+          const age = clamp((performance.now() - last.t) / 1000, 0, .25) + .04;
+          const sx = c.x + c.vx * age, sy = c.y + c.vy * age, sa = c.a + c.w * age, ex = sx - me.x, ey = sy - me.y;
+          if (Math.hypot(ex, ey) > 14) { me.x = sx; me.y = sy; me.vx = c.vx; me.vy = c.vy; me.a = sa; me.w = c.w; }
+          else { const k = 1 - Math.exp(-dt * 6); me.x += ex * k; me.y += ey * k; me.a += ((((sa - me.a + Math.PI) % TAU) + TAU) % TAU - Math.PI) * k; }
+        }
       }
       for (const [id, bb] of o.bmap) {
         const a = s0.bidx[id], c = s1.bidx[id]; if (!c) continue;
@@ -1816,7 +1835,7 @@
       // keys → host (every change, plus a heartbeat)
       const t = performance.now();
       if (mode === 'run') {
-        const inp = readInput(); inp.fc = !!$('optFC').checked; inp.spd = +$('optSpd').value / 100;
+        const inp = myInp;
         const key = JSON.stringify([inp.mx.toFixed(2), inp.my.toFixed(2), inp.rot.toFixed(2), inp.shoot, inp.slow, inp.dep, inp.take, inp.fc, inp.spd]);
         if (key !== o.lastIn || t - o.sendT > 250) { o.lastIn = key; o.sendT = t; inp.n = ++o.n; inp.uid = o.uid; bsend(o, 'in', inp); }
       }
@@ -1826,7 +1845,7 @@
       if (o.host) {
         if (mode === 'run') { update(dt); hud(); }
         o.acc += dt;
-        if (o.acc >= .08 && o.playing && G && (mode === 'run' || (mode === 'end' && o.endTicks > 0))) { o.acc = 0; sendState(); if (mode === 'end') o.endTicks--; }
+        if (o.acc >= .05 && o.playing && G && (mode === 'run' || (mode === 'end' && o.endTicks > 0))) { o.acc = 0; sendState(); if (mode === 'end') o.endTicks--; }
       } else { guestFrame(dt); if (mode === 'run' || mode === 'count') hud(); }
     }
     function onlineAfterEnd() {
