@@ -103,10 +103,8 @@
     @media (max-width: 980px) { .fs { grid-template-columns: 1fr; } .stage { max-height: none; } .tb-score b, .tb-time { font-size: 30px; } }
   </style>
 <link href="css/online.css?v=1" rel="stylesheet" />
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="js/firebase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase-config.js"></script>
 </head>
 
 <body>
@@ -1392,18 +1390,20 @@
     hold('tDep', () => touch.dep = true, () => touch.dep = false); hold('tTake', () => touch.take = true, () => touch.take = false);
     hold('tL', () => touch.rot = -1, () => touch.rot = 0); hold('tR', () => touch.rot = 1, () => touch.rot = 0); hold('tShoot', () => touch.shoot = true, () => touch.shoot = false);
 
-    // ================= ONLINE: conturi, prieteni, invitații, meci în rețea (Firebase) =================
+    // ================= ONLINE: conturi, prieteni, invitații, meci în rețea (Supabase) =================
     // Gazda rulează simularea; ceilalți trimit tastele și primesc starea jocului (~12 ori/s), interpolată local.
-    let ONL = null;   // active room: { room, host, uid, meta, slots, ... }
-    const FBC = window.FIREBASE_CONFIG || {};
-    const FB_OK = !!(window.firebase && FBC.apiKey && FBC.databaseURL);
-    let fbAuth = null, fbDb = null;
-    if (FB_OK) { try { firebase.initializeApp(FBC); fbAuth = firebase.auth(); fbDb = firebase.database(); } catch (e) { console.warn('firebase init failed', e); } }
-    const ACC = { user: null, name: null, view: 'auth', tab: 'login', friends: {}, reqs: {}, invites: {}, sent: {}, offs: [], fOffs: {}, err: '', ok: '', busy: false, registering: false };
+    // Camerele nu au tabele: sunt canale Supabase Realtime (broadcast + presence). Conturile și prietenii stau în Postgres.
+    let ONL = null;   // active room: { room, host, uid, meta, slots, ch, ... }
+    const SBC = window.SUPABASE_CONFIG || {};
+    const SB_OK = !!(window.supabase && SBC.url && SBC.anonKey);
+    let sb = null;
+    if (SB_OK) { try { sb = supabase.createClient(SBC.url, SBC.anonKey, { realtime: { params: { eventsPerSecond: 40 } } }); } catch (e) { console.warn('supabase init failed', e); } }
+    const ACC = { user: null, name: null, view: 'auth', tab: 'login', friends: {}, reqs: {}, out: {}, invites: {}, sent: {}, pres: {}, err: '', ok: '', busy: false, booting: false };
     const UI = {};
     let onlOpen = false;
-    const ref = (p) => fbDb.ref(p);
     const SLOT_ORDER = { '1v1': ['R0', 'B0'], '2v2': ['R0', 'R1', 'B0', 'B1'] };
+    const SLOT_PREF = { '1v1': ['B0', 'R0'], '2v2': ['B0', 'R1', 'B1', 'R0'] };
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
     function el(tag, a, ...kids) {
       const e = document.createElement(tag);
@@ -1425,120 +1425,147 @@
     const setErr = (m) => { ACC.err = m || ''; ACC.ok = ''; queue(); };
     const setOk = (m) => { ACC.ok = m || ''; ACC.err = ''; queue(); };
     const hnum = (s) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return String(10000 + (h % 80000)); };
+    const validName = (n) => /^[A-Za-z0-9_]{3,16}$/.test(n);
     const authMsg = (e) => {
-      const c = (e && e.code) || '';
-      if (c === 'auth/email-already-in-use') return 'Emailul e deja folosit.';
-      if (c === 'auth/invalid-email') return 'Email invalid.';
-      if (c === 'auth/weak-password') return 'Parola trebuie să aibă minim 6 caractere.';
-      if (/invalid-credential|user-not-found|wrong-password/.test(c)) return 'Email sau parolă greșită.';
-      if (c === 'auth/too-many-requests') return 'Prea multe încercări, mai așteaptă puțin.';
-      if (/popup-closed|cancelled-popup/.test(c)) return '';
-      if (c === 'auth/unauthorized-domain') return 'Domeniul nu e autorizat în Firebase (Authentication → Settings → Authorized domains).';
-      return (e && e.message) || 'Eroare necunoscută.';
+      const m = (e && e.message) || '';
+      if (/already registered|already been registered/i.test(m)) return 'Emailul e deja folosit.';
+      if (/invalid.*email|unable to validate email/i.test(m)) return 'Email invalid.';
+      if (/at least \d+ characters|weak/i.test(m)) return 'Parola trebuie să aibă minim 6 caractere.';
+      if (/invalid login/i.test(m)) return 'Email sau parolă greșită.';
+      if (/not confirmed/i.test(m)) return 'Confirmă emailul din mesajul primit, apoi autentifică-te.';
+      if (/rate limit|too many/i.test(m)) return 'Prea multe încercări, mai așteaptă puțin.';
+      return m || 'Eroare necunoscută.';
     };
 
     // ---------- session (auth, presence, friends, invites) ----------
-    const off = (list, r, ev, cb) => { r.on(ev, cb); list.push(() => r.off(ev, cb)); };
-    function endSession() { ACC.offs.forEach((f) => f()); ACC.offs = []; Object.values(ACC.fOffs).forEach((a) => a.forEach((f) => f())); ACC.fOffs = {}; ACC.friends = {}; ACC.reqs = {}; ACC.invites = {}; }
-    function setPresence() { if (!fbDb || !ACC.user) return; ref('presence/' + ACC.user.uid).set(!ONL ? 'on' : (mode === 'run' || mode === 'count') ? 'play' : 'lobby'); }
+    let lobbyCh = null, userCh = null, friendsCh = null, sessionOn = false;
+    const presOf = (f) => { const e = ACC.pres[f]; return e && e[0] ? e[0].st : null; };
+    function setPresence() { if (!lobbyCh || !ACC.user) return; lobbyCh.track({ st: !ONL ? 'on' : (mode === 'run' || mode === 'count') ? 'play' : 'lobby', name: ACC.name }); }
     function startSession() {
-      const uid = ACC.user.uid;
-      off(ACC.offs, ref('.info/connected'), 'value', (s) => { if (s.val()) { const pr = ref('presence/' + uid); pr.onDisconnect().remove(); setPresence(); } });
-      const fr = ref('friends/' + uid);
-      off(ACC.offs, fr, 'child_added', (s) => {
-        const f = s.key; if (ACC.friends[f]) return; ACC.friends[f] = { name: '…', pres: null };
-        const un = ref('users/' + f + '/name'), pr = ref('presence/' + f), a = [];
-        off(a, un, 'value', (x) => { if (ACC.friends[f]) ACC.friends[f].name = x.val() || '?'; queue(); });
-        off(a, pr, 'value', (x) => { if (ACC.friends[f]) ACC.friends[f].pres = x.val(); queue(); });
-        ACC.fOffs[f] = a; queue();
-      });
-      off(ACC.offs, fr, 'child_removed', (s) => { const f = s.key; (ACC.fOffs[f] || []).forEach((x) => x()); delete ACC.fOffs[f]; delete ACC.friends[f]; queue(); });
-      off(ACC.offs, ref('requests/' + uid), 'value', (s) => { ACC.reqs = s.val() || {}; queue(); });
-      off(ACC.offs, ref('invites/' + uid), 'value', (s) => { ACC.invites = s.val() || {}; queue(); });
+      if (sessionOn) return; sessionOn = true; const uid = ACC.user.uid;
+      lobbyCh = sb.channel('rb-lobby', { config: { presence: { key: uid } } });
+      lobbyCh.on('presence', { event: 'sync' }, () => { ACC.pres = lobbyCh.presenceState(); queue(); });
+      lobbyCh.subscribe((s) => { if (s === 'SUBSCRIBED') setPresence(); });
+      userCh = sb.channel('u:' + uid);
+      userCh.on('broadcast', { event: 'invite' }, ({ payload }) => { if (payload && payload.from && payload.from !== uid) { ACC.invites[payload.from] = payload; queue(); } });
+      userCh.subscribe();
+      friendsCh = sb.channel('fr:' + uid);
+      friendsCh.on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, () => loadFriends());
+      friendsCh.subscribe();
+      loadFriends();
     }
+    function endSession() {
+      [lobbyCh, userCh, friendsCh].forEach((c) => { if (c) try { sb.removeChannel(c); } catch (e) { } });
+      lobbyCh = userCh = friendsCh = null; sessionOn = false; ACC.friends = {}; ACC.reqs = {}; ACC.out = {}; ACC.invites = {}; ACC.pres = {};
+    }
+    async function loadFriends() {
+      const uid = ACC.user && ACC.user.uid; if (!uid) return;
+      const { data, error } = await sb.from('friendships').select('id,requester,addressee,status'); if (error || !data) return;
+      const ids = new Set(); data.forEach((r) => { ids.add(r.requester); ids.add(r.addressee); }); ids.delete(uid);
+      const names = {}; if (ids.size) { const p = await sb.from('profiles').select('id,username').in('id', [...ids]); (p.data || []).forEach((x) => { names[x.id] = x.username; }); }
+      const fr = {}, rq = {}, out = {};
+      for (const r of data) {
+        const other = r.requester === uid ? r.addressee : r.requester, v = { name: names[other] || '?', row: r.id };
+        if (r.status === 'accepted') fr[other] = v; else if (r.addressee === uid) rq[other] = v; else out[other] = v;
+      }
+      ACC.friends = fr; ACC.reqs = rq; ACC.out = out; queue();
+    }
+    setInterval(() => { if (ACC.user && ACC.name) loadFriends(); }, 30000);
     setInterval(() => { if (ACC.user) renderToasts(); }, 15000);
-    if (FB_OK && fbAuth) {
-      fbAuth.onAuthStateChanged(async (u) => {
-        endSession();
-        if (!u) { ACC.user = null; ACC.name = null; ACC.view = 'auth'; queue(); return; }
-        ACC.user = u; if (ACC.registering) return;
-        try {
-          const prof = (await ref('users/' + u.uid).once('value')).val();
-          if (!prof) { ACC.view = 'name'; queue(); return; }
-          ACC.name = prof.name; startSession(); ACC.view = ONL ? 'lobby' : 'home'; queue();
-        } catch (e) { setErr(authMsg(e)); }
+    async function bootProfile(u) {
+      if (ACC.booting) return; ACC.booting = true;
+      try {
+        const got = await sb.from('profiles').select('username').eq('id', u.id).maybeSingle(); let prof = got.data;
+        if (!prof) {
+          const want = u.user_metadata && u.user_metadata.username;
+          if (want && validName(want)) {
+            const r = await sb.from('profiles').insert({ id: u.id, username: want });
+            if (!r.error) prof = { username: want }; else ACC.err = r.error.code === '23505' ? 'Numele „' + want + '” e deja luat. Alege altul.' : r.error.message;
+          }
+        }
+        if (!prof) { ACC.view = 'name'; queue(); return; }
+        ACC.name = prof.username; startSession(); ACC.view = ONL ? 'lobby' : 'home'; ACC.err = ''; queue();
+      } catch (e) { setErr(authMsg(e)); } finally { ACC.booting = false; }
+    }
+    if (SB_OK && sb) {
+      sb.auth.onAuthStateChange((ev, session) => {
+        setTimeout(() => {   // never await supabase calls inside this callback
+          const u = session && session.user;
+          if (!u) { endSession(); ACC.user = null; ACC.name = null; ACC.view = 'auth'; queue(); return; }
+          if (ACC.user && ACC.user.uid === u.id && (ACC.name || ACC.booting)) return;
+          ACC.user = { uid: u.id, email: u.email }; bootProfile(u);
+        }, 0);
       });
     }
     async function claimName(name) {
-      const uid = fbAuth.currentUser.uid, low = name.toLowerCase();
-      const r = await ref('usernames/' + low).transaction((c) => (c ? undefined : uid));
-      if (!r.committed) throw new Error('Numele „' + name + '” e deja luat.');
-      await ref('users/' + uid).set({ name });
-      ACC.name = name; ACC.user = fbAuth.currentUser; ACC.registering = false; startSession(); ACC.view = 'home'; queue();
+      const r = await sb.from('profiles').insert({ id: ACC.user.uid, username: name });
+      if (r.error) throw new Error(r.error.code === '23505' ? 'Numele „' + name + '” e deja luat.' : r.error.message);
+      ACC.name = name; startSession(); ACC.view = 'home'; ACC.err = ''; queue();
     }
-    const validName = (n) => /^[A-Za-z0-9_]{3,16}$/.test(n);
     async function doRegister() {
       const email = (UI.email || '').trim(), pass = UI.pass || '', name = (UI.uname || '').trim();
       if (!validName(name)) return setErr('Numele: 3-16 caractere (litere, cifre, _).');
-      ACC.busy = true; ACC.registering = true; setErr('');
-      try { await fbAuth.createUserWithEmailAndPassword(email, pass); await claimName(name); }
-      catch (e) { ACC.registering = false; if (fbAuth.currentUser) ACC.view = 'name'; setErr(e.code ? authMsg(e) : e.message); }
+      ACC.busy = true; setErr('');
+      try {
+        const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { username: name } } });
+        if (error) setErr(authMsg(error));
+        else if (!data.session) { ACC.tab = 'login'; setOk('Cont creat. Confirmă emailul din mesajul primit, apoi autentifică-te.'); }
+      } catch (e) { setErr(authMsg(e)); }
       ACC.busy = false; queue();
     }
     async function doLogin() {
       ACC.busy = true; setErr('');
-      try { await fbAuth.signInWithEmailAndPassword((UI.email || '').trim(), UI.pass || ''); } catch (e) { setErr(authMsg(e)); }
+      try { const { error } = await sb.auth.signInWithPassword({ email: (UI.email || '').trim(), password: UI.pass || '' }); if (error) setErr(authMsg(error)); } catch (e) { setErr(authMsg(e)); }
       ACC.busy = false; queue();
     }
-    async function doGoogle() { setErr(''); try { await fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); } catch (e) { setErr(authMsg(e)); } }
     async function doPickName() {
       const name = (UI.uname || '').trim(); if (!validName(name)) return setErr('Numele: 3-16 caractere (litere, cifre, _).');
-      ACC.busy = true; ACC.registering = true; setErr('');
+      ACC.busy = true; setErr('');
       try { await claimName(name); } catch (e) { setErr(e.message); }
-      ACC.registering = false; ACC.busy = false; queue();
+      ACC.busy = false; queue();
     }
-    async function doLogout() { if (ONL) leaveRoom(); if (ACC.user) { try { await ref('presence/' + ACC.user.uid).remove(); } catch (e) { } } fbAuth.signOut(); }
+    async function doLogout() { if (ONL) leaveRoom(); await sb.auth.signOut(); }
 
     // ---------- friends ----------
     async function sendRequest() {
-      const name = (UI.addName || '').trim(), low = name.toLowerCase(), me = ACC.user.uid;
+      const name = (UI.addName || '').trim(), me = ACC.user.uid;
       if (!validName(name)) return setErr('Scrie numele exact al prietenului.');
-      if (low === ACC.name.toLowerCase()) return setErr('Ăsta ești tu 🙂');
+      if (name.toLowerCase() === ACC.name.toLowerCase()) return setErr('Ăsta ești tu 🙂');
       try {
-        const uid = (await ref('usernames/' + low).once('value')).val();
-        if (!uid) return setErr('Nu există niciun jucător cu numele „' + name + '”.');
-        if (ACC.friends[uid]) return setErr('Sunteți deja prieteni.');
-        if (ACC.reqs[uid]) { await acceptReq(uid); UI.addName = ''; return setOk('Acum ești prieten cu ' + name + '.'); }
-        await ref('requests/' + uid + '/' + me).set({ name: ACC.name, ts: Date.now() });
-        UI.addName = ''; setOk('Cerere trimisă către ' + name + '.');
+        const { data: p } = await sb.from('profiles').select('id,username').eq('username_lower', name.toLowerCase()).maybeSingle();
+        if (!p) return setErr('Nu există niciun jucător cu numele „' + name + '”.');
+        if (ACC.friends[p.id]) return setErr('Sunteți deja prieteni.');
+        if (ACC.out[p.id]) return setErr('Cererea către ' + p.username + ' e deja trimisă.');
+        if (ACC.reqs[p.id]) { await acceptReq(p.id); UI.addName = ''; return setOk('Acum ești prieten cu ' + p.username + '.'); }
+        const r = await sb.from('friendships').insert({ requester: me, addressee: p.id });
+        if (r.error) return setErr(r.error.message);
+        UI.addName = ''; setOk('Cerere trimisă către ' + p.username + '.'); loadFriends();
       } catch (e) { setErr(e.message); }
     }
-    async function acceptReq(from) {
-      const me = ACC.user.uid;
-      try { await ref('friends/' + from + '/' + me).set(true); await ref('friends/' + me + '/' + from).set(true); await ref('requests/' + me + '/' + from).remove(); }
-      catch (e) { setErr(e.message); }
+    async function acceptReq(from) { const v = ACC.reqs[from]; if (!v) return; const r = await sb.from('friendships').update({ status: 'accepted' }).eq('id', v.row); if (r.error) setErr(r.error.message); loadFriends(); }
+    async function declineReq(from) { const v = ACC.reqs[from]; if (!v) return; await sb.from('friendships').delete().eq('id', v.row); loadFriends(); }
+    async function unfriend(f) { const v = ACC.friends[f]; if (!v) return; await sb.from('friendships').delete().eq('id', v.row); loadFriends(); }
+    function sendTo(f, event, payload) {
+      const c = sb.channel('u:' + f);
+      c.subscribe((s) => { if (s === 'SUBSCRIBED') c.send({ type: 'broadcast', event, payload }).then(() => setTimeout(() => sb.removeChannel(c), 300)); });
     }
-    const declineReq = (from) => ref('requests/' + ACC.user.uid + '/' + from).remove();
-    async function unfriend(f) { const me = ACC.user.uid; try { await ref('friends/' + me + '/' + f).remove(); await ref('friends/' + f + '/' + me).remove(); } catch (e) { setErr(e.message); } }
     function invite(f) {
       if (!ONL) return;
-      ref('invites/' + f + '/' + ACC.user.uid).set({ name: ACC.name, room: ONL.room, mode: ONL.meta.mode, ts: Date.now() });
+      sendTo(f, 'invite', { from: ACC.user.uid, name: ACC.name, room: ONL.room, mode: ONL.meta.mode, ts: Date.now() });
       ACC.sent[f] = Date.now(); queue(); setTimeout(queue, 20000);
     }
     function renderToasts() {
       toastBox.querySelectorAll('.inv').forEach((n) => n.remove());
       const now = Date.now();
       for (const [from, v] of Object.entries(ACC.invites)) {
-        if (!v || now - v.ts > 120000) { if (ACC.user) ref('invites/' + ACC.user.uid + '/' + from).remove(); continue; }
+        if (!v || now - v.ts > 120000) { delete ACC.invites[from]; continue; }
         if (ONL && ONL.room === v.room) continue;
-        const t = el('div', { class: 'onl-toast inv' }, el('b', { text: v.name }), ' te invită la un meci ' + (v.mode || '1v1') + '.',
+        toastBox.append(el('div', { class: 'onl-toast inv' }, el('b', { text: v.name }), ' te invită la un meci ' + (v.mode || '1v1') + '.',
           el('div', { class: 'acts' },
-            el('button', { class: 'onl-btn pri sm', text: 'Acceptă', onclick: async () => { ref('invites/' + ACC.user.uid + '/' + from).remove(); onlOpen = true; await joinRoom(v.room); queue(); } }),
-            el('button', { class: 'onl-btn sm', text: 'Refuză', onclick: () => ref('invites/' + ACC.user.uid + '/' + from).remove() })));
-        toastBox.append(t);
+            el('button', { class: 'onl-btn pri sm', text: 'Acceptă', onclick: async () => { delete ACC.invites[from]; onlOpen = true; queue(); await joinRoom(v.room); queue(); } }),
+            el('button', { class: 'onl-btn sm', text: 'Refuză', onclick: () => { delete ACC.invites[from]; queue(); } }))));
       }
       for (const [from, v] of Object.entries(ACC.reqs)) {
-        if (!v) continue;
         toastBox.append(el('div', { class: 'onl-toast inv' }, el('b', { text: v.name }), ' vrea să fie prietenul tău.',
           el('div', { class: 'acts' },
             el('button', { class: 'onl-btn pri sm', text: 'Acceptă', onclick: () => acceptReq(from) }),
@@ -1546,41 +1573,70 @@
       }
     }
 
-    // ---------- rooms ----------
+    // ---------- rooms (Realtime channel per room; the host is the source of truth) ----------
     const genCode = () => { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 5; i++) s += c[Math.floor(Math.random() * c.length)]; return s; };
-    const mySlot = () => { if (!ONL) return null; for (const [id, s] of Object.entries(ONL.slots)) if (s && s.uid === ACC.user.uid) return id; return null; };
+    const slotOfUid = (o, uid) => { for (const [id, s] of Object.entries(o.slots)) if (s && s.uid === uid) return id; return null; };
+    const mySlot = () => (ONL ? slotOfUid(ONL, ACC.user.uid) : null);
     function resetEndButtons() { $('btnAgain').style.display = ''; $('btnMenu').textContent = 'Meniu'; $('btnAgain').textContent = 'Joacă din nou'; }
-    function enterRoom(code, isHost, meta) {
-      ONL = { room: code, host: isHost, uid: ACC.user.uid, meta, slots: {}, inp: {}, buf: [], offs: [], acc: 0, bid: 0, tid: 0, seq: 0, rb: cfg.robot, playing: false, seenMid: 0, endTicks: 0, cd: 0, sendT: 0, n: 0, lastIn: '' };
-      const base = 'rooms/' + code, o = ONL;
-      off(o.offs, ref(base + '/meta'), 'value', (s) => {
-        const v = s.val(); if (!ONL || ONL !== o) return;
-        if (!v) { leaveRoom('Camera a fost închisă de gazdă.'); return; }
-        o.meta = v;
-        if (!o.host && v.state === 'lobby' && o.playing) returnToLobbyUI();
+    const bsend = (o, event, payload) => { try { o.ch.send({ type: 'broadcast', event, payload }); } catch (e) { } };
+    function mkONL(code, isHost, meta) {
+      return { room: code, host: isHost, uid: ACC.user.uid, meta, slots: {}, inp: {}, buf: [], ch: null, gotLobby: false, denied: '', acc: 0, bid: 0, tid: 0, seq: 0, rb: cfg.robot, playing: false, seenMid: 0, endTicks: 0, cd: 0, sendT: 0, n: 0, lastIn: '' };
+    }
+    function subscribeCh(ch) { return new Promise((res) => { ch.subscribe((s) => { if (s === 'SUBSCRIBED') res(true); else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') res(false); }); }); }
+    function dropRoom(o) { try { sb.removeChannel(o.ch); } catch (e) { } if (ONL === o) ONL = null; }
+    function pushLobby() { const o = ONL; if (!o || !o.host) return; bsend(o, 'lobby', { meta: o.meta, slots: o.slots }); onSlotsChanged(); queue(); }
+    function onSlotsChanged() {   // a player who left mid-match becomes an AI robot
+      const o = ONL; if (!o || !o.host || !o.playing || !G) return;
+      for (const r of G.robots) if (r.pid && !Object.values(o.slots).some((x) => x && x.uid === r.pid)) { r.pid = null; r.human = false; r.pname = null; }
+    }
+    function hostHello(p) {
+      const o = ONL; if (!o || !o.host || !p || !p.uid) return;
+      if (slotOfUid(o, p.uid)) return pushLobby();
+      if (o.meta.state !== 'lobby') return bsend(o, 'deny', { uid: p.uid, reason: 'Meciul a început deja.' });
+      const free = SLOT_PREF[o.meta.mode].find((id) => !o.slots[id]);
+      if (!free) return bsend(o, 'deny', { uid: p.uid, reason: 'Camera e plină.' });
+      o.slots[free] = { uid: p.uid, name: String(p.name || '?').slice(0, 16), rb: 'strafe' }; pushLobby();
+    }
+    function hostClaim(uid, name, id, rb) {
+      const o = ONL; if (!o || !o.host || o.meta.state !== 'lobby' || !SLOT_ORDER[o.meta.mode].includes(id) || o.slots[id]) return;
+      const cur = slotOfUid(o, uid), prev = cur ? o.slots[cur] : null; if (cur) delete o.slots[cur];
+      o.slots[id] = { uid, name: String(name || (prev && prev.name) || '?').slice(0, 16), rb: rb === 'turret' ? 'turret' : 'strafe' }; pushLobby();
+    }
+    function freeUid(uid) { const o = ONL, s = o && slotOfUid(o, uid); if (!s) return; delete o.slots[s]; pushLobby(); }
+    function openChannel(code, o) {
+      const ch = sb.channel('room:' + code, { config: { broadcast: { self: false }, presence: { key: ACC.user.uid } } });
+      const live = () => ONL === o;
+      ch.on('broadcast', { event: 'lobby' }, ({ payload }) => {
+        if (!live() || o.host || !payload) return;
+        o.meta = payload.meta; o.slots = payload.slots || {}; o.gotLobby = true;
+        if (o.meta.state === 'lobby' && o.playing) returnToLobbyUI();
         queue();
       });
-      off(o.offs, ref(base + '/slots'), 'value', (s) => {
-        o.slots = s.val() || {}; queue();
-        if (o.host && o.playing && G) for (const r of G.robots) if (r.pid && !Object.values(o.slots).some((x) => x && x.uid === r.pid)) { r.pid = null; r.human = false; r.pname = null; }
+      ch.on('broadcast', { event: 'state' }, ({ payload }) => { if (live() && !o.host && payload) onSnap(payload.s); });
+      ch.on('broadcast', { event: 'in' }, ({ payload }) => { if (live() && o.host && payload && payload.uid) o.inp[payload.uid] = Object.assign({}, payload, { rt: performance.now() }); });
+      ch.on('broadcast', { event: 'hello' }, ({ payload }) => { if (live() && o.host) hostHello(payload); });
+      ch.on('broadcast', { event: 'claim' }, ({ payload }) => { if (live() && o.host && payload) hostClaim(payload.uid, payload.name, payload.slot, payload.rb); });
+      ch.on('broadcast', { event: 'rb' }, ({ payload }) => { if (!live() || !o.host || !payload) return; const s = slotOfUid(o, payload.uid); if (s) { o.slots[s].rb = payload.rb === 'turret' ? 'turret' : 'strafe'; pushLobby(); } });
+      ch.on('broadcast', { event: 'leave' }, ({ payload }) => { if (live() && o.host && payload) freeUid(payload.uid); });
+      ch.on('broadcast', { event: 'deny' }, ({ payload }) => { if (live() && payload && payload.uid === ACC.user.uid) o.denied = payload.reason || 'Nu poți intra.'; });
+      ch.on('broadcast', { event: 'close' }, () => { if (live() && !o.host) leaveRoom('Camera a fost închisă de gazdă.', true); });
+      ch.on('presence', { event: 'leave' }, ({ key }) => {
+        if (!live()) return;
+        if (o.host) freeUid(key); else if (key === o.meta.hostUid) leaveRoom('Camera a fost închisă de gazdă.', true);
       });
-      if (isHost) {
-        const inR = ref(base + '/inputs'), h = (s) => { o.inp[s.key] = Object.assign({}, s.val(), { rt: performance.now() }); };
-        off(o.offs, inR, 'child_added', h); off(o.offs, inR, 'child_changed', h);
-        ref(base).onDisconnect().remove();
-      } else {
-        off(o.offs, ref(base + '/state'), 'value', (s) => onSnap(s.val()));
-      }
-      ACC.view = 'lobby'; onlOpen = true; ACC.err = ACC.ok = ''; setPresence(); queue();
+      o.ch = ch; return ch;
     }
+    function finishEnter(o) { ACC.view = 'lobby'; onlOpen = true; ACC.err = ACC.ok = ''; setPresence(); queue(); }
     async function createRoom(modeSel) {
-      for (let i = 0; i < 6; i++) {
-        const code = genCode();
-        const meta = { host: ACC.user.uid, hostName: ACC.name, mode: modeSel, state: 'lobby', ts: Date.now() };
-        try {
-          const r = await ref('rooms/' + code + '/meta').transaction((c) => (c ? undefined : meta));
-          if (r.committed) { enterRoom(code, true, meta); await claimSlot('R0'); return; }
-        } catch (e) { return setErr(e.message); }
+      if (ONL) leaveRoom();
+      const uid = ACC.user.uid;
+      for (let i = 0; i < 5; i++) {
+        const code = genCode(), o = mkONL(code, true, { hostUid: uid, hostName: ACC.name, mode: modeSel, state: 'lobby' });
+        ONL = o; const ch = openChannel(code, o);
+        if (!(await subscribeCh(ch))) { dropRoom(o); return setErr('Nu m-am putut conecta la server. Verifică configurarea Supabase.'); }
+        await ch.track({ uid, name: ACC.name, host: true }); await sleep(450);
+        if (Object.values(ch.presenceState()).flat().some((p) => p.host && p.uid !== uid)) { dropRoom(o); continue; }   // code already taken
+        o.slots.R0 = { uid, name: ACC.name, rb: cfg.robot }; finishEnter(o); return;
       }
       setErr('Nu am putut crea camera, încearcă din nou.');
     }
@@ -1588,50 +1644,46 @@
       code = (code || '').trim().toUpperCase();
       if (!/^[A-Z0-9]{5}$/.test(code)) { setErr('Cod invalid (5 caractere).'); return false; }
       if (ONL) leaveRoom();
-      try {
-        const m = (await ref('rooms/' + code + '/meta').once('value')).val();
-        if (!m) { setErr('Camera nu există (sau a fost închisă).'); return false; }
-        if (m.state !== 'lobby') { setErr('Meciul a început deja.'); return false; }
-        enterRoom(code, false, m);
-        const order = m.mode === '2v2' ? ['B0', 'R1', 'B1', 'R0'] : ['B0', 'R0'];
-        for (const id of order) if (await claimSlot(id)) return true;
-        leaveRoom('Camera e plină.'); return false;
-      } catch (e) { setErr(e.message); return false; }
+      const uid = ACC.user.uid, o = mkONL(code, false, { hostUid: null, hostName: '', mode: '1v1', state: 'lobby' });
+      ONL = o; const ch = openChannel(code, o);
+      const fail = (m) => { dropRoom(o); setErr(m); return false; };
+      if (!(await subscribeCh(ch))) return fail('Nu m-am putut conecta la server. Verifică configurarea Supabase.');
+      await ch.track({ uid, name: ACC.name, host: false });
+      let host = null; for (let i = 0; i < 20 && !host; i++) { await sleep(150); host = Object.values(ch.presenceState()).flat().find((p) => p.host); }
+      if (!host) return fail('Camera nu există (sau a fost închisă).');
+      o.meta.hostUid = host.uid; bsend(o, 'hello', { uid, name: ACC.name });
+      for (let i = 0; i < 25 && !o.gotLobby && !o.denied; i++) await sleep(150);
+      if (o.denied) return fail(o.denied);
+      if (!o.gotLobby || !slotOfUid(o, uid)) return fail('Gazda nu a răspuns.');
+      finishEnter(o); return true;
     }
-    async function claimSlot(id) {
-      const o = ONL; if (!o) return false; const cur = mySlot(); if (cur === id) return true;
-      const sr = ref('rooms/' + o.room + '/slots/' + id);
-      try {
-        const r = await sr.transaction((c) => (c ? undefined : { uid: ACC.user.uid, name: ACC.name, rb: o.rb || 'strafe' }));
-        if (!r.committed) return false;
-        sr.onDisconnect().remove();
-        if (cur) { const old = ref('rooms/' + o.room + '/slots/' + cur); old.onDisconnect().cancel(); old.remove(); }
-        return true;
-      } catch (e) { return false; }
+    function claimSlot(id) {
+      const o = ONL; if (!o || mySlot() === id) return;
+      if (o.host) hostClaim(o.uid, ACC.name, id, o.rb); else bsend(o, 'claim', { uid: o.uid, name: ACC.name, slot: id, rb: o.rb });
     }
-    function setRb(rb) { const o = ONL; if (!o) return; o.rb = rb; cfg.robot = rb; const s = mySlot(); if (s) ref('rooms/' + o.room + '/slots/' + s + '/rb').set(rb); }
+    function setRb(rb) {
+      const o = ONL; if (!o) return; o.rb = rb; cfg.robot = rb;
+      if (o.host) { const s = mySlot(); if (s) { o.slots[s].rb = rb; pushLobby(); } } else bsend(o, 'rb', { uid: o.uid, rb });
+    }
     function setRoomMode(m) {
       const o = ONL; if (!o || !o.host || o.meta.mode === m) return;
       if (m === '1v1' && (o.slots.R1 || o.slots.B1)) return flash('Eliberează locurile 2 înainte de 1v1.');
-      ref('rooms/' + o.room + '/meta/mode').set(m);
+      o.meta.mode = m; pushLobby();
     }
-    function leaveRoom(msg) {
+    function leaveRoom(msg, remote) {
       const o = ONL; if (!o) return;
-      clearInterval(o.cdIv); o.offs.forEach((f) => f());
-      try {
-        if (o.host) { ref('rooms/' + o.room).onDisconnect().cancel(); ref('rooms/' + o.room).remove(); }
-        else { const s = mySlotOf(o); if (s) { const r = ref('rooms/' + o.room + '/slots/' + s); r.onDisconnect().cancel(); r.remove(); } ref('rooms/' + o.room + '/inputs/' + o.uid).remove(); }
-      } catch (e) { }
+      clearInterval(o.cdIv);
+      if (!remote) bsend(o, o.host ? 'close' : 'leave', { uid: o.uid });
+      setTimeout(() => { try { sb.removeChannel(o.ch); } catch (e) { } }, 250);
       ONL = null; resetEndButtons();
       if (mode === 'run' || mode === 'count' || mode === 'end') { mode = 'menu'; show('end', false); show('countdown', false); show('menu', true); G = newGame(); eval_(); }
       ACC.view = ACC.user ? 'home' : 'auth'; setPresence(); if (msg) { ACC.err = msg; flash(msg); } queue();
     }
-    const mySlotOf = (o) => { for (const [id, s] of Object.entries(o.slots)) if (s && s.uid === o.uid) return id; return null; };
     function returnToLobbyUI() {
       const o = ONL; if (!o) return;
       clearInterval(o.cdIv); o.playing = false; mode = 'menu'; resetEndButtons();
       show('end', false); show('countdown', false); show('menu', true); onlOpen = true; ACC.view = 'lobby';
-      if (o.host) ref('rooms/' + o.room + '/meta/state').set('lobby');
+      if (o.host) { o.meta.state = 'lobby'; pushLobby(); }
       setPresence(); queue();
     }
 
@@ -1653,8 +1705,8 @@
       const me = mySlot(); if (!me) return flash('Alege un loc în echipă.');
       clearInterval(o.cdIv);
       o.mid = Date.now(); o.playing = true; o.seenMid = o.mid; o.inp = {}; o.endTicks = 0; cfg.alliance = me[0] === 'R' ? 'red' : 'blue';
-      ref('rooms/' + o.room + '/state').remove(); ref('rooms/' + o.room + '/meta').update({ state: 'play', mid: o.mid });
       G = newGameOnline(); G.mid = o.mid; eval_(); resetEndButtons();
+      o.meta.state = 'play'; o.meta.mid = o.mid; pushLobby();
       onlOpen = false; mode = 'count'; show('menu', false); show('end', false); show('countdown', true); queue();
       let n = 3; o.cd = n; $('cdText').textContent = n; sendState(); setPresence();
       o.cdIv = setInterval(() => {
@@ -1679,7 +1731,7 @@
         tk: G.tokens.map((k) => pick(k, ['id', 'k', 'x0', 'y0', 'x1', 'y1', 't', 'dur', 'c'])),
         ri: G.rings, po: G.pops, fx: G.fx.slice(0, 50).map((p) => pick(p, ['x', 'y', 'vx', 'vy', 'life', 'c']))
       };
-      ref('rooms/' + o.room + '/state').set(JSON.stringify(d, rnd));
+      bsend(o, 'state', { s: JSON.stringify(d, rnd) });
     }
     const ZERO_IN = ZERO;
     function onlineInput(pid) {
@@ -1766,7 +1818,7 @@
       if (mode === 'run') {
         const inp = readInput(); inp.fc = !!$('optFC').checked; inp.spd = +$('optSpd').value / 100;
         const key = JSON.stringify([inp.mx.toFixed(2), inp.my.toFixed(2), inp.rot.toFixed(2), inp.shoot, inp.slow, inp.dep, inp.take, inp.fc, inp.spd]);
-        if (key !== o.lastIn || t - o.sendT > 250) { o.lastIn = key; o.sendT = t; inp.n = ++o.n; ref('rooms/' + o.room + '/inputs/' + o.uid).set(inp); }
+        if (key !== o.lastIn || t - o.sendT > 250) { o.lastIn = key; o.sendT = t; inp.n = ++o.n; inp.uid = o.uid; bsend(o, 'in', inp); }
       }
     }
     function onlineFrame(dt) {
@@ -1793,24 +1845,24 @@
     const field = (id, ph, type, onEnter, ac) => el('input', { id, class: 'onl-in', placeholder: ph, type: type || 'text', value: UI[id] || '', autocomplete: ac || 'off', maxlength: id === 'uname' || id === 'addName' ? 16 : id === 'joinCode' ? 5 : 80, oninput: (e) => { UI[id] = e.target.value; }, onkeydown: (e) => { if (e.key === 'Enter' && onEnter) onEnter(); } });
     const presLabel = { on: 'online', lobby: 'într-o cameră', play: 'în meci' };
     function friendsPanel(inRoom) {
-      const entries = Object.entries(ACC.friends).sort((a, b) => (b[1].pres ? 1 : 0) - (a[1].pres ? 1 : 0) || a[1].name.localeCompare(b[1].name));
+      const entries = Object.entries(ACC.friends).map(([f, v]) => [f, v, presOf(f)]).sort((a, b) => (b[2] ? 1 : 0) - (a[2] ? 1 : 0) || a[1].name.localeCompare(b[1].name));
       const reqs = Object.entries(ACC.reqs);
       return el('div', null,
         el('div', { class: 'onl-sec', text: 'Prieteni' + (entries.length ? ' · ' + entries.length : '') }),
-        entries.length ? entries.map(([f, v]) => el('div', { class: 'onl-friend' },
-          el('span', { class: 'onl-dot ' + (v.pres || '') }), el('b', { text: v.name }), el('small', { text: v.pres ? presLabel[v.pres] || v.pres : 'offline' }),
-          inRoom && v.pres === 'on' ? el('button', { class: 'onl-btn sm pri', text: ACC.sent[f] && Date.now() - ACC.sent[f] < 20000 ? 'Trimis ✓' : 'Invită', disabled: !!(ACC.sent[f] && Date.now() - ACC.sent[f] < 20000), onclick: () => invite(f) }) : null,
+        entries.length ? entries.map(([f, v, pres]) => el('div', { class: 'onl-friend' },
+          el('span', { class: 'onl-dot ' + (pres || '') }), el('b', { text: v.name }), el('small', { text: pres ? presLabel[pres] || pres : 'offline' }),
+          inRoom && pres === 'on' ? el('button', { class: 'onl-btn sm pri', text: ACC.sent[f] && Date.now() - ACC.sent[f] < 20000 ? 'Trimis ✓' : 'Invită', disabled: !!(ACC.sent[f] && Date.now() - ACC.sent[f] < 20000), onclick: () => invite(f) }) : null,
           !inRoom ? el('button', { class: 'onl-btn sm', text: '✕', title: 'Elimină', onclick: () => { if (confirm('Elimini pe ' + v.name + ' din prieteni?')) unfriend(f); } }) : null))
           : el('div', { class: 'onl-empty', text: 'Încă niciun prieten. Adaugă pe cineva după nume.' }),
         reqs.length ? el('div', { class: 'onl-sec', text: 'Cereri primite' }) : null,
-        reqs.map(([from, v]) => el('div', { class: 'onl-friend' }, el('b', { text: v ? v.name : '?' }),
+        reqs.map(([from, v]) => el('div', { class: 'onl-friend' }, el('b', { text: v.name }),
           el('button', { class: 'onl-btn sm pri', text: 'Acceptă', onclick: () => acceptReq(from) }), el('button', { class: 'onl-btn sm', text: 'Refuză', onclick: () => declineReq(from) }))),
         inRoom ? null : el('div', { class: 'onl-sec', text: 'Adaugă prieten' }),
         inRoom ? null : el('div', { class: 'onl-row' }, field('addName', 'Nume jucător', 'text', sendRequest), el('button', { class: 'onl-btn', text: 'Trimite cerere', onclick: sendRequest })));
     }
     function setupView() {
       return [el('div', { class: 'onl-head' }, el('h2', { text: 'Online' }), el('button', { class: 'onl-x', text: '✕', onclick: closeOnl })),
-        el('p', { class: 'onl-sub', text: 'Conturile, prietenii și meciurile online au nevoie de un proiect Firebase gratuit. Completează js/firebase-config.js cu cheile proiectului (pașii sunt scriși chiar în fișier) și publică regulile din database.rules.json.' })];
+        el('p', { class: 'onl-sub', text: 'Conturile, prietenii și meciurile online au nevoie de un proiect Supabase gratuit. Rulează supabase/schema.sql în SQL Editor și completează js/supabase-config.js cu adresa și cheia proiectului.' })];
     }
     function authView() {
       const reg = ACC.tab === 'register';
@@ -1819,9 +1871,8 @@
         el('div', { class: 'onl-tabs' }, el('button', { class: reg ? '' : 'on', text: 'Autentificare', onclick: () => { ACC.tab = 'login'; setErr(''); } }), el('button', { class: reg ? 'on' : '', text: 'Cont nou', onclick: () => { ACC.tab = 'register'; setErr(''); } })),
         field('email', 'Email', 'email', reg ? doRegister : doLogin, 'email'), field('pass', 'Parolă (min. 6 caractere)', 'password', reg ? doRegister : doLogin, reg ? 'new-password' : 'current-password'),
         reg ? field('uname', 'Nume de jucător (3-16, litere/cifre/_)', 'text', doRegister) : null,
-        el('div', { class: 'onl-err', text: ACC.err }),
-        el('button', { class: 'onl-btn pri wide', text: reg ? 'Creează cont' : 'Intră', disabled: ACC.busy, onclick: reg ? doRegister : doLogin }),
-        el('div', { class: 'onl-or', text: 'sau' }), el('button', { class: 'onl-btn wide', text: 'Continuă cu Google', onclick: doGoogle })];
+        el('div', { class: ACC.err ? 'onl-err' : 'onl-ok', text: ACC.err || ACC.ok }),
+        el('button', { class: 'onl-btn pri wide', text: reg ? 'Creează cont' : 'Intră', disabled: ACC.busy, onclick: reg ? doRegister : doLogin })];
     }
     function nameView() {
       return [el('div', { class: 'onl-head' }, el('h2', { text: 'Alege un nume' }), el('button', { class: 'onl-x', text: '✕', onclick: doLogout })),
@@ -1845,7 +1896,7 @@
       const slotEl = (id) => {
         const s = o.slots[id], mine = s && s.uid === ACC.user.uid;
         if (!s) return el('div', { class: 'onl-slot free' }, 'Loc liber' + (o.host && m.mode === '2v2' ? ' · AI dacă rămâne gol' : ''), el('button', { class: 'onl-btn sm', text: 'Ia locul', onclick: () => claimSlot(id) }));
-        return el('div', { class: 'onl-slot' + (mine ? ' me' : '') }, el('span', { class: 'nm' }, s.name, el('i', { text: (s.uid === m.host ? 'gazdă · ' : '') + (s.rb === 'turret' ? 'turelă' : 'full strafe') })),
+        return el('div', { class: 'onl-slot' + (mine ? ' me' : '') }, el('span', { class: 'nm' }, s.name, el('i', { text: (s.uid === m.hostUid ? 'gazdă · ' : '') + (s.rb === 'turret' ? 'turelă' : 'full strafe') })),
           mine ? el('div', { class: 'onl-seg' }, el('button', { class: s.rb !== 'turret' ? 'on' : '', text: 'Full strafe', onclick: () => setRb('strafe') }), el('button', { class: s.rb === 'turret' ? 'on' : '', text: 'Turelă', onclick: () => setRb('turret') })) : null);
       };
       const team = (al, label) => el('div', { class: 'onl-team ' + al }, el('h4', { text: label }), ids.filter((i) => i[0] === (al === 'red' ? 'R' : 'B')).map(slotEl));
@@ -1860,18 +1911,18 @@
     function renderOnl() {
       onlRoot.classList.toggle('hidden', !onlOpen); if (!onlOpen) return;
       const act = document.activeElement, keep = act && act.id && onlRoot.contains(act) ? { id: act.id, s: act.selectionStart, e: act.selectionEnd } : null;
-      const card = el('div', { class: 'onl-card' }, !FB_OK ? setupView() : !ACC.user ? authView() : ACC.view === 'name' ? nameView() : ONL && ACC.view === 'lobby' ? lobbyView() : homeView());
+      const card = el('div', { class: 'onl-card' }, !SB_OK ? setupView() : !ACC.user ? authView() : ACC.view === 'name' ? nameView() : ONL && ACC.view === 'lobby' ? lobbyView() : homeView());
       onlRoot.replaceChildren(card);
       if (keep) { const n = document.getElementById(keep.id); if (n) { n.focus(); try { n.setSelectionRange(keep.s, keep.e); } catch (e) { } } }
     }
     function openOnl() { onlOpen = true; if (ACC.user && ACC.name) ACC.view = ONL ? 'lobby' : 'home'; queue(); }
-    function closeOnl() { if (ONL && ONL.room && !ONL.playing) { onlOpen = false; queue(); return; } onlOpen = false; queue(); }
+    function closeOnl() { onlOpen = false; queue(); }
     onlRoot.addEventListener('mousedown', (e) => { if (e.target === onlRoot && !(ONL && ACC.view === 'lobby')) closeOnl(); });
-    { const row = document.querySelector('#menu .row2'); if (row) row.append(el('button', { class: 'btn-retro', id: 'btnOnline', text: 'Online · prieteni', onclick: openOnl })); }
+    { const row = document.querySelector('#menu .row2'); if (row && SB_OK) row.append(el('button', { class: 'btn-retro', id: 'btnOnline', text: 'Online · prieteni', onclick: openOnl })); }
     // pill to reopen the room while the lobby is hidden in the menu
     { const pill = el('button', { class: 'onl-btn pri sm', style: 'position:fixed;left:14px;bottom:14px;z-index:80;display:none', onclick: openOnl }); document.body.append(pill);
       setInterval(() => { const on = !!(ONL && !onlOpen && !ONL.playing); pill.style.display = on ? '' : 'none'; if (on) pill.textContent = 'Cameră ' + ONL.room; }, 400); }
-    window.addEventListener('beforeunload', () => { if (ONL && ONL.host) { try { ref('rooms/' + ONL.room).remove(); } catch (e) { } } });
+    window.addEventListener('beforeunload', () => { if (ONL) bsend(ONL, ONL.host ? 'close' : 'leave', { uid: ONL.uid }); });
     // ================= /ONLINE =================
 
     bestLine(); G = newGame(); eval_(); requestAnimationFrame(frame);
