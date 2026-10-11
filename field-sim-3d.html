@@ -1338,8 +1338,8 @@
     }
 
     function frame(ts) {
-      const dt = Math.min(0.033, (ts - last) / 1000 || 0); last = ts;
-      if (ONL && ONL.room) onlineFrame(dt); else if (mode === 'run') { update(dt); hud(); }
+      const rawDt = Math.min(0.12, (ts - last) / 1000 || 0), dt = Math.min(0.033, rawDt); last = ts;
+      if (ONL && ONL.room) onlineFrame(dt, rawDt); else if (mode === 'run') { update(dt); hud(); }
       render();
       requestAnimationFrame(frame);
     }
@@ -1580,7 +1580,7 @@
     function resetEndButtons() { $('btnAgain').style.display = ''; $('btnMenu').textContent = 'Meniu'; $('btnAgain').textContent = 'Joacă din nou'; }
     const bsend = (o, event, payload) => { try { o.ch.send({ type: 'broadcast', event, payload }); } catch (e) { } };
     function mkONL(code, isHost, meta) {
-      return { room: code, host: isHost, uid: ACC.user.uid, meta, slots: {}, inp: {}, buf: [], ch: null, peers: {}, pc: null, dc: null, pend: [], qs: 0, lastQ: 0, gotLobby: false, denied: '', acc: 0, bid: 0, tid: 0, seq: 0, rb: cfg.robot, playing: false, seenMid: 0, endTicks: 0, cd: 0, sendT: 0, n: 0, lastIn: '' };
+      return { room: code, host: isHost, uid: ACC.user.uid, meta, slots: {}, inp: {}, buf: [], ch: null, hist: [], corr: null, peers: {}, pc: null, dc: null, pend: [], qs: 0, lastQ: 0, gotLobby: false, denied: '', acc: 0, bid: 0, tid: 0, seq: 0, rb: cfg.robot, playing: false, seenMid: 0, endTicks: 0, cd: 0, sendT: 0, n: 0, lastIn: '' };
     }
     function subscribeCh(ch) { return new Promise((res) => { ch.subscribe((s) => { if (s === 'SUBSCRIBED') res(true); else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') res(false); }); }); }
     function dropRoom(o) { try { sb.removeChannel(o.ch); } catch (e) { } if (ONL === o) ONL = null; }
@@ -1804,10 +1804,22 @@
       else if (!o.playing) return;
       else if (d.q && d.q <= o.lastQ) return;   // late / duplicate snapshot
       if (d.q) o.lastQ = d.q;
+      const now = performance.now();
       const mine = d.ak && d.ak[o.uid];
       if (mine && mine !== o.lastAck) { o.lastAck = mine; const rtt = performance.now() - mine; if (rtt > 0 && rtt < 3000) o.rtt = o.rtt ? o.rtt * .8 + rtt * .2 : rtt; }
+      if (G && mode === 'run' && o.hist.length) {
+        const meR = d.r.find((r) => r.pid === o.uid), me = G.robots.find((r) => r.pid === o.uid);
+        if (meR && me) {
+          const tq = now - clamp(o.rtt || 100, 20, 400), h = o.hist; let pr = null;
+          for (let i = h.length - 1; i >= 0; i--) if (h[i].t <= tq) { const n2 = h[i + 1]; pr = n2 && n2.t > h[i].t ? { x: lerp(h[i].x, n2.x, (tq - h[i].t) / (n2.t - h[i].t)), y: lerp(h[i].y, n2.y, (tq - h[i].t) / (n2.t - h[i].t)), a: h[i].a } : h[i]; break; }
+          if (pr) {
+            const ex = meR.x - pr.x, ey = meR.y - pr.y, ea = ((((meR.a - pr.a + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
+            if (Math.hypot(ex, ey) > 14) { me.x = meR.x; me.y = meR.y; me.a = meR.a; me.vx = meR.vx; me.vy = meR.vy; me.w = meR.w; o.hist = []; o.corr = null; }
+            else o.corr = { x: ex, y: ey, a: ea };
+          }
+        }
+      }
       const ridx = {}, bidx = {}; d.r.forEach((r) => { ridx[r.id] = r; }); d.b.forEach((b) => { bidx[b.id] = b; });
-      const now = performance.now();
       if (o.lastArr) { const gap = now - o.lastArr; o.gapAvg = o.gapAvg ? o.gapAvg * .9 + gap * .1 : gap; o.jit = (o.jit || 0) * .9 + Math.abs(gap - o.gapAvg) * .1; o.delay = clamp(o.gapAvg * 1.3 + o.jit * 2.5, 70, 200); }
       o.lastArr = now;
       o.buf.push({ t: now, d, ridx, bidx, seq: ++o.seq }); if (o.buf.length > 8) o.buf.shift();
@@ -1852,8 +1864,8 @@
       else if (d.m === 'run' && mode !== 'run') { mode = 'run'; show('countdown', false); }
       else if (d.m === 'end' && mode !== 'end') { mode = 'run'; endMatch(); }
     }
-    function guestFrame(dt) {
-      const o = ONL, b = o.buf; if (!o.playing || !b.length) return;
+    function guestFrame(dt0, raw) {
+      const dt = raw || dt0, o = ONL, b = o.buf; if (!o.playing || !b.length) return;
       const rt = performance.now() - (o.delay || 120); let i = b.length - 1; while (i > 0 && b[i].t > rt) i--;
       const s0 = b[i], s1 = b[Math.min(i + 1, b.length - 1)];
       const al = s1.t > s0.t ? clamp((rt - s0.t) / (s1.t - s0.t), 0, 1) : 1;
@@ -1871,15 +1883,15 @@
       }
       if (predict) {
         const frozen = !G.free && phaseOf(G.t) === 'inter';
-        driveRobot(me, frozen ? ZERO : myInp, dt);
-        const last = b[b.length - 1], c = last.ridx[me.id];
-        if (c) {
-          const age = clamp((performance.now() - last.t) / 1000, 0, .25) + .04;
-          const sx = c.x + c.vx * age, sy = c.y + c.vy * age, sa = c.a + c.w * age, ex = sx - me.x, ey = sy - me.y;
-          if (Math.hypot(ex, ey) > 14) { me.x = sx; me.y = sy; me.vx = c.vx; me.vy = c.vy; me.a = sa; me.w = c.w; }
-          else { const k = 1 - Math.exp(-dt * 6); me.x += ex * k; me.y += ey * k; me.a += ((((sa - me.a + Math.PI) % TAU) + TAU) % TAU - Math.PI) * k; }
+        for (let rem = dt; rem > 1e-4;) { const hs = Math.min(rem, 1 / 60); driveRobot(me, frozen ? ZERO : myInp, hs); rem -= hs; }
+        const nowT = performance.now(); o.hist.push({ t: nowT, x: me.x, y: me.y, a: me.a }); while (o.hist.length && nowT - o.hist[0].t > 1500) o.hist.shift();
+        if (o.corr) {   // fold the server's correction in smoothly; history is shifted too so it is never applied twice
+          const k = 1 - Math.exp(-dt * 14), dx = o.corr.x * k, dy = o.corr.y * k, da = o.corr.a * k;
+          me.x += dx; me.y += dy; me.a += da; o.corr.x -= dx; o.corr.y -= dy; o.corr.a -= da;
+          for (const e of o.hist) { e.x += dx; e.y += dy; e.a += da; }
+          if (Math.abs(o.corr.x) + Math.abs(o.corr.y) + Math.abs(o.corr.a) < .02) o.corr = null;
         }
-      }
+      } else if (o.hist.length) { o.hist = []; o.corr = null; }
       for (const [id, bb] of o.bmap) {
         const a = s0.bidx[id], c = s1.bidx[id]; if (!c) continue;
         if (a && Math.hypot(a.x - c.x, a.y - c.y) < 30) { bb.x = lerp(a.x, c.x, al); bb.y = lerp(a.y, c.y, al); if (c.z !== undefined) bb.z = lerp(a.z || 0, c.z, al); } else { bb.x = c.x; bb.y = c.y; if (c.z !== undefined) bb.z = c.z; }
@@ -1898,13 +1910,13 @@
         if (key !== o.lastIn || t - o.sendT > 250) { o.lastIn = key; o.sendT = t; inp.n = ++o.n; inp.uid = o.uid; inp.pt = performance.now(); sendIn(o, inp); }
       }
     }
-    function onlineFrame(dt) {
+    function onlineFrame(dt, raw) {
       const o = ONL;
       if (o.host) {
-        if (mode === 'run') { update(dt); hud(); }
-        o.acc += dt;
+        if (mode === 'run') { for (let rem = raw || dt; rem > 1e-4 && mode === 'run';) { const hs = Math.min(rem, 1 / 60); update(hs); rem -= hs; } hud(); }
+        o.acc += raw || dt;
         if (o.acc >= (allP2P(o) ? .033 : .05) && o.playing && G && (mode === 'run' || (mode === 'end' && o.endTicks > 0))) { o.acc = 0; sendState(); if (mode === 'end') o.endTicks--; }
-      } else { guestFrame(dt); if (mode === 'run' || mode === 'count') hud(); }
+      } else { guestFrame(dt, raw); if (mode === 'run' || mode === 'count') hud(); }
     }
     function onlineAfterEnd() {
       const o = ONL; if (!o) return;
