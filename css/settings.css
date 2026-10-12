@@ -1,0 +1,63 @@
+/* Field Sim 3D — settings window (keys, graphics, game) */
+.set-modal { position: fixed; inset: 0; z-index: 95; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(5, 5, 7, .72); backdrop-filter: blur(6px); }
+.set-modal.hidden, .set-pane.hidden, .set-fps.hidden { display: none; }
+.set-card { width: min(640px, 100%); max-height: calc(100vh - 32px); display: flex; flex-direction: column; background: #101013; border: 1px solid var(--g-line); border-radius: 18px; color: var(--g-ink); font-family: var(--g-body); box-shadow: 0 30px 80px rgba(0, 0, 0, .6); overflow: hidden; }
+.set-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 8px; }
+.set-head h2 { margin: 0; font-family: var(--g-display); font-size: 24px; letter-spacing: -.02em; }
+.set-x2 { background: none; border: 1px solid var(--g-line); color: var(--g-dim); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 16px; }
+.set-x2:hover { color: #fff; border-color: #fff; }
+.set-tabs { display: flex; gap: 6px; padding: 8px 22px 12px; }
+.set-tabs button { flex: 1; padding: 9px; border-radius: 10px; border: 1px solid var(--g-line); background: transparent; color: var(--g-dim); font: 600 13px var(--g-body); cursor: pointer; }
+.set-tabs button.on { background: var(--g-pink); border-color: var(--g-pink); color: #fff; }
+.set-body { color-scheme: dark; overflow: auto; padding: 0 22px 8px; flex: 1; }
+.set-sub { color: var(--g-dim); font-size: 13px; line-height: 1.5; margin: 0 0 10px; }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(244, 241, 236, .07); font-size: 14px; }
+.set-row small { display: block; color: var(--g-dim); font-size: 11px; margin-top: 2px; }
+.set-keys { display: flex; gap: 6px; align-items: center; }
+.set-key { min-width: 92px; padding: 7px 10px; border-radius: 9px; border: 1px solid var(--g-line); background: #17171b; color: var(--g-ink); font: 600 12px var(--g-mono); cursor: pointer; }
+.set-key:hover { border-color: #fff; }
+.set-key.empty { color: var(--g-dim); }
+.set-key.listen { border-color: var(--g-pink); background: rgba(249, 5, 108, .15); color: #fff; }
+.set-x { background: none; border: 0; color: var(--g-dim); cursor: pointer; font-size: 13px; padding: 4px 6px; }
+.set-x:hover { color: #ff6b7a; }
+.set-tg input { width: 20px; height: 20px; accent-color: #f9056c; flex: none; }
+.set-tg { cursor: pointer; }
+.set-sl { flex-direction: column; align-items: stretch; gap: 6px; }
+.set-sl b { color: var(--g-pink-hi); font-family: var(--g-mono); font-size: 12px; }
+.set-sl input[type=range], #optSpd { width: 100%; accent-color: #f9056c; }
+.set-sel { padding: 8px 10px; background: #09090b; border: 1px solid var(--g-line); border-radius: 9px; color: var(--g-ink); font: 500 13px var(--g-body); }
+.set-btn { margin: 14px 0 6px; padding: 9px 14px; border-radius: 10px; border: 1px solid var(--g-line); background: #17171b; color: var(--g-ink); font: 600 13px var(--g-body); cursor: pointer; }
+.set-btn:hover { border-color: #fff; }
+.set-foot { display: flex; justify-content: space-between; gap: 10px; padding: 14px 22px 18px; border-top: 1px solid var(--g-line); }
+.set-foot .primary { background: var(--g-pink); border-color: var(--g-pink); color: #fff; }
+.set-foot .primary:hover { background: var(--g-pink-hi); border-color: var(--g-pink-hi); }
+.set-foot button { margin: 0; }
+.set-fps { position: fixed; top: 10px; left: 10px; z-index: 60; font: 600 12px var(--g-mono); color: #7be0a0; background: rgba(9, 9, 11, .7); padding: 3px 8px; border-radius: 7px; pointer-events: none; }
+.set-card .toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rules-card summary { cursor: pointer; font: 700 15px var(--g-display); letter-spacing: -.01em; list-style: none; }
+.rules-card summary::-webkit-details-marker { display: none; }
+.rules-card summary::after { content: '＋'; float: right; color: var(--g-dim); }
+.rules-card[open] summary::after { content: '－'; }
+.rules-card[open] summary { margin-bottom: 10px; }
+
+/* floating tools (always available, top-right of the stage) */
+.fs-tools { position: absolute; top: 12px; right: 12px; z-index: 25; display: flex; gap: 6px; }
+.fs-tool { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; border: 1px solid var(--g-line); background: rgba(9, 9, 11, .62); backdrop-filter: blur(8px); color: var(--g-ink); font: 600 17px var(--g-body); cursor: pointer; text-decoration: none; transition: background .15s, border-color .15s; }
+.fs-tool:hover { background: var(--g-pink); border-color: var(--g-pink); color: #fff; }
+
+/* immersive: the stage fills the window, the side panel becomes a small HUD */
+body.immersive { padding: 0; display: block; overflow: hidden; min-height: 100vh; }
+body.immersive .fs { display: block; width: 100vw; height: 100vh; }
+body.immersive .stage-wrap { position: fixed; inset: 0; display: block; z-index: 1; }
+body.immersive .stage { position: fixed; inset: 0; width: 100vw; height: 100vh; max-height: none; min-height: 0; aspect-ratio: auto; border-radius: 0; box-shadow: none; margin: 0; }
+body.immersive .topbar2 { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); width: min(720px, calc(100vw - 150px)); z-index: 30; padding: 8px 16px; border-radius: 18px; }
+body.immersive .tb-score b, body.immersive .tb-time { font-size: 30px; }
+body.immersive .side { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; justify-content: space-between; align-items: flex-end; padding: 14px; pointer-events: none; }
+body.immersive .side > * { display: none !important; }
+body.immersive .side > .card2:first-child, body.immersive .side > .card2:nth-child(3) { display: block !important; width: 250px; padding: 12px 14px; border-radius: 18px; background: rgba(9, 9, 11, .62); backdrop-filter: blur(8px); }
+body.immersive .side .card2 h3 { font-size: 15px; margin-bottom: 8px; }
+body.immersive .side .kv { font-size: 12px; padding: 4px 0; }
+body.immersive .side > .card2:first-child .kv ~ .kv { display: none; }
+body.immersive .side > .card2:first-child .pip { width: 28px; height: 28px; }
+body.immersive .side > .card2:first-child .pips { margin-bottom: 8px; }
+@media (max-width: 760px) { body.immersive .side > .card2:nth-child(3) { display: none !important; } body.immersive .topbar2 { width: calc(100vw - 24px); top: 56px; } }

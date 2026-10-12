@@ -103,6 +103,7 @@
     @media (max-width: 980px) { .fs { grid-template-columns: 1fr; } .stage { max-height: none; } .tb-score b, .tb-time { font-size: 30px; } }
   </style>
 <link href="css/online.css?v=1" rel="stylesheet" />
+  <link href="css/settings.css?v=1" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="js/supabase-config.js"></script>
 </head>
@@ -122,6 +123,7 @@
 
       <div class="stage" id="stage">
         <canvas id="cv" width="960" height="960"></canvas>
+        <div class="fs-tools"><a class="fs-tool" href="index.html" title="Înapoi la site">←</a><button class="fs-tool" id="fsSet" title="Setări">⚙</button><button class="fs-tool" id="fsFull" title="Ecran complet">⛶</button></div>
 
         <div class="touch" id="touch">
           <div class="joy" id="joy"><i id="joyKnob"></i></div>
@@ -143,6 +145,7 @@
           <div class="seg" id="segMode"><button class="on pink" data-mode="1v1">Meci 1v1</button><button data-mode="2v2">Meci 2v2 + AI</button><button data-mode="free">Free drive</button></div>
           <div class="row2" style="margin-top:10px">
             <button class="btn-retro" id="btnStart">Intră pe teren</button>
+            <button class="btn-retro" id="btnCareer" onclick="location.href='career.html'">Mod carieră</button>
           </div>
           <div class="lbl" id="bestLine"></div>
         </div>
@@ -176,23 +179,8 @@
       </div>
       <div class="card2">
         <h3>Setări</h3>
-        <label class="toggle">Field-centric (implicit: robot-centric) <input type="checkbox" id="optFC"></label>
-        <div class="kv"><span>Cameră (V)</span><b id="camName">URMĂRIRE</b></div>
-        <div class="kv"><span>Grafică (K)</span><b id="qName">AUTO</b></div>
-        <div class="lbl" style="margin-top:6px">Viteză robot <span id="spdVal">100%</span></div>
-        <input type="range" id="optSpd" min="50" max="130" value="100" style="width:100%;accent-color:#f9056c">
-      </div>
-      <div class="card2 keys-card">
-        <h3>Comenzi</h3>
-        <div class="keys">
-          <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> mișcare</div>
-          <div><kbd>←</kbd><kbd>→</kbd> sau <kbd>Q</kbd><kbd>E</kbd> rotire</div>
-          <div><kbd>Space</kbd> aruncă spre stup</div>
-          <div><kbd>F</kbd> depune în floare · <kbd>C</kbd> ia din floare</div>
-          <div><kbd>Shift</kbd> precizie · <kbd>R</kbd> field-centric</div>
-          <div><kbd>V</kbd> camera · <kbd>K</kbd> grafică · <kbd>P</kbd> pauză</div>
-          <div>Gamepad suportat</div>
-        </div>
+        <button class="btn-retro" id="btnSettings" style="width:100%">⚙ Taste, grafică, joc</button>
+        <div class="lbl" style="margin-top:8px">Deschide cu <kbd id="kbSet">O</kbd> · schimbi tastele din setări</div>
       </div>
       <div class="card2">
         <h3>Scor alianță</h3>
@@ -203,8 +191,8 @@
         <div class="kv"><span>Grădină (1 / element)</span><b id="bkGd">0</b></div>
         <div class="kv"><span>Fault-uri credit</span><b id="bkFoul">0</b></div>
       </div>
-      <div class="card2">
-        <h3>Reguli <span style="font-family:var(--g-mono);font-size:10px;letter-spacing:.12em;color:var(--g-pink-hi)">MANUAL TU04</span></h3>
+      <details class="card2 rules-card">
+        <summary>Reguli <span style="font-family:var(--g-mono);font-size:10px;letter-spacing:.12em;color:var(--g-pink-hi)">MANUAL TU04</span></summary>
         <div class="keys">
           <div><b style="color:#fff">Stupul</b> din mijloc are 2 celule; doar cea ridicată primește. Lansezi <b style="color:#ffc933">polen</b> sau nectar în ea; când e plină, <b style="color:#fff">se răstoarnă (+20)</b>, se varsă și primești încă un nectar.</div>
           <div><b style="color:#fff">Nectarul</b> (roșu/albastru) merge în flori <b style="color:#fff">doar în ultimele 60 s</b> (altfel fault 20). Cine are nectarul cel mai de sus deține floarea: 2 pct pentru fiecare element. Nectarul cel mai de jos: +5.</div>
@@ -214,13 +202,33 @@
           <div style="color:#ff8a96">Nectar de culoarea adversarului: avertisment, apoi fault minor (5).</div>
           <div style="opacity:.7">Pragul de răsturnare e estimat (nu e în manual).</div>
         </div>
-      </div>
+      </details>
       <a class="ghost-link" href="field-sim-3d.html">Versiunea 3D →</a>
       <a class="ghost-link" href="field-sim.html">Versiunea 2D</a>
       <a class="ghost-link" href="index.html">← Înapoi la site</a>
     </aside>
   </div>
 
+  <div class="set-modal hidden" id="setModal">
+    <div class="set-card">
+      <div class="set-head"><h2>Setări</h2><button class="set-x2" id="setClose" aria-label="Închide">✕</button></div>
+      <div class="set-tabs"><button class="on" data-t="keys">Taste</button><button data-t="gfx">Grafică</button><button data-t="game">Joc</button></div>
+      <div class="set-body">
+        <div class="set-pane" id="paneKeys"></div>
+        <div class="set-pane hidden" id="paneGfx"></div>
+        <div class="set-pane hidden" id="paneGame">
+          <label class="set-row set-tg"><span>Ecran complet în pagină<small>umple fereastra; panoul din dreapta devine un HUD mic</small></span><input type="checkbox" id="optImm"></label>
+          <label class="set-row set-tg"><span>Field-centric<small>implicit: robot-centric (apasă tasta ta pentru a comuta în meci)</small></span><input type="checkbox" id="optFC"></label>
+          <div class="set-row set-sl"><span>Viteza robotului <b id="spdVal">100%</b></span><input type="range" id="optSpd" min="50" max="130" value="100"></div>
+          <div class="set-row"><span>Camera la start</span><select class="set-sel" id="setCam"><option value="chase">Urmărire</option><option value="driver">Șofer</option><option value="top">Deasupra</option></select></div>
+          <div class="set-row"><span>Cameră acum</span><b id="camName">URMĂRIRE</b></div>
+          <div class="set-row"><span>Grafică acum</span><b id="qName">AUTO</b></div>
+          <div class="set-row"><span>Gamepad</span><b>suportat automat</b></div>
+        </div>
+      </div>
+      <div class="set-foot"><button class="set-btn" id="setReset">Resetează tot</button><button class="set-btn primary" id="setDone">Gata</button></div>
+    </div>
+  </div>
   <script>
   (() => {
     'use strict';
@@ -293,19 +301,19 @@
 
     // ---------- input ----------
     addEventListener('keydown', (e) => {
-      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) || (CFG.isBound(e.code) && /^(Tab|F\d+)$/.test(e.code))) e.preventDefault();
       keys[e.code] = true;
-      if (e.code === 'KeyR') { const o = $('optFC'); o.checked = !o.checked; }
-      if ((e.code === 'KeyP' || e.code === 'Escape') && (mode === 'run' || mode === 'pause')) togglePause();
+      if (CFG.matches('fc', e.code) && !e.repeat) { const o = $('optFC'); o.checked = !o.checked; CFG.game.fc = o.checked; CFG.save(); }
+      if (CFG.matches('pause', e.code) && !e.repeat && (mode === 'run' || mode === 'pause')) togglePause();
     });
     addEventListener('keyup', (e) => { keys[e.code] = false; });
     addEventListener('blur', () => { keys = {}; });
 
     function readInput() {
-      let mx = 0, my = 0, rot = 0, shoot = false, slow = false, dep = !!keys.KeyF, take = !!keys.KeyC;
-      if (keys.KeyD) mx += 1; if (keys.KeyA) mx -= 1; if (keys.KeyW) my += 1; if (keys.KeyS) my -= 1;
-      if (keys.ArrowRight || keys.KeyE) rot += 1; if (keys.ArrowLeft || keys.KeyQ) rot -= 1;
-      if (keys.Space || keys.Enter) shoot = true; if (keys.ShiftLeft || keys.ShiftRight) slow = true;
+      let mx = 0, my = 0, rot = 0, shoot = false, slow = false, dep = CFG.down('deposit'), take = CFG.down('take');
+      if (CFG.down('right')) mx += 1; if (CFG.down('left')) mx -= 1; if (CFG.down('forward')) my += 1; if (CFG.down('back')) my -= 1;
+      if (CFG.down('rotR')) rot += 1; if (CFG.down('rotL')) rot -= 1;
+      if (CFG.down('shoot')) shoot = true; if (CFG.down('slow')) slow = true;
       const gps = navigator.getGamepads ? navigator.getGamepads() : [];
       for (const g of gps) {
         if (!g) continue;
@@ -333,16 +341,16 @@
     // ---------- physics ----------
     function driveRobot(r, inp, dt) {
       const def = ROBOTS[r.type];
-      const sp = (inp.spd != null ? inp.spd : +$('optSpd').value / 100) * def.speed * (r.human ? 1 : 0.72) * (inp.slow ? 0.4 : 1);
+      const sp = (inp.spd != null ? inp.spd : +$('optSpd').value / 100) * def.speed * (r.human ? (r.mods ? r.mods.speed : 1) : (r.skill != null ? 0.5 + 0.35 * r.skill : 0.72)) * (inp.slow ? 0.4 : 1);
       let tvx, tvy;
       if (r.human && !(inp.fc != null ? inp.fc : $('optFC').checked)) {
         const fx = Math.cos(r.a), fy = Math.sin(r.a), rx = -Math.sin(r.a), ry = Math.cos(r.a);
         tvx = (fx * inp.my + rx * inp.mx) * MAX_V * sp; tvy = (fy * inp.my + ry * inp.mx) * MAX_V * sp;
       } else { const fcs = (r.human && r.al === 'blue') ? -1 : 1; tvx = inp.mx * fcs * MAX_V * sp; tvy = -inp.my * fcs * MAX_V * sp; }
-      const k = 1 - Math.exp(-dt * 9);
+      const k = 1 - Math.exp(-dt * 9 * (r.mods ? r.mods.accel : 1));
       r.vx += (tvx - r.vx) * k; r.vy += (tvy - r.vy) * k;
       const kw = 1 - Math.exp(-dt * 12);
-      r.w += (inp.rot * MAX_W * (inp.slow ? 0.45 : 1) - r.w) * kw;
+      r.w += (inp.rot * MAX_W * (r.mods ? r.mods.turn : 1) * (inp.slow ? 0.45 : 1) - r.w) * kw;
       r.x += r.vx * dt; r.y += r.vy * dt; r.a += r.w * dt;
       {
         const vf = r.vx * Math.cos(r.a) + r.vy * Math.sin(r.a), vs = -r.vx * Math.sin(r.a) + r.vy * Math.cos(r.a), L = 9, k2 = dt / 12;
@@ -392,7 +400,7 @@
       let i = late ? r.hold.indexOf(mine) : -1; if (i < 0) i = r.hold.indexOf('y'); if (i < 0) i = late ? -1 : r.hold.indexOf(mine);
       if (i < 0) { hint(r, 'Nimic de depus'); return false; }
       const c = r.hold.splice(i, 1)[0], m = mouthOf(r);
-      f.pendIn = (f.pendIn || 0) + 1; r.cd = ROBOTS[r.type].reload * (r.human ? 1 : 2); r.shots++; r.boost = .3;
+      f.pendIn = (f.pendIn || 0) + 1; r.cd = ROBOTS[r.type].reload * (r.human ? (r.mods ? r.mods.reload : 1) : (r.skill != null ? 3.2 - 1.2 * r.skill : 2)); r.shots++; r.boost = .3;
       if ((c === 'r' || c === 'b') && !late) { G.pen[c === 'r' ? 'blue' : 'red'] += PT.major; pop(f.x, f.y + 14, 'FAULT MAJOR · G410', r.al); }
       G.tokens.push({ k: 'in', x0: m.x, y0: m.y, x1: f.x, y1: f.y, t: 0, dur: 0.34, c, f, r });
       return true;
@@ -427,7 +435,7 @@
     }
     // range assist: if you are lined up with an upward-facing cell, the lob is sized to drop into it; otherwise a default lob
     function assistRange(r, dir) {
-      let bestD = null, bad = 0.14, tgt = null;
+      let bestD = null, bad = 0.14 * (r.mods ? r.mods.assist : 1), tgt = null;
       for (const al of ['red', 'blue']) {
         const cc = CELLS[al][G.hive[al].up];
         const outS = cc.x < 72 ? -1 : 1; if ((r.x - cc.x) * outS < 6) continue;   // only from the open side of the cell
@@ -445,7 +453,7 @@
       const as = assistRange(r, dir), D = as.D + (Math.random() - .5) * spread * 26;
       const Dh = Math.max(4, D - (R + 2)), T = clamp(Dh / 85, 0.95, 1.3), vh = Dh / T, vz0 = (Z_CELL + 0.5 - Z0 + 0.5 * GRAV * T * T) / T;
       G.balls.push({ x: r.x + Math.cos(dir) * (R + 2), y: r.y + Math.sin(dir) * (R + 2), vx: Math.cos(a) * vh + r.vx * .3, vy: Math.sin(a) * vh + r.vy * .3, z: Z0, pz: Z0, vz: vz0, st: 'fly', c, life: 3, by: r });
-      r.cd = def.reload * (r.human ? 1 : 2.4); r.shots++; r.recoil = 1;
+      r.cd = def.reload * (r.human ? (r.mods ? r.mods.reload : 1) : (r.skill != null ? 3.2 - 1.2 * r.skill : 2.4)); r.shots++; r.recoil = 1;
       for (let i = 0; i < 6; i++) G.fx.push({ x: r.x + Math.cos(dir) * (R + 1), y: r.y + Math.sin(dir) * (R + 1), vx: Math.cos(a + (Math.random() - .5)) * 40, vy: Math.sin(a + (Math.random() - .5)) * 40, life: .25, c });
     }
     function tipHive(al) {
@@ -518,7 +526,7 @@
           for (const r of G.robots) {
             const c = Math.cos(r.a), sn = Math.sin(r.a), dx = b.x - r.x, dy = b.y - r.y;
             const lx = dx * c + dy * sn, ly = -dx * sn + dy * c;
-            if (capOf(r) < HOLD && lx > HS - 1.5 && lx < HS + rb + 3.4 && Math.abs(ly) < 7.6) {
+            if (capOf(r) < HOLD && lx > HS - 1.5 && lx < HS + rb + 3.4 * (r.mods ? r.mods.intake : 1) && Math.abs(ly) < 7.6 * (r.mods ? r.mods.intake : 1)) {
               r.hold.push(b.c); b._gone = true; r.gotFlash = .35; r.boost = Math.max(r.boost, .25);
               for (let i = 0; i < 6; i++) { const a2 = r.a + (Math.random() - .5) * 1.8; G.fx.push({ x: r.x + Math.cos(r.a) * (HS + 3), y: r.y + Math.sin(r.a) * (HS + 3), vx: Math.cos(a2) * 24, vy: Math.sin(a2) * 24, life: .28, c: b.c }); }
               if (b.c === NECT[OPP[r.al]]) { // G408: don't control opponent nectar
@@ -698,7 +706,7 @@
         const i = frozen ? ZERO : (r.pid ? (ONL && r.pid === ONL.uid ? inp : onlineInput(r.pid)) : (r.human ? inp : botThink(r, dt)));
         driveRobot(r, i, dt);
         if (!frozen) { if (i.dep) deposit(r); if (i.take) takeFlower(r); }
-        if (i.shoot) shoot(r, r.human ? (ROBOTS[r.type].turret ? 0.02 : 0.04) : 0.3);
+        if (i.shoot) shoot(r, r.human ? (ROBOTS[r.type].turret ? 0.02 : 0.04) * (r.mods ? r.mods.spread : 1) : (r.skill != null ? 0.45 - 0.25 * r.skill : 0.3));
       }
       robotCollisions();
       stepBalls(dt); stepTokens(dt); releases();
@@ -742,7 +750,26 @@
     // ---------- 3D renderer (three.js) — same game logic as the 2D version, drawn as a lit PBR scene ----------
     // world mapping: field x -> world x, field y -> world z, height -> world y (all in inches)
     const stageEl = $('stage');
-    let render3d = null, camMode = 'chase';
+    // ---------- settings (key binds, graphics, game): saved in this browser ----------
+    const CFG = (() => {
+      const ACTIONS = [['forward', 'Înainte'], ['back', 'Înapoi'], ['left', 'Stânga (strafe)'], ['right', 'Dreapta (strafe)'], ['rotL', 'Rotire stânga'], ['rotR', 'Rotire dreapta'], ['shoot', 'Aruncă spre stup'], ['deposit', 'Depune în floare'], ['take', 'Ia din floare'], ['slow', 'Precizie (lent)'], ['fc', 'Field-centric pornit/oprit'], ['camera', 'Schimbă camera'], ['quality', 'Schimbă grafica'], ['pause', 'Pauză'], ['settings', 'Deschide setările'], ['fullscreen', 'Ecran complet']];
+      const DEF_BINDS = { forward: ['KeyW', ''], back: ['KeyS', ''], left: ['KeyA', ''], right: ['KeyD', ''], rotL: ['KeyQ', 'ArrowLeft'], rotR: ['KeyE', 'ArrowRight'], shoot: ['Space', 'Enter'], deposit: ['KeyF', ''], take: ['KeyC', ''], slow: ['ShiftLeft', 'ShiftRight'], fc: ['KeyR', ''], camera: ['KeyV', ''], quality: ['KeyK', ''], pause: ['KeyP', 'Escape'], settings: ['KeyO', ''], fullscreen: ['KeyG', ''] };
+      const DEF_GFX = { preset: 'auto', shadows: true, bloom: true, res: 100, particles: true, trails: true, names: true, aim: true, shake: true, fps: false, camDist: 44 };
+      const DEF_GAME = { fc: false, speed: 100, cam: 'chase', immersive: true };
+      const copy = (o) => JSON.parse(JSON.stringify(o));
+      const st = { binds: copy(DEF_BINDS), gfx: copy(DEF_GFX), game: copy(DEF_GAME), fps: 0, ACTIONS, DEF_BINDS, DEF_GFX, DEF_GAME, copy };
+      try {
+        const j = JSON.parse(localStorage.getItem('fsSettings3d') || '{}');
+        if (j.binds) for (const k in st.binds) if (Array.isArray(j.binds[k])) st.binds[k] = [String(j.binds[k][0] || ''), String(j.binds[k][1] || '')];
+        Object.assign(st.gfx, j.gfx || {}); Object.assign(st.game, j.game || {});
+      } catch (e) { }
+      st.save = () => { try { localStorage.setItem('fsSettings3d', JSON.stringify({ binds: st.binds, gfx: st.gfx, game: st.game })); } catch (e) { } };
+      st.matches = (a, code) => !!code && st.binds[a].includes(code);
+      st.down = (a) => st.binds[a].some((c) => c && keys[c]);
+      st.isBound = (code) => !!code && Object.values(st.binds).some((b) => b.includes(code));
+      return st;
+    })();
+    let render3d = null, gfxApply = null, camMode = CFG.game.cam;
     function render() { if (render3d) render3d(); }
 
     if (!window.THREE) {
@@ -1237,18 +1264,18 @@
 
       // ---- camera ----
       const camPos = new V3(72, 140, 260), camLook = new V3(72, 0, 72); let camYaw = -Math.PI / 2, lastT = performance.now();
-      addEventListener('keydown', (e) => { if (e.code === 'KeyV') { camMode = camMode === 'chase' ? 'driver' : camMode === 'driver' ? 'top' : 'chase'; const el = $('camName'); if (el) el.textContent = camMode === 'chase' ? 'URMĂRIRE' : camMode === 'driver' ? 'ȘOFER' : 'DEASUPRA'; } });
+      addEventListener('keydown', (e) => { if (CFG.matches('camera', e.code) && !e.repeat) { camMode = camMode === 'chase' ? 'driver' : camMode === 'driver' ? 'top' : 'chase'; CFG.game.cam = camMode; CFG.save(); window.dispatchEvent(new Event('fs-gfx')); const el = $('camName'); if (el) el.textContent = camMode === 'chase' ? 'URMĂRIRE' : camMode === 'driver' ? 'ȘOFER' : 'DEASUPRA'; } });
       function updateCamera(dt) {
         const me = G && G.robots[0]; let tp, tl;
         if (mode === 'menu' || mode === 'end' || !me) { const a = performance.now() / 9000; tp = new V3(72 + Math.cos(a) * 200, 120, 72 + Math.sin(a) * 200); tl = new V3(72, 8, 72); }
         else if (camMode === 'chase') {
           const d = ((me.a - camYaw + Math.PI) % TAU + TAU) % TAU - Math.PI; camYaw += d * (1 - Math.exp(-dt * 4));
-          const fx = Math.cos(camYaw), fz = Math.sin(camYaw); const cd = window.__camDist || 44; tp = new V3(me.x - fx * cd, 30 * cd / 44, me.y - fz * cd); tl = new V3(me.x + fx * 24, 7, me.y + fz * 24);
+          const fx = Math.cos(camYaw), fz = Math.sin(camYaw); const cd = CFG.gfx.camDist; tp = new V3(me.x - fx * cd, 30 * cd / 44, me.y - fz * cd); tl = new V3(me.x + fx * 24, 7, me.y + fz * 24);
         } else if (camMode === 'driver') { const s = me.al === 'red' ? 1 : -1; tp = new V3(72, 120, 72 + s * 160); tl = new V3(72, 0, 72 - s * 8); }
         else { tp = new V3(72, 250, 72.2); tl = new V3(72, 0, 72); }
         const k = 1 - Math.exp(-dt * 5); camPos.lerp(tp, k); camLook.lerp(tl, k); camera.position.copy(camPos); camera.lookAt(camLook);
         (cad.ok ? cad.walls : walls).forEach((w) => { w.g.visible = !((camera.position[w.axis] - w.pos) * w.sign > 2); });
-        if (G && G.shake > 0) camera.position.add(new V3((Math.random() - .5) * G.shake * 2.2, (Math.random() - .5) * G.shake * 2.2, (Math.random() - .5) * G.shake * 2.2));
+        if (CFG.gfx.shake && G && G.shake > 0) camera.position.add(new V3((Math.random() - .5) * G.shake * 2.2, (Math.random() - .5) * G.shake * 2.2, (Math.random() - .5) * G.shake * 2.2));
       }
 
       // ---- quality governor ----
@@ -1262,15 +1289,15 @@
       const qName = () => { const el = $('qName'); if (el) el.textContent = (qAuto ? 'AUTO · ' : '') + ['RIDICATĂ', 'MEDIE', 'MICĂ', 'MINIMĂ'][qLevel]; };
       function applyQuality(l) {
         qLevel = clamp(l, 0, Q.length - 1); const q = Q[qLevel];
-        dpr = Math.min(DEV, q.dpr); renderer.setPixelRatio(dpr); shadowEvery = q.every;
+        dpr = Math.min(DEV, q.dpr) * (CFG.gfx.res / 100); renderer.setPixelRatio(dpr); shadowEvery = q.every;
         if (sun.shadow.mapSize.x !== q.shadow) { sun.shadow.mapSize.set(q.shadow, q.shadow); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
         if (composer) {
           composer.renderTarget1.samples = q.samples; composer.renderTarget2.samples = q.samples; composer.renderTarget1.dispose(); composer.renderTarget2.dispose();
-          if (bloomPass) bloomPass.enabled = q.bloom;
+          if (bloomPass) bloomPass.enabled = q.bloom && CFG.gfx.bloom;
         }
         resize(); qName();
       }
-      addEventListener('keydown', (e) => { if (e.code === 'KeyK') { if (qAuto) { qAuto = false; applyQuality(0); } else if (qLevel < Q.length - 1) applyQuality(qLevel + 1); else { qAuto = true; applyQuality(0); } qName(); } });
+      addEventListener('keydown', (e) => { if (CFG.matches('quality', e.code) && !e.repeat) { if (qAuto) { qAuto = false; applyQuality(0); } else if (qLevel < Q.length - 1) applyQuality(qLevel + 1); else { qAuto = true; applyQuality(0); } qName(); CFG.gfx.preset = qAuto ? 'auto' : ['ridicata', 'medie', 'mica', 'minima'][qLevel]; CFG.save(); window.dispatchEvent(new Event('fs-gfx')); } });
       function governor(dt, raw) {
         if (document.hidden || raw > 0.25 || frameNo < 150) { tAcc = 0; nAcc = 0; return; }   // ignore warm-up, background tabs and hitches
         tAcc += dt; nAcc++; qCool = Math.max(0, qCool - dt);
@@ -1286,7 +1313,7 @@
         ctx.clearRect(0, 0, cv.width, cv.height);
         if (!G) return;
         const U = cv.height / 560, me = G.robots[0];
-        if (mode === 'run' && me.hold.length) {
+        if (CFG.gfx.aim && mode === 'run' && me.hold.length) {
           const dir = ROBOTS[me.type].turret ? me.ta : me.a, as = assistRange(me, dir), Dh = Math.max(4, as.D - (R + 2)), T = clamp(Dh / 85, .95, 1.3), vh = Dh / T, vz0 = (Z_CELL + 0.5 - Z0 + 0.5 * GRAV * T * T) / T;
           ctx.fillStyle = as.assisted ? 'rgba(120,255,170,.85)' : 'rgba(255,201,51,.65)';
           for (let i = 0; i <= 22; i++) {
@@ -1305,7 +1332,7 @@
             ctx.fillStyle = '#fff'; ctx.font = '600 ' + 12 * U + 'px JetBrains Mono, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('F depune  ·  C ia', q.x, q.y + U); ctx.textBaseline = 'alphabetic';
           }
         }
-        G.robots.forEach((r, idx) => {
+        if (CFG.gfx.names) G.robots.forEach((r, idx) => {
           const q = proj(r.x, 24, r.y); if (!q.vis) return;
           const name = (r.pname ? r.pname.toUpperCase().slice(0, 16) : (r.al === 'red' ? 'ROȘU ' : 'ALBASTRU ') + (r.slot + 1)) + (r === me && r.human ? ' · TU' : ''), w = (r.pname || r.human ? 112 : 86) * U, h = 18 * U;
           ctx.fillStyle = 'rgba(9,9,11,.82)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(q.x - w / 2, q.y - h / 2, w, h, 5 * U); else ctx.rect(q.x - w / 2, q.y - h / 2, w, h); ctx.fill();
@@ -1324,11 +1351,18 @@
         }
       }
 
-      applyQuality(0); let lastRaw = performance.now();
+      gfxApply = (g) => {
+        sun.castShadow = !!g.shadows; renderer.shadowMap.needsUpdate = true;
+        pts.visible = !!g.particles; tPts.visible = !!g.trails;
+        const lv = ['ridicata', 'medie', 'mica', 'minima'].indexOf(g.preset);
+        if (lv < 0) { qAuto = true; applyQuality(qLevel); } else { qAuto = false; applyQuality(lv); }
+        qName();
+      };
+      applyQuality(0); gfxApply(CFG.gfx); let lastRaw = performance.now();
       render3d = function () {
         const now = performance.now(), dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
         if (!G) return;
-        governor(dt, (now - lastRaw) / 1000); lastRaw = now; if (++frameNo % shadowEvery === 0) renderer.shadowMap.needsUpdate = true;
+        const rawS = (now - lastRaw) / 1000; CFG.fps = CFG.fps ? CFG.fps * .9 + Math.min(240, 1 / Math.max(rawS, .001)) * .1 : 60; governor(dt, rawS); lastRaw = now; if (++frameNo % shadowEvery === 0) renderer.shadowMap.needsUpdate = true;
         syncRobots(); syncBalls(); syncTokens(); syncFx(); syncRings(); syncHives(); syncTrail(dt);
         syncFlowers(mode === 'run' ? flowerAhead(G.robots[0]) : null);
         updateCamera(dt);
@@ -1347,7 +1381,7 @@
     // ---------- flow ----------
     const show = (id, on) => $(id).classList.toggle('hidden', !on);
     function startCountdown() {
-      G = newGame(); eval_(); hud(); mode = 'count'; show('menu', false); show('end', false); show('countdown', true);
+      G = newGame(); applyCareer(); eval_(); hud(); mode = 'count'; show('menu', false); show('end', false); show('countdown', true);
       let n = 3; $('cdText').textContent = n;
       const iv = setInterval(() => {
         n--; if (n <= 0) { clearInterval(iv); show('countdown', false); mode = 'run'; return; }
@@ -1363,10 +1397,11 @@
       let rp = my > op ? 3 : my === op ? 1 : 0; const tags = [];
       if (lp >= 16) { rp++; tags.push('SWARM'); } if (tips >= 4) { rp++; tags.push('POLLINATOR 1'); } if (tips >= 7) { rp++; tags.push('POLLINATOR 2'); }
       $('fRed').textContent = G.score.red; $('fBlue').textContent = G.score.blue;
-      const key = me + '-' + cfg.mode; const prev = best[key] || 0; const nb = !(ONL && ONL.room) && my > prev; if (nb) { best[key] = my; localStorage.setItem('fieldSimBest', JSON.stringify(best)); }
+      const key = me + '-' + cfg.mode; const prev = best[key] || 0; const nb = !(ONL && ONL.room) && !CAREER && my > prev; if (nb) { best[key] = my; localStorage.setItem('fieldSimBest', JSON.stringify(best)); }
       $('endTitle').textContent = my > op ? 'AI CÂȘTIGAT' : my < op ? 'AI PIERDUT' : 'EGALITATE';
       $('endNote').innerHTML = 'Tips: ' + tips + ' · RP: ' + rp + (tags.length ? ' (' + tags.join(', ') + ')' : '') + '<br>' + (nb ? 'Nou record personal: ' : 'Record personal: ') + (best[key] || 0);
       show('end', true);
+      careerAfterEnd();
       if (ONL && ONL.room) onlineAfterEnd();
     }
     function bestLine() { const b = best[cfg.alliance + '-' + cfg.mode]; $('bestLine').textContent = cfg.mode === 'free' ? 'Free drive: fără cronometru, exersează liber' : (b ? 'Record personal: ' + b : 'Încă niciun meci în acest format'); }
@@ -1389,6 +1424,109 @@
     const hold = (id, on, off) => { const el = $(id); el.addEventListener('pointerdown', (e) => { el.setPointerCapture(e.pointerId); on(); el.classList.add('on'); }); const up = () => { off(); el.classList.remove('on'); }; el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); };
     hold('tDep', () => touch.dep = true, () => touch.dep = false); hold('tTake', () => touch.take = true, () => touch.take = false);
     hold('tL', () => touch.rot = -1, () => touch.rot = 0); hold('tR', () => touch.rot = 1, () => touch.rot = 0); hold('tShoot', () => touch.shoot = true, () => touch.shoot = false);
+
+    // ================= SETĂRI: fereastra (taste, grafică, joc) =================
+    {
+      const modal = $('setModal'), panes = { keys: $('paneKeys'), gfx: $('paneGfx'), game: $('paneGame') };
+      let tab = 'keys', listening = null, pausedBySet = false;
+      const mk = (tag, a, ...kids) => { const e = document.createElement(tag); if (a) for (const k in a) { const v = a[k]; if (v === false || v == null) continue; if (k === 'class') e.className = v; else if (k === 'text') e.textContent = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v); } kids.flat().forEach((c) => { if (c == null || c === false) return; e.append(c.nodeType ? c : document.createTextNode(String(c))); }); return e; };
+      const NAMES = { Space: 'Space', ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', ShiftLeft: 'Shift stâng', ShiftRight: 'Shift drept', ControlLeft: 'Ctrl stâng', ControlRight: 'Ctrl drept', AltLeft: 'Alt stâng', Enter: 'Enter', Escape: 'Esc', Tab: 'Tab', Backquote: '`', Backspace: 'Backspace', CapsLock: 'Caps' };
+      const keyLabel = (c) => (!c ? '—' : NAMES[c] || c.replace(/^Key/, '').replace(/^Digit/, '').replace(/^Numpad/, 'Num '));
+
+      function renderKeys() {
+        const p = panes.keys; p.replaceChildren(
+          mk('p', { class: 'set-sub', text: 'Apasă pe o casetă, apoi pe tasta dorită. Fiecare acțiune are două taste. Esc anulează.' }),
+          ...CFG.ACTIONS.map(([a, label]) => mk('div', { class: 'set-row' }, mk('span', { text: label }),
+            mk('div', { class: 'set-keys' }, [0, 1].map((i) => {
+              const on = listening && listening.a === a && listening.i === i;
+              return mk('button', { class: 'set-key' + (on ? ' listen' : '') + (CFG.binds[a][i] ? '' : ' empty'), text: on ? 'apasă o tastă…' : keyLabel(CFG.binds[a][i]), onclick: () => { listening = { a, i }; renderKeys(); } });
+            }), mk('button', { class: 'set-x', title: 'Golește', text: '✕', onclick: () => { CFG.binds[a] = ['', '']; CFG.save(); renderKeys(); updateHint(); } })))),
+          mk('button', { class: 'set-btn', text: 'Taste implicite', onclick: () => { CFG.binds = CFG.copy(CFG.DEF_BINDS); CFG.save(); renderKeys(); updateHint(); } }));
+      }
+      function assign(a, i, code) {
+        for (const k in CFG.binds) CFG.binds[k] = CFG.binds[k].map((c) => (c === code ? '' : c));   // one key = one action
+        CFG.binds[a][i] = code; CFG.save(); updateHint();
+      }
+      document.addEventListener('keydown', (e) => {   // capture phase: swallows the key while a bind is being recorded
+        if (!listening) return; e.preventDefault(); e.stopPropagation();
+        if (e.code !== 'Escape') assign(listening.a, listening.i, e.code);
+        listening = null; renderKeys();
+      }, true);
+
+      const toggleRow = (label, key, hint) => mk('label', { class: 'set-row set-tg' }, mk('span', null, label, hint ? mk('small', { text: hint }) : null),
+        mk('input', { type: 'checkbox', checked: !!CFG.gfx[key], onchange: (e) => { CFG.gfx[key] = e.target.checked; CFG.save(); if (gfxApply) gfxApply(CFG.gfx); updateFps(); } }));
+      const sliderRow = (label, key, min, max, step, fmt) => { const out = mk('b', { text: fmt(CFG.gfx[key]) });
+        return mk('div', { class: 'set-row set-sl' }, mk('span', null, label, ' ', out), mk('input', { type: 'range', min, max, step, value: CFG.gfx[key], oninput: (e) => { CFG.gfx[key] = +e.target.value; out.textContent = fmt(CFG.gfx[key]); CFG.save(); if (gfxApply) gfxApply(CFG.gfx); } })); };
+      function renderGfx() {
+        const sel = mk('select', { class: 'set-sel', onchange: (e) => { CFG.gfx.preset = e.target.value; CFG.save(); if (gfxApply) gfxApply(CFG.gfx); } },
+          [['auto', 'Auto (se adaptează după FPS)'], ['ridicata', 'Ridicată'], ['medie', 'Medie'], ['mica', 'Mică'], ['minima', 'Minimă']].map(([v, t]) => mk('option', { value: v, text: t, selected: CFG.gfx.preset === v })));
+        panes.gfx.replaceChildren(
+          mk('div', { class: 'set-row' }, mk('span', { text: 'Calitate grafică' }), sel),
+          sliderRow('Rezoluție', 'res', 50, 125, 5, (v) => v + '%'),
+          toggleRow('Umbre', 'shadows', 'cel mai greu efect'), toggleRow('Bloom (strălucire)', 'bloom'), toggleRow('Particule', 'particles'), toggleRow('Dâră la mingi', 'trails'),
+          toggleRow('Nume deasupra roboților', 'names'), toggleRow('Linia de țintire', 'aim'), toggleRow('Tremurul camerei', 'shake'), toggleRow('Afișează FPS', 'fps'),
+          sliderRow('Distanța camerei (urmărire)', 'camDist', 30, 70, 1, (v) => v),
+          mk('button', { class: 'set-btn', text: 'Grafică implicită', onclick: () => { CFG.gfx = CFG.copy(CFG.DEF_GFX); CFG.save(); if (gfxApply) gfxApply(CFG.gfx); updateFps(); renderGfx(); } }));
+      }
+      const camSel = $('setCam');
+      const camTxt = () => (camMode === 'chase' ? 'URMĂRIRE' : camMode === 'driver' ? 'ȘOFER' : 'DEASUPRA');
+      function syncGame() { syncImm(); { const n = $('camName'); if (n) n.textContent = camTxt(); } $('optFC').checked = !!CFG.game.fc; $('optSpd').value = CFG.game.speed; $('spdVal').textContent = CFG.game.speed + '%'; camSel.value = camMode; }
+      function showTab(t) {
+        tab = t; modal.querySelectorAll('.set-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.t === t));
+        for (const k in panes) panes[k].classList.toggle('hidden', k !== t);
+        if (t === 'keys') renderKeys(); else if (t === 'gfx') renderGfx(); else syncGame();
+      }
+      modal.querySelectorAll('.set-tabs button').forEach((b) => { b.onclick = () => showTab(b.dataset.t); });
+      function openSet() {
+        if (!modal.classList.contains('hidden')) return; keys = {}; modal.classList.remove('hidden'); showTab(tab);
+        pausedBySet = false; if (!(ONL && ONL.room) && mode === 'run') { togglePause(); pausedBySet = true; }
+      }
+      function closeSet() { listening = null; modal.classList.add('hidden'); if (pausedBySet && mode === 'pause') togglePause(); pausedBySet = false; }
+      window.openSettings = openSet;
+      $('btnSettings').onclick = openSet; $('setClose').onclick = closeSet; $('setDone').onclick = closeSet;
+      modal.addEventListener('mousedown', (e) => { if (e.target === modal) closeSet(); });
+      ['keydown', 'keyup'].forEach((t) => modal.addEventListener(t, (e) => { if (!listening) e.stopPropagation(); }));
+      addEventListener('keydown', (e) => {
+        if (e.repeat || /INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
+        if (CFG.matches('settings', e.code)) { if (modal.classList.contains('hidden')) openSet(); else closeSet(); }
+      });
+      $('setReset').onclick = () => { if (!confirm('Resetezi toate setările (taste, grafică, joc)?')) return; CFG.binds = CFG.copy(CFG.DEF_BINDS); CFG.gfx = CFG.copy(CFG.DEF_GFX); CFG.game = CFG.copy(CFG.DEF_GAME); CFG.save(); if (gfxApply) gfxApply(CFG.gfx); camMode = CFG.game.cam; syncGame(); showTab(tab); updateHint(); updateFps(); };
+
+      // game options (these elements are read by the game itself)
+      $('optFC').checked = !!CFG.game.fc; $('optSpd').value = CFG.game.speed; $('spdVal').textContent = CFG.game.speed + '%';
+      $('optFC').addEventListener('change', () => { CFG.game.fc = $('optFC').checked; CFG.save(); });
+      const _spd = $('optSpd').oninput; $('optSpd').oninput = () => { if (_spd) _spd(); CFG.game.speed = +$('optSpd').value; CFG.save(); };
+      camSel.onchange = () => { camMode = camSel.value; CFG.game.cam = camMode; CFG.save(); const n = $('camName'); if (n) n.textContent = camMode === 'chase' ? 'URMĂRIRE' : camMode === 'driver' ? 'ȘOFER' : 'DEASUPRA'; };
+      addEventListener('fs-gfx', () => { if (!modal.classList.contains('hidden')) showTab(tab); });
+
+      // full-screen: in-page immersive layout (default) + the browser's real fullscreen
+      const syncImm = () => { const o = $('optImm'); if (o) o.checked = !!CFG.game.immersive; };
+      function setImmersive(on, persist) {
+        document.body.classList.toggle('immersive', !!on); CFG.game.immersive = !!on; if (persist !== false) CFG.save(); syncImm();
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
+      }
+      function toggleFullscreen() {
+        if (document.fullscreenElement) { document.exitFullscreen().catch(() => { }); return; }
+        setImmersive(true, false);
+        const el = document.documentElement; (el.requestFullscreen ? el.requestFullscreen() : Promise.reject()).catch(() => { });
+      }
+      document.addEventListener('fullscreenchange', () => { const b = $('fsFull'); if (b) b.textContent = document.fullscreenElement ? '✕' : '⛶'; setTimeout(() => window.dispatchEvent(new Event('resize')), 80); });
+      $('fsFull').onclick = toggleFullscreen; $('fsSet').onclick = openSet;
+      const oi = $('optImm'); if (oi) oi.addEventListener('change', () => setImmersive(oi.checked));
+      addEventListener('keydown', (e) => {
+        if (e.repeat || /INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
+        if (CFG.matches('fullscreen', e.code)) toggleFullscreen();
+      });
+      setImmersive(CFG.game.immersive, false);
+
+      // FPS counter + hotkey hint
+      const fpsEl = mk('div', { class: 'set-fps hidden' }); document.body.append(fpsEl);
+      function updateFps() { fpsEl.classList.toggle('hidden', !CFG.gfx.fps); }
+      setInterval(() => { if (CFG.gfx.fps) fpsEl.textContent = Math.round(CFG.fps || 0) + ' FPS'; }, 300);
+      function updateHint() { const k = $('kbSet'); if (k) k.textContent = keyLabel(CFG.binds.settings[0] || CFG.binds.settings[1]); }
+      updateFps(); updateHint();
+    }
+    // ================= /SETĂRI =================
 
     // ================= ONLINE: conturi, prieteni, invitații, meci în rețea (Supabase) =================
     // Gazda rulează simularea; ceilalți trimit tastele și primesc starea jocului (~12 ori/s), interpolată local.
@@ -2021,7 +2159,32 @@
     window.addEventListener('beforeunload', () => { if (ONL) bsend(ONL, ONL.host ? 'close' : 'leave', { uid: ONL.uid }); });
     // ================= /ONLINE =================
 
+    // ================= CARIERĂ: meciul vine din career.html (upgrade-urile și adversarul sunt aplicate aici) =================
+    const CAREER = (() => {
+      if (!/[?&]career=1/.test(location.search)) return null;
+      try { const c = JSON.parse(localStorage.getItem('rbCareerMatch') || 'null'); return c && c.id && c.team && c.opp && c.mods ? c : null; } catch (e) { return null; }
+    })();
+    if (CAREER) {
+      cfg.alliance = CAREER.alliance === 'blue' ? 'blue' : 'red'; cfg.robot = CAREER.robot === 'turret' ? 'turret' : 'strafe'; cfg.mode = '1v1';
+      document.title = 'Carieră · ' + CAREER.label;
+      const back = document.querySelector('.fs-tool[href="index.html"]'); if (back) { back.href = 'career.html'; back.title = 'Înapoi la carieră'; }
+    }
+    function applyCareer() {
+      if (!CAREER || !G) return;
+      const me = G.robots[0], op = G.robots[1]; if (!me || !op) return;
+      me.mods = CAREER.mods; me.pname = String(CAREER.team.name).slice(0, 16); me.num = String(CAREER.team.num);
+      op.skill = clamp(+CAREER.opp.skill || 0.5, 0, 1); op.pname = String(CAREER.opp.name).replace(' (antrenament)', '').slice(0, 16);
+    }
+    function careerAfterEnd() {
+      if (!CAREER) return;
+      const my = cfg.alliance, op = OPP[my], me = G.robots[0], P = G.parts[my] || {};
+      try { localStorage.setItem('rbCareerResult', JSON.stringify({ id: CAREER.id, my: G.score[my], opp: G.score[op], tips: G.hive[my].tips, lp: P.lp || 0, flowers: P.flower || 0, shots: me.shots, hits: me.hits, ts: Date.now() })); } catch (e) { }
+      $('btnAgain').style.display = 'none'; const bm = $('btnMenu'); bm.textContent = 'Continuă cariera'; bm.onclick = () => { location.href = 'career.html'; };
+      $('endNote').innerHTML = '<b style="color:var(--g-pink-hi)">' + CAREER.label + '</b><br>Rezultatul se salvează în carieră.';
+    }
+    // ================= /CARIERĂ =================
     bestLine(); G = newGame(); eval_(); requestAnimationFrame(frame);
+    if (CAREER) { $('menu').classList.add('hidden'); startCountdown(); }
   })();
   </script>
 </body>
