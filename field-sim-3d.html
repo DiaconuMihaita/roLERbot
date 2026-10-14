@@ -2304,7 +2304,7 @@
       items.forEach((b, k) => { b.addEventListener('mouseenter', () => focusIdx(k)); b.addEventListener('click', () => act(b.dataset.a)); });
       $('suBack').onclick = () => setMenu('home');
       $('hmFull').onclick = () => $('fsFull').click();
-      addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.rb === 'career-back') setMenu('home'); });
+      addEventListener('message', (e) => { if (e.origin !== location.origin || !e.data) return; if (e.data.rb === 'career-back') setMenu('home'); else if (e.data.rb === 'open-online') setMenu('online'); });
       addEventListener('keydown', (e) => {
         const st = menuState;
         if (!ld.classList.contains('hidden') || (st !== 'home' && st !== 'setup' && st !== 'settings' && st !== 'online')) return;

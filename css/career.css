@@ -113,3 +113,23 @@ table.st td.n { color: var(--dim); width: 32px; }
 .welcome h1 { font: 800 clamp(34px, 6vw, 56px) var(--display); letter-spacing: -.04em; line-height: 1.02; margin: 0 0 12px; }
 .welcome h1 span { color: var(--pink); }
 .banner { padding: 12px 16px; border-radius: 14px; border: 1px solid var(--gold); background: rgba(255, 201, 51, .08); margin-bottom: 14px; font-size: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+
+/* account chip */
+.cr-chip.cloud { cursor: pointer; font: 600 12.5px var(--body); color: var(--dim); }
+.cr-chip.cloud:hover { border-color: #fff; color: #fff; }
+.cr-chip.cloud.ok { color: var(--ok); border-color: rgba(123, 224, 160, .4); }
+.cr-chip.cloud.saving { color: var(--gold); }
+.cr-chip.cloud.error, .cr-chip.cloud.nosetup { color: #ff8a96; border-color: rgba(255, 138, 150, .4); }
+
+/* embedded in the game menu: same look as the Play / Online / Settings pages */
+body.embed { background: linear-gradient(180deg, #0d0d11, #09090b); background-image: none; }
+.cr-page { padding: clamp(18px, 4vw, 54px) clamp(18px, 6vw, 90px) 0; max-width: 1180px; margin: 0 auto; }
+.cr-back { align-self: flex-start; background: none; border: 1px solid rgba(244, 241, 236, .2); color: #b9b5bd; border-radius: 12px; padding: 9px 16px; font: 600 14px var(--body); cursor: pointer; margin-bottom: 14px; }
+.cr-back:hover { color: #fff; border-color: #fff; }
+.cr-kicker { font: 500 11px var(--mono); letter-spacing: .3em; text-transform: uppercase; color: var(--pink-hi); }
+.cr-pt { margin: 8px 0 6px; font: 800 clamp(30px, 4.5vw, 54px) var(--display); letter-spacing: -.03em; line-height: 1; }
+.cr-team2 { color: var(--dim); font-size: 14px; margin-bottom: 14px; }
+.cr-page .cr-stats { margin-left: 0; }
+body.embed .cr-nav { padding-left: clamp(18px, 6vw, 90px); padding-right: clamp(18px, 6vw, 90px); max-width: 1180px; margin: 14px auto 0; }
+body.embed .cr-main { padding-left: clamp(18px, 6vw, 90px); padding-right: clamp(18px, 6vw, 90px); }
+body.embed .welcome { margin-top: 3vh; }

@@ -8,6 +8,10 @@
   const FRAMED = window.top !== window.self;   // opened inside the game menu
   const goTop = (url) => { (FRAMED ? window.top : window).location.href = url; };
   if (FRAMED) document.body.classList.add('embed');
+  const SBC = window.SUPABASE_CONFIG || {};
+  const SBX = window.supabase && SBC.url && SBC.anonKey ? window.supabase.createClient(SBC.url, SBC.anonKey) : null;
+  const CLOUD = { user: null, name: '', status: SBX ? 'guest' : 'off', err: '' };
+  let cloudTimer = null;
   const menuLink = () => (FRAMED ? el('button', { class: 'cr-link', onclick: () => window.parent.postMessage({ rb: 'career-back' }, location.origin) }, '← Meniu') : el('a', { class: 'cr-link', href: 'field-sim-3d.html' }, '← Meniu joc'));
 
   // ---------- helpers ----------
@@ -95,8 +99,79 @@
 
   // ---------- state ----------
   let S = null, tab = 'hub';
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
+  const saveLocal = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
+  const save = () => { if (S) S.savedAt = Date.now(); saveLocal(); cloudSoon(); };
   const load = () => { try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); return j && j.v === 1 ? j : null; } catch (e) { return null; } };
+
+  // ---------- account save: table career_saves (each player can only read/write their own row) ----------
+  const NOSETUP = /does not exist|schema cache|42P01|PGRST205|PGRST204/i;
+  const backToMenu = () => window.parent.postMessage({ rb: 'career-back' }, location.origin);
+  const connectAccount = () => { if (FRAMED) window.parent.postMessage({ rb: 'open-online' }, location.origin); else location.href = 'field-sim-3d.html?page=online'; };
+  const cloudText = () => ({ guest: '☁ Neconectat', saving: '☁ Se salvează…', ok: '☁ ' + CLOUD.name + ' · salvat', error: '☁ Eroare la salvare', nosetup: '☁ Salvare în cont indisponibilă' }[CLOUD.status] || '');
+  function paintCloud() {
+    document.querySelectorAll('.cloud-st').forEach((n) => { n.textContent = cloudText(); n.className = 'cr-chip cloud cloud-st ' + CLOUD.status; });
+    document.querySelectorAll('.cloud-hint').forEach((n) => { n.textContent = cloudHint(); });
+  }
+  function cloudHint() {
+    if (CLOUD.status === 'guest') return 'Nu ești conectat. Progresul se salvează doar în acest browser. Conectează-te cu contul online ca să-l ai oriunde.';
+    if (CLOUD.status === 'ok' || CLOUD.status === 'saving') return 'Progresul se salvează automat în contul tău (' + CLOUD.name + ').';
+    if (CLOUD.status === 'nosetup') return 'Salvarea în cont nu e activată încă pe server: rulează supabase/career.sql în Supabase (SQL Editor). Până atunci progresul rămâne în acest browser.';
+    if (CLOUD.status === 'error') return 'Nu am putut salva în cont' + (CLOUD.err ? ' (' + CLOUD.err + ')' : '') + '. Se încearcă din nou la următoarea acțiune.';
+    return '';
+  }
+  function cloudClick() {
+    if (CLOUD.status === 'guest') return connectAccount();
+    if (CLOUD.status === 'nosetup') return toast('Rulează supabase/career.sql în Supabase ca să activezi salvarea în cont.');
+    cloudPush().then((ok) => { if (ok) toast('Salvat în cont.'); });
+  }
+  function cloudChip() { return SBX ? el('button', { class: 'cr-chip cloud cloud-st ' + CLOUD.status, title: 'Salvarea în contul online', onclick: cloudClick, text: cloudText() }) : null; }
+  function cloudSoon() { if (!SBX || !CLOUD.user || CLOUD.status === 'nosetup') return; clearTimeout(cloudTimer); cloudTimer = setTimeout(cloudPush, 1200); }
+  async function cloudPush() {
+    clearTimeout(cloudTimer); cloudTimer = null;
+    if (!SBX || !CLOUD.user || !S || CLOUD.status === 'nosetup') return false;
+    S.cloudUid = CLOUD.user.id; saveLocal(); CLOUD.status = 'saving'; paintCloud();
+    try {
+      const r = await SBX.from('career_saves').upsert({ user_id: CLOUD.user.id, data: S, updated_at: new Date().toISOString() });
+      if (r.error) { CLOUD.status = NOSETUP.test((r.error.message || '') + (r.error.code || '')) ? 'nosetup' : 'error'; CLOUD.err = r.error.message; paintCloud(); return false; }
+      CLOUD.status = 'ok'; CLOUD.err = ''; paintCloud(); return true;
+    } catch (e) { CLOUD.status = 'error'; CLOUD.err = e.message; paintCloud(); return false; }
+  }
+  const flushCloud = (ms) => (CLOUD.user && CLOUD.status !== 'nosetup' ? Promise.race([cloudPush(), new Promise((r) => setTimeout(r, ms))]) : Promise.resolve());
+  const sumLine = (s) => s.team.name + ' · sezon ' + s.season + ', săpt. ' + s.week + ' · ' + eur(s.money) + ' · reputație ' + Math.round(s.rep) + (s.savedAt ? ' · salvat ' + new Date(s.savedAt).toLocaleString('ro-RO') : '');
+  function adopt(cloud) { S = cloud; S.cloudUid = CLOUD.user.id; saveLocal(); CLOUD.status = 'ok'; paintCloud(); render(); toast('Progres încărcat din contul tău.'); }
+  function chooseSave(local, cloud) {
+    const box = el('div', null, el('div', { class: 'cr-eyebrow', text: 'Cont online' }), el('h2', { text: 'Ce progres păstrezi?' }),
+      el('p', { class: 'cr-sub', text: 'Contul tău are deja o carieră salvată, diferită de cea din acest browser.' }),
+      el('div', { class: 'choices' },
+        el('button', { class: 'cr-btn pri', onclick: () => { try { localStorage.setItem('rbCareerBackup', JSON.stringify(local)); } catch (e) { } mm.close(); adopt(cloud); } }, el('b', { text: 'Cea din cont' }), el('br'), sumLine(cloud)),
+        el('button', { class: 'cr-btn', onclick: async () => { mm.close(); S.cloudUid = CLOUD.user.id; await cloudPush(); toast('Cariera din acest browser a fost salvată în cont.'); } }, el('b', { text: 'Cea din acest browser (înlocuiește contul)' }), el('br'), sumLine(local))));
+    const mm = modal(box, true);
+  }
+  async function cloudSync() {
+    const uid = CLOUD.user.id;
+    const { data: row, error } = await SBX.from('career_saves').select('data,updated_at').eq('user_id', uid).maybeSingle();
+    if (error) { CLOUD.status = NOSETUP.test((error.message || '') + (error.code || '')) ? 'nosetup' : 'error'; CLOUD.err = error.message; paintCloud(); return; }
+    const cloud = row && row.data && row.data.v === 1 ? row.data : null;
+    if (!cloud) { CLOUD.status = 'ok'; if (S) await cloudPush(); else paintCloud(); return; }
+    if (!S) { adopt(cloud); return; }
+    if (S.cloudUid === uid) {
+      const c = cloud.savedAt || 0, l = S.savedAt || 0;
+      if (c > l) adopt(cloud); else if (l > c) await cloudPush(); else { CLOUD.status = 'ok'; paintCloud(); }
+      return;
+    }
+    CLOUD.status = 'ok'; paintCloud(); chooseSave(S, cloud);
+  }
+  async function cloudInit() {
+    if (!SBX) return;
+    try {
+      const { data } = await SBX.auth.getSession(), u = data && data.session && data.session.user;
+      if (!u) { CLOUD.user = null; CLOUD.status = 'guest'; paintCloud(); return; }
+      CLOUD.user = u; CLOUD.name = u.email || 'cont';
+      try { const p = await SBX.from('profiles').select('username').eq('id', u.id).maybeSingle(); if (p.data && p.data.username) CLOUD.name = p.data.username; } catch (e) { }
+      await cloudSync();
+    } catch (e) { CLOUD.status = 'error'; CLOUD.err = e.message; paintCloud(); }
+  }
+
   const log = (m) => { S.log.unshift(m); S.log = S.log.slice(0, 14); };
   function newState(name) {
     const s = { v: 1, team: { name, num: String(irnd(10000, 29999)) }, money: 3000, rep: 0, week: 1, season: 1, evIndex: 0, evCount: 0, hw: { chassis: 0, motors: 0, intake: 0, launcher: 0, software: 0 }, build: [], type: 'strafe', sponsors: [], offers: [], sponsorLog: [], event: null, pending: null, buffs: [], practiceWeek: 0, history: [], log: [], stats: { w: 0, l: 0, t: 0, tips: 0, titles: 0 }, summary: null, lastMatch: null, card: null };
@@ -188,13 +263,14 @@
     a.rp += ra + (sa >= 38 && Math.random() < .6 ? 1 : 0); b.rp += rb + (sb >= 38 && Math.random() < .6 ? 1 : 0); a.pts += sa; b.pts += sb; a.played++; b.played++;
     if (ra > rb) { a.w++; b.l++; } else if (rb > ra) { b.w++; a.l++; } else { a.t++; b.t++; }
   }
-  function launch(kind) {
+  async function launch(kind) {
     const id = Date.now() + '-' + irnd(1000, 9999);
     let opp, alliance, label;
     if (kind === 'qual') { const ev = S.event; opp = ev.teams[ev.sched[ev.round]]; alliance = ev.alliances[ev.round]; label = ev.name + ' · meciul ' + (ev.round + 1) + '/4'; }
     else { opp = { name: pick(TEAM_NAMES) + ' (antrenament)', skill: clamp(rnd(0.25, 0.6) + (S.season - 1) * .05, 0, .95) }; alliance = pick(['red', 'blue']); label = 'Antrenament'; }
     S.pending = { id, kind }; save();
     try { localStorage.setItem(MATCH_KEY, JSON.stringify({ id, type: kind, label, alliance, robot: canTurret() ? S.type : 'strafe', mods: modsOf(S), team: S.team, opp: { name: opp.name, skill: opp.skill }, ts: Date.now() })); localStorage.removeItem(RESULT_KEY); } catch (e) { return toast('Nu pot salva meciul (stocarea e blocată).'); }
+    await flushCloud(1800);
     goTop('field-sim-3d.html?career=1');
   }
   function applyResult(res) {
@@ -240,8 +316,8 @@
 
   // ---------- ui bits ----------
   function toast(msg) { document.querySelectorAll('.cr-toast').forEach((n) => n.remove()); const t = el('div', { class: 'cr-toast', text: msg }); document.body.append(t); setTimeout(() => t.remove(), 3200); }
-  function modal(content) {
-    const m = el('div', { class: 'cr-modal' }, el('div', { class: 'box' }, content)); document.body.append(m);
+  function modal(content, keep) {
+    const m = el('div', { class: 'cr-modal' + (keep ? ' keep' : '') }, el('div', { class: 'box' }, content)); document.body.append(m);
     return { close: () => m.remove() };
   }
   function bars(m) {
@@ -251,14 +327,17 @@
 
   // ---------- views ----------
   function header() {
-    const ev = nextEvent();
+    const chips = [el('div', { class: 'cr-chip money' }, el('small', { text: 'Buget' }), el('b', { text: eur(S.money) })),
+      el('div', { class: 'cr-chip rep' }, el('small', { text: 'Reputație' }), el('b', { text: Math.round(S.rep) })),
+      el('div', { class: 'cr-chip' }, el('small', { text: 'Sezon ' + S.season }), el('b', { text: 'Săpt. ' + S.week })), cloudChip()];
+    if (FRAMED) return el('header', { class: 'cr-page' },
+      el('button', { class: 'cr-back', onclick: backToMenu }, '← Înapoi'),
+      el('div', { class: 'cr-kicker', text: 'BIOBUZZ · CARIERĂ' }), el('h1', { class: 'cr-pt', text: 'Mod carieră' }),
+      el('div', { class: 'cr-team2', text: S.team.name + ' · #' + S.team.num + ' · ' + repLevel(S.rep) }), el('div', { class: 'cr-stats' }, chips));
     return el('header', { class: 'cr-top' },
       el('a', { class: 'cr-brand', href: 'index.html', target: FRAMED ? '_top' : null }, 'ro', el('span', { text: 'LER' }), 'bot'),
       el('div', { class: 'cr-team' }, el('b', { text: S.team.name }), el('small', { text: '#' + S.team.num + ' · ' + repLevel(S.rep) })),
-      el('div', { class: 'cr-stats' },
-        el('div', { class: 'cr-chip money' }, el('small', { text: 'Buget' }), el('b', { text: eur(S.money) })),
-        el('div', { class: 'cr-chip rep' }, el('small', { text: 'Reputație' }), el('b', { text: Math.round(S.rep) })),
-        el('div', { class: 'cr-chip' }, el('small', { text: 'Sezon ' + S.season }), el('b', { text: 'Săpt. ' + S.week }))),
+      el('div', { class: 'cr-stats' }, chips),
       el('div', { class: 'cr-links' }, menuLink(), FRAMED ? null : el('a', { class: 'cr-link', href: 'index.html' }, '← Site')));
   }
   function nav() {
@@ -358,19 +437,29 @@
         el('div', { class: 'log' }, [['Victorii', st.w], ['Egaluri', st.t], ['Înfrângeri', st.l], ['Stupi răsturnați', st.tips], ['Titluri', st.titles], ['Reputație', Math.round(S.rep) + ' (' + repLevel(S.rep) + ')']].map(([a, b]) => el('div', { text: a + ': ' + b })))),
       el('div', { class: 'cr-card s7' }, el('div', { class: 'cr-eyebrow', text: 'Evenimente' }), el('h2', { text: 'Istoric' }),
         S.history.length ? el('div', { class: 'hist' }, S.history.map((h) => el('div', { class: 'h' }, el('div', null, h.name, el('small', { text: 'Sezonul ' + h.season + ' · ' + h.w + '-' + h.t + '-' + h.l + ' · ' + h.rp + ' RP' })), el('b', { text: 'Locul ' + h.rank + ' · +' + eur(h.prize) })))) : el('p', { class: 'cr-sub', text: 'Încă niciun eveniment jucat.' })),
-      el('div', { class: 'cr-card' }, el('h3', { text: 'Date' }), el('p', { class: 'cr-note', text: 'Progresul e salvat în acest browser. Dacă ștergi datele site-ului, se pierde.' }),
-        el('button', { class: 'cr-btn sm', text: 'Resetează cariera', onclick: () => { if (confirm('Ștergi toată cariera și o iei de la capăt?')) { localStorage.removeItem(KEY); localStorage.removeItem(MATCH_KEY); localStorage.removeItem(RESULT_KEY); S = null; render(); } } })));
+      el('div', { class: 'cr-card' }, el('h3', { text: 'Salvare' }), el('p', { class: 'cr-note cloud-hint', text: cloudHint() || 'Progresul e salvat în acest browser.' }),
+        el('div', { class: 'cr-row', style: 'margin-top:10px' },
+          SBX && CLOUD.status === 'guest' ? el('button', { class: 'cr-btn pri sm', text: 'Conectează-te', onclick: connectAccount }) : null,
+          SBX && CLOUD.user ? el('button', { class: 'cr-btn sm', text: 'Salvează acum', onclick: cloudClick }) : null,
+          el('button', { class: 'cr-btn sm', text: 'Resetează cariera', onclick: resetAll }))));
   }
   function welcome() {
     const inp = el('input', { class: 'cr-in', value: 'roLERbot', maxlength: 22, placeholder: 'Numele echipei' });
     const go = () => { const n = inp.value.trim() || 'roLERbot'; newState(n); save(); render(); };
     inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
-    return el('main', { class: 'cr-main' }, el('div', { class: 'welcome' },
+    return el('main', { class: 'cr-main' }, FRAMED ? el('button', { class: 'cr-back', onclick: backToMenu }, '← Înapoi') : null, el('div', { class: 'welcome' },
       el('div', { class: 'cr-eyebrow', text: 'FTC · BIOBUZZ 2026/27' }),
       el('h1', null, 'Construiește-ți ', el('span', { text: 'echipa' }), '.'),
       el('p', { class: 'cr-sub', text: 'Începi cu un robot simplu și un buget mic. Cumperi hardware mai bun, semnezi sponsori, câștigi evenimente și urci de la echipă locală la campionatul național. Meciurile se joacă în simulatorul 3D, iar upgrade-urile îți schimbă robotul cu adevărat.' }),
       el('div', { class: 'cr-eyebrow', style: 'margin-top:20px', text: 'Numele echipei' }), inp,
-      el('div', { class: 'cr-row', style: 'margin-top:14px' }, el('button', { class: 'cr-btn pri', text: 'Începe cariera', onclick: go }), menuLink(), FRAMED ? null : el('a', { class: 'cr-link', href: 'index.html' }, '← Site'))));
+      el('div', { class: 'cr-row', style: 'margin-top:14px' }, el('button', { class: 'cr-btn pri', text: 'Începe cariera', onclick: go }), FRAMED ? null : menuLink(), FRAMED ? null : el('a', { class: 'cr-link', href: 'index.html' }, '← Site')),
+      SBX ? el('p', { class: 'cr-note cloud-hint', style: 'margin-top:14px', text: cloudHint() }) : null,
+      SBX && CLOUD.status === 'guest' ? el('button', { class: 'cr-btn sm', style: 'margin-top:8px', text: 'Conectează-te ca să-ți încarci progresul', onclick: connectAccount }) : null));
+  }
+  async function resetAll() {
+    if (!confirm('Ștergi toată cariera și o iei de la capăt?')) return;
+    if (CLOUD.user && CLOUD.status !== 'nosetup' && confirm('Ștergi și progresul salvat în contul tău? (OK = da, Anulare = îl păstrez în cont)')) { try { await SBX.from('career_saves').delete().eq('user_id', CLOUD.user.id); } catch (e) { } }
+    localStorage.removeItem(KEY); localStorage.removeItem(MATCH_KEY); localStorage.removeItem(RESULT_KEY); S = null; render();
   }
 
   // ---------- popups ----------
@@ -402,7 +491,7 @@
 
   // ---------- render ----------
   function render() {
-    document.querySelectorAll('.cr-modal').forEach((m) => m.remove());
+    document.querySelectorAll('.cr-modal:not(.keep)').forEach((m) => m.remove());
     app.replaceChildren();
     if (!S) { app.append(welcome()); return; }
     const views = { hub: hubView, robot: robotView, sponsors: sponsorsView, event: eventView, history: historyView };
@@ -418,4 +507,7 @@
     else if (res) localStorage.removeItem(RESULT_KEY);
   }
   render();
+  cloudInit().then(() => { if (!S) render(); });
+  if (SBX) SBX.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') { CLOUD.user = null; CLOUD.status = 'guest'; paintCloud(); } });
+  addEventListener('pagehide', () => { if (cloudTimer) cloudPush(); });
 })();
