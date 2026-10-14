@@ -223,7 +223,7 @@ body.embed .welcome { margin-top: 3vh; }
 .lg-tag{font-style:normal}
 
 /* ---- harta 2D + comandă nouă ---- */
-.ap-cv{max-width:820px;background:#050506;border-color:rgba(255,255,255,.22)}
+.ap-cv{max-width:820px;background:#262a33;border-color:rgba(255,255,255,.22)}
 .ap-map{position:relative;max-width:820px;margin:0 auto}
 .ap-newcmd{width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:1.5px dashed rgba(249,5,108,.7);background:rgba(249,5,108,.1);color:inherit;cursor:pointer;font-family:inherit;text-align:left}
 .ap-newcmd:hover,.ap-newcmd.open{background:rgba(249,5,108,.2);border-style:solid}
