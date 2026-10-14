@@ -1,0 +1,7 @@
+/* Field Sim 3D: no live backdrop blur over the WebGL canvas. It is re-composited every frame and is expensive on integrated GPUs;
+   the panels get a slightly more opaque background instead. */
+*, *::before, *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.topbar2 { background: rgba(12, 12, 16, .88) !important; }
+.fs-tool { background: rgba(9, 9, 11, .82) !important; }
+body.immersive .side > .card2:first-child, body.immersive .side > .card2:nth-child(3) { background: rgba(9, 9, 11, .84) !important; }
+.overlay-screen#countdown { background: rgba(9, 9, 11, .35); }

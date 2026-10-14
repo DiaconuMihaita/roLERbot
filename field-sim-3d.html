@@ -26,6 +26,8 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/GammaCorrectionShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js"></script>
   <style>
     :root { --red: #ff4d5e; --blue: #3d8bff; --purple: #ffb81f; --green: #ffe27a; }
     * { box-sizing: border-box; }
@@ -105,6 +107,7 @@
 <link href="css/online.css?v=1" rel="stylesheet" />
   <link href="css/settings.css?v=2" rel="stylesheet" />
   <link href="css/menu.css?v=3" rel="stylesheet" />
+  <link href="css/perf.css?v=1" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="js/supabase-config.js"></script>
 </head>
@@ -823,12 +826,12 @@
     } else {
       const V3 = THREE.Vector3;
       const DEV = window.devicePixelRatio || 1;
-      let dpr = Math.min(DEV, 1.5);
+      let dpr = Math.min(DEV, 1.0);
       const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
       renderer.setPixelRatio(dpr);
       renderer.outputEncoding = THREE.sRGBEncoding;
       renderer.toneMapping = THREE.NoToneMapping;
-      renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.VSMShadowMap; renderer.shadowMap.autoUpdate = false;
+      renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
       stageEl.insertBefore(renderer.domElement, stageEl.firstChild);
       renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
       cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2';
@@ -838,27 +841,28 @@
       scene.background = C(0x1d1f24); scene.fog = new THREE.Fog(C(0x1d1f24), 380, 900);
       const camera = new THREE.PerspectiveCamera(44, 1, 1, 1500);
 
-      let composer = null, bloomPass = null;
+      let composer = null, bloomPass = null, fxaaPass = null;
       function resize() {
         const w = stageEl.clientWidth || 800, h = stageEl.clientHeight || 500;
         renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
-        if (composer) { composer.setPixelRatio && composer.setPixelRatio(dpr); composer.setSize(w, h); }
-        cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+        if (composer) { composer.setPixelRatio && composer.setPixelRatio(dpr); composer.setSize(w, h); if (fxaaPass) fxaaPass.material.uniforms['resolution'].value.set(1 / (w * dpr), 1 / (h * dpr)); }
+        { const ovs = Math.min(dpr, 1280 / w); cv.width = Math.round(w * ovs); cv.height = Math.round(h * ovs); }
       }
       resize();
       if (THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass && THREE.ShaderPass && THREE.GammaCorrectionShader) {
         try {
           const w = stageEl.clientWidth || 800, h = stageEl.clientHeight || 500;
-          const rt = new THREE.WebGLMultisampleRenderTarget(w * dpr, h * dpr, { format: THREE.RGBAFormat }); rt.samples = 2;
+          const rt = new THREE.WebGLRenderTarget(w * dpr, h * dpr, { format: THREE.RGBAFormat });
           composer = new THREE.EffectComposer(renderer, rt);
           composer.addPass(new THREE.RenderPass(scene, camera));
           bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(Math.round(w / 2), Math.round(h / 2)), 0.38, 0.55, 0.86); composer.addPass(bloomPass);
+          { const bs = bloomPass.setSize.bind(bloomPass); bloomPass.setSize = (bw, bh) => bs(Math.round(bw / 2), Math.round(bh / 2)); }
           composer.addPass(new THREE.ShaderPass({
             uniforms: { tDiffuse: { value: null }, exposure: { value: 1.1 }, mixAmt: { value: .62 }, sat: { value: 1.1 }, vig: { value: .2 } },
             vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-            fragmentShader: 'uniform sampler2D tDiffuse; uniform float exposure, mixAmt, sat, vig; varying vec2 vUv; vec3 aces(vec3 x){ x *= 0.62; return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); } void main(){ vec4 c = texture2D(tDiffuse, vUv); vec3 col = c.rgb * exposure; col = mix(clamp(col, 0.0, 1.0), aces(col), mixAmt); float l = dot(col, vec3(0.2126, 0.7152, 0.0722)); col = mix(vec3(l), col, sat); col *= 1.0 - vig * smoothstep(0.35, 0.9, distance(vUv, vec2(0.5))); gl_FragColor = vec4(col, c.a); }'
+            fragmentShader: 'uniform sampler2D tDiffuse; uniform float exposure, mixAmt, sat, vig; varying vec2 vUv; vec3 aces(vec3 x){ x *= 0.62; return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); } void main(){ vec4 c = texture2D(tDiffuse, vUv); vec3 col = c.rgb * exposure; col = mix(clamp(col, 0.0, 1.0), aces(col), mixAmt); float l = dot(col, vec3(0.2126, 0.7152, 0.0722)); col = mix(vec3(l), col, sat); col *= 1.0 - vig * smoothstep(0.35, 0.9, distance(vUv, vec2(0.5))); col = mix(col * 12.92, 1.055 * pow(col, vec3(0.41666)) - 0.055, step(vec3(0.0031308), col)); gl_FragColor = vec4(col, c.a); }'
           }));
-          composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
+          if (THREE.FXAAShader) { fxaaPass = new THREE.ShaderPass(THREE.FXAAShader); composer.addPass(fxaaPass); }
           resize();
         } catch (e) { console.warn('post-processing off', e && e.message); composer = null; }
       }
@@ -893,16 +897,14 @@
       }
 
       // ---- lights ----
-      scene.add(new THREE.HemisphereLight(C(0xe9efff), C(0x4a4e58), 0.78));
+      scene.add(new THREE.HemisphereLight(C(0xe9efff), C(0x4a4e58), 0.9));
       const sun = new THREE.DirectionalLight(C(0xfff3e2), 0.72);
       sun.position.set(-30, 190, 150); sun.castShadow = true;
       sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.3; sun.shadow.radius = 4; sun.shadow.blurSamples = 8;
       Object.assign(sun.shadow.camera, { left: -100, right: 100, top: 100, bottom: -100, near: 20, far: 460 });
       sun.target.position.set(72, 0, 72); scene.add(sun, sun.target);
-      const fill = new THREE.DirectionalLight(C(0xdfe6ff), 0.25); fill.position.set(160, 90, -90); scene.add(fill);
-      const rim = new THREE.PointLight(C(0xf9056c), 0.08, 600, 1.6); rim.position.set(72, 110, -90); scene.add(rim);
+      const fill = new THREE.DirectionalLight(C(0xdfe6ff), 0.45); fill.position.set(160, 90, -90); scene.add(fill);
 
-      [[-40, 95, -40], [184, 95, -40], [-40, 95, 184], [184, 95, 184]].forEach(([x, y, z]) => { const sp = new THREE.SpotLight(C(0xfff0dc), .5, 460, .85, 1, 1.1); sp.position.set(x, y, z); sp.target.position.set(72, 0, 72); scene.add(sp, sp.target); });
       const ledRed = new THREE.PointLight(C(0xff4d5e), .75, 120, 1.5); ledRed.position.set(72, 9, IN + 8); scene.add(ledRed);
       const ledBlue = new THREE.PointLight(C(0x3d8bff), .75, 120, 1.5); ledBlue.position.set(72, 9, -8); scene.add(ledBlue);
 
@@ -1037,8 +1039,10 @@
       function loadCad() {
         if (!THREE.GLTFLoader) { console.warn('GLTFLoader missing, using the built-in field'); LOAD.cadDone = true; return; }
         const MPI = 39.3701;
-        new THREE.GLTFLoader().load('assets/cad/field_cad.glb?v=4', (gltf) => {
+        const ldr = new THREE.GLTFLoader(); if (window.MeshoptDecoder && ldr.setMeshoptDecoder) ldr.setMeshoptDecoder(window.MeshoptDecoder);   // the model is meshopt-compressed (1.9 MB instead of 18 MB)
+        ldr.load('assets/cad/field_cad.glb?v=5', (gltf) => {
           const meshes = []; gltf.scene.traverse((o) => { if (o.isMesh) meshes.push(o); });
+          meshes.forEach((m) => { if (m.parent && m.parent.name && !m.name.includes('|')) m.name = m.parent.name; });   // gltfpack keeps the names on the parent node
           const clearMat = (op) => new THREE.MeshPhysicalMaterial({ color: C(0xdbe8f0), transparent: true, opacity: op, roughness: .04, metalness: 0, clearcoat: 1, clearcoatRoughness: .05, envMapIntensity: 1.4, side: THREE.DoubleSide, depthWrite: false });
           meshes.forEach((m) => {
             const clear = m.name.startsWith('glass') || m.name.startsWith('hiveskin');
@@ -1326,20 +1330,20 @@
 
       // ---- quality governor ----
       const Q = [
-        { dpr: 1.5, samples: 2, bloom: true, shadow: 2048, every: 2 },
-        { dpr: 1.25, samples: 2, bloom: true, shadow: 1536, every: 2 },
-        { dpr: 1.0, samples: 0, bloom: false, shadow: 1024, every: 3 },
-        { dpr: 0.8, samples: 0, bloom: false, shadow: 1024, every: 4 }
+        { dpr: 1.0, fxaa: true, bloom: true, shadow: 2048, every: 2 },
+        { dpr: 1.0, fxaa: true, bloom: false, shadow: 1024, every: 2 },
+        { dpr: 0.85, fxaa: true, bloom: false, shadow: 1024, every: 3 },
+        { dpr: 0.7, fxaa: false, bloom: false, shadow: 1024, every: 4 }
       ];
       let qLevel = 0, qAuto = true, shadowEvery = 2, frameNo = 0, tAcc = 0, nAcc = 0, fastRun = 0, qCool = 0;
-      const qName = () => { const el = $('qName'); if (el) el.textContent = (qAuto ? 'AUTO · ' : '') + ['RIDICATĂ', 'MEDIE', 'MICĂ', 'MINIMĂ'][qLevel]; };
+      const qName = () => { const lab = (qAuto ? 'AUTO · ' : '') + ['RIDICATĂ', 'MEDIE', 'MICĂ', 'MINIMĂ'][qLevel]; CFG.qLabel = lab; const el = $('qName'); if (el) el.textContent = lab; };
       function applyQuality(l) {
         qLevel = clamp(l, 0, Q.length - 1); const q = Q[qLevel];
         dpr = Math.min(DEV, q.dpr) * (CFG.gfx.res / 100); renderer.setPixelRatio(dpr); shadowEvery = q.every;
         if (sun.shadow.mapSize.x !== q.shadow) { sun.shadow.mapSize.set(q.shadow, q.shadow); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
         if (composer) {
-          composer.renderTarget1.samples = q.samples; composer.renderTarget2.samples = q.samples; composer.renderTarget1.dispose(); composer.renderTarget2.dispose();
           if (bloomPass) bloomPass.enabled = q.bloom && CFG.gfx.bloom;
+          if (fxaaPass) fxaaPass.enabled = q.fxaa;
         }
         resize(); qName();
       }
@@ -1586,7 +1590,7 @@
       // FPS counter + hotkey hint
       const fpsEl = mk('div', { class: 'set-fps hidden' }); document.body.append(fpsEl);
       function updateFps() { fpsEl.classList.toggle('hidden', !CFG.gfx.fps); }
-      setInterval(() => { if (CFG.gfx.fps) fpsEl.textContent = Math.round(CFG.fps || 0) + ' FPS'; }, 300);
+      setInterval(() => { if (CFG.gfx.fps) fpsEl.textContent = Math.round(CFG.fps || 0) + ' FPS · ' + (CFG.qLabel || ''); }, 300);
       function updateHint() { const k = $('kbSet'); if (k) k.textContent = keyLabel(CFG.binds.settings[0] || CFG.binds.settings[1]); }
       updateFps(); updateHint();
     }
