@@ -181,3 +181,43 @@ body.embed .welcome { margin-top: 3vh; }
 .ap-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 .ap-seg button { padding: 8px 13px; background: transparent; border: 0; color: var(--dim); font: 600 13px var(--body); cursor: pointer; }
 .ap-seg button.on.red { background: var(--red); color: #fff; } .ap-seg button.on.blue { background: var(--blue); color: #fff; }
+
+/* ---- editor autonom v2: bară de unelte, cronologie, verificări ---- */
+.ap-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.ap-tool{background:#17171b;color:var(--text,#f4f1ec);border:1px solid rgba(244,241,236,.2);border-radius:10px;width:38px;height:36px;font-size:16px;cursor:pointer}
+.ap-tool:hover{border-color:#ff3d8f}
+.ap-seg button.pink.on,.ap-seg button.on.pink{background:#f9056c;color:#fff}
+.ap-tlrow{display:flex;gap:10px;align-items:center;margin-top:10px}
+.ap-tlrow input[type=range]{flex:1;accent-color:#ff3d8f}
+.ap-tlrow span{font:600 12px "JetBrains Mono",monospace;min-width:92px;text-align:right;color:#b9b5bd}
+.ap-tl{position:relative;height:26px;margin-top:6px;background:#16171c;border:1px solid rgba(244,241,236,.12);border-radius:8px;overflow:hidden}
+.ap-tl i{position:absolute;top:3px;bottom:3px;border-radius:4px;background:#555;cursor:pointer;opacity:.9}
+.ap-tl i.sel{outline:2px solid #ff3d8f}
+.ap-tl i.over{opacity:.35}
+.ap-tl .tl-move{background:#3f9d6a}.ap-tl .tl-shoot{background:#f9056c}.ap-tl .tl-intake{background:#d98a2b}.ap-tl .tl-take,.ap-tl .tl-deposit{background:#ffc933}.ap-tl .tl-wait{background:#6c7ae0}.ap-tl .tl-settle{background:#444}
+.ap-tl u{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed #ff6b7a}
+.ap-tl s{position:absolute;top:0;bottom:0;width:2px;background:#fff;text-decoration:none}
+.ap-quick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.ap-qbtn{display:flex;gap:8px;align-items:center;padding:10px;border-radius:10px;background:#17171b;color:inherit;border:1px solid rgba(244,241,236,.18);font:600 13px "Instrument Sans",sans-serif;cursor:pointer;text-align:left}
+.ap-qbtn:hover{border-color:#ff3d8f}
+.ap-presets{display:grid;gap:6px;margin:6px 0}
+.ap-preset{text-align:left;padding:8px 10px;border-radius:10px;background:#131316;color:inherit;border:1px solid rgba(244,241,236,.12);cursor:pointer;font-family:inherit}
+.ap-preset b{display:block;font-size:13px}.ap-preset small{color:#9d99a3}
+.ap-preset:hover{border-color:#ff3d8f}
+.ap-sub{font:600 12px "Instrument Sans",sans-serif;color:#9d99a3;margin:12px 0 6px}
+.ap-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.ap-chip{display:flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;background:#17171b;color:inherit;border:1px solid rgba(244,241,236,.18);font:600 12px "Instrument Sans",sans-serif;cursor:pointer}
+.ap-chip i{font-style:normal;color:#ffc933;font-family:"JetBrains Mono",monospace}
+.ap-chip:hover{border-color:#ffc933}
+.ap-tags{display:flex;gap:3px;color:#ffc933;font:700 11px "JetBrains Mono",monospace;flex:1}
+.ap-tags i{font-style:normal}
+.ap-row em{font-style:normal;color:#ffc933;font-weight:800;margin-right:4px}
+.ap-row.warn{border-color:rgba(255,201,51,.5)}
+.ap-mv{display:flex;gap:2px}
+.ap-mv button{background:none;border:0;color:#9d99a3;cursor:pointer;padding:2px 5px}
+.ap-mv button:hover{color:#fff}
+.ap-checks{margin:10px 0;padding:10px 12px;border-radius:10px;background:rgba(255,201,51,.08);border:1px solid rgba(255,201,51,.35)}
+.ap-checks b{color:#ffc933;font-size:12px}
+.ap-checks p{margin:6px 0 0;font-size:12.5px;cursor:pointer}
+.ap-act input{width:58px}
+.lg-tag{font-style:normal}
