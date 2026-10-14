@@ -2357,7 +2357,11 @@
         if (tAim && r.cd <= 0 && r.hold.length) inp.shoot = true;
         if (r.shots - A.s0 >= (a.n || 4) || !r.hold.length || A.at > 5) next();
       } else if (a.t === 'deposit') { rot(nearFlower()); inp.dep = true; if (r.hold.length < A.h0 || A.at > 1.4) next(); }
-      else if (a.t === 'take') { rot(nearFlower()); inp.take = true; if (capOf(r) > A.c0 || A.at > 1.4) next(); }
+      else if (a.t === 'take') {   // face the flower and pull n pollen balls out of it, one after another
+        const n = clamp(Math.round(a.n || 1), 1, 4), da = rot(nearFlower()), fl = flowerAhead(r);
+        inp.take = Math.abs(da) < 0.35;
+        if (capOf(r) - A.c0 >= n || capOf(r) >= HOLD || (fl && !fl.stack.length) || A.at > 1 + n * 0.75) next();
+      }
       else { const hw = headingFor(); if (hw !== null) rot(hw); if (A.at >= (a.s || 1)) next(); }   // wait / intake
       return inp;
     }

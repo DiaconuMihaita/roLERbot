@@ -508,11 +508,11 @@
     if (!Array.isArray(S.autos)) S.autos = [{ name: 'Tragere în stup', pts: clonePts(PRESETS['Tragere în stup']) }, { name: 'Tragere și mingi din grădină', pts: clonePts(PRESETS['Tragere și mingi din grădină']) }, { name: 'Auto 3', pts: [] }];
     if (typeof S.autoSel !== 'number') S.autoSel = -1;
   }
-  let edSlot = 0, edSel = -1, edPlay = null, edCv = null, edMode = 'add', edSnap = false, edUndo = [], edRedo = [], edLast = '', edKeysBound = false;
-  const ACT_LABEL = { shoot: 'Trage în stup', intake: 'Intake', deposit: 'Depune în floare', take: 'Ia polen din floare', wait: 'Așteaptă' };
+  let edSlot = 0, edSel = -1, edPlay = null, edCv = null, edMode = 'add', edSnap = false, edUndo = [], edRedo = [], edLast = '', edKeysBound = false, edHover = null, edPick = false;
+  const ACT_LABEL = { shoot: 'Trage în stup', intake: 'Intake', deposit: 'Depune în floare', take: 'Ia mingi din floare', wait: 'Așteaptă' };
   const ACT_TAG = { shoot: 'T', intake: 'I', deposit: 'D', take: 'L', wait: 'W' };
-  const ACT_SHORT = { shoot: 'Trage', intake: 'Intake', deposit: 'Depune', take: 'Ia polen', wait: 'Așteaptă' };
-  const actDur = (a) => (a.t === 'shoot' ? (a.n || 4) * 0.62 + 0.4 : a.t === 'wait' || a.t === 'intake' ? a.s || 1 : 0.9);
+  const ACT_SHORT = { shoot: 'Trage', intake: 'Intake', deposit: 'Depune', take: 'Ia mingi', wait: 'Așteaptă' };
+  const actDur = (a) => (a.t === 'shoot' ? (a.n || 4) * 0.62 + 0.4 : a.t === 'take' ? (a.n || 1) * 0.7 + 0.3 : a.t === 'wait' || a.t === 'intake' ? a.s || 1 : 0.9);
   const hitsFrame = (ax, ay, bx, by) => { const f = FLD.FRAME, pad = FLD.R + 3; for (let t = 0; t <= 1; t += 0.04) { const x = ax + (bx - ax) * t, y = ay + (by - ay) * t; if (x > f.x0 - pad && x < f.x1 + pad && y > f.y0 - pad && y < f.y1 + pad) return true; } return false; };
   const curPts = () => S.autos[edSlot].pts;
   const sn = (v) => (edSnap ? Math.round(v / 3) * 3 : v);
@@ -565,36 +565,63 @@
   // ---- drawing ----
   function drawEditor() {
     const cv = edCv; if (!cv || !cv.isConnected || !S) return; const ctx = cv.getContext('2d'), W = cv.width, sc = W / FLD.IN, pts = curPts(), X = (v) => v * sc, chk = checkPts(pts), bad = new Set(chk.map((c) => c.i));
-    ctx.clearRect(0, 0, W, W); ctx.fillStyle = '#16171c'; ctx.fillRect(0, 0, W, W);
-    ctx.strokeStyle = edSnap ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.06)'; ctx.lineWidth = 1; const gs = edSnap ? 3 : 24; for (let k = gs; k < FLD.IN; k += gs) { ctx.beginPath(); ctx.moveTo(X(k), 0); ctx.lineTo(X(k), W); ctx.moveTo(0, X(k)); ctx.lineTo(W, X(k)); ctx.stroke(); }
+    const MONO = '"JetBrains Mono", monospace', fs = (k, w) => (w || 600) + ' ' + Math.round(W / k) + 'px ' + MONO, R = 9;
+    ctx.clearRect(0, 0, W, W);
+    const bg = ctx.createLinearGradient(0, 0, 0, W); bg.addColorStop(0, '#1a1b22'); bg.addColorStop(1, '#14151a'); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, W);
+    for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) if ((r + c) % 2 === 0) { ctx.fillStyle = 'rgba(255,255,255,.025)'; ctx.fillRect(X(c * 24), X(r * 24), X(24), X(24)); }
+    ctx.strokeStyle = edSnap ? 'rgba(255,255,255,.14)' : 'rgba(255,255,255,.07)'; ctx.lineWidth = 1; const gs = edSnap ? 3 : 24; for (let k = gs; k < FLD.IN; k += gs) { ctx.beginPath(); ctx.moveTo(X(k), 0); ctx.lineTo(X(k), W); ctx.moveTo(0, X(k)); ctx.lineTo(W, X(k)); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.font = fs(64); ctx.textAlign = 'left'; for (let k = 24; k < FLD.IN; k += 24) { ctx.fillText(String(k), X(k) + 3, W - 5); ctx.fillText(String(k), 4, X(k) - 3); }
     const zone = (z, col) => { ctx.fillStyle = col; ctx.fillRect(X(z.x), X(z.y), X(z.w), X(z.h)); };
     zone(FLD.LZ.red, 'rgba(255,77,94,.28)'); zone(FLD.LZ.blue, 'rgba(61,139,255,.28)');
     ctx.fillStyle = 'rgba(61,139,255,.55)'; ctx.fillRect(0, 0, X(3.5), X(23)); ctx.fillStyle = 'rgba(255,77,94,.55)'; ctx.fillRect(X(FLD.IN - 3.5), X(FLD.IN - 23), X(3.5), X(23));
-    const f = FLD.FRAME; ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.fillRect(X(f.x0), X(f.y0), X(f.x1 - f.x0), X(f.y1 - f.y0)); ctx.strokeStyle = 'rgba(249,5,108,.8)'; ctx.lineWidth = 2; ctx.strokeRect(X(f.x0), X(f.y0), X(f.x1 - f.x0), X(f.y1 - f.y0));
-    [['blue', '#3d8bff'], ['red', '#ff4d5e']].forEach(([al, col]) => FLD.CELLS[al].forEach((c, ci) => { ctx.strokeStyle = col; ctx.lineWidth = al === 'red' && ci === 1 ? 3 : 1.5; ctx.strokeRect(X(c.x - 8), X(c.y - 10), X(16), X(20)); }));
-    ctx.strokeStyle = '#ffc933'; ctx.lineWidth = 2; FLD.FLOWERS.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(X(x), X(y), X(4.1), 0, 6.283); ctx.stroke(); });
-    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.font = '600 ' + Math.round(W / 46) + 'px "JetBrains Mono", monospace'; ctx.textAlign = 'center'; ctx.fillText('STUP', X(72), X(72) + 4); ctx.fillText('ZONA ROȘIE', X(37), X(141.4)); ctx.fillText('ZONA ALBASTRĂ', X(107), X(8));
-    ctx.fillStyle = 'rgba(255,201,51,.5)'; ctx.font = '600 ' + Math.round(W / 60) + 'px "JetBrains Mono", monospace'; ctx.fillText('grădină', X(138), X(116)); ctx.fillStyle = 'rgba(255,77,94,.5)'; ctx.fillText('celula ta', X(85.5), X(85) + X(13));
-    ctx.save(); ctx.translate(X(FLD.START.x), X(FLD.START.y)); ctx.fillStyle = 'rgba(255,77,94,.35)'; ctx.strokeStyle = '#ff4d5e'; ctx.lineWidth = 2; ctx.fillRect(-X(9), -X(9), X(18), X(18)); ctx.strokeRect(-X(9), -X(9), X(18), X(18)); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -X(9)); ctx.stroke(); ctx.restore();
-    let px = FLD.START.x, py = FLD.START.y; ctx.lineWidth = 3; ctx.lineJoin = 'round';
-    pts.forEach((p) => { const b = hitsFrame(px, py, p.x, p.y); ctx.strokeStyle = b ? '#ff6b7a' : '#7be0a0'; ctx.setLineDash(b ? [8, 6] : []); ctx.beginPath(); ctx.moveTo(X(px), X(py)); ctx.lineTo(X(p.x), X(p.y)); ctx.stroke(); px = p.x; py = p.y; }); ctx.setLineDash([]);
-    pts.forEach((p, i) => {   // aiming / working lines
+    const gz = ctx.createRadialGradient(X(133), X(133), 0, X(133), X(133), X(24)); gz.addColorStop(0, 'rgba(255,201,51,.16)'); gz.addColorStop(1, 'rgba(255,201,51,0)'); ctx.fillStyle = gz; ctx.fillRect(X(100), X(100), X(44), X(44));
+    const f = FLD.FRAME; ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(X(f.x0), X(f.y0), X(f.x1 - f.x0), X(f.y1 - f.y0)); ctx.strokeStyle = 'rgba(249,5,108,.85)'; ctx.lineWidth = 2; ctx.strokeRect(X(f.x0), X(f.y0), X(f.x1 - f.x0), X(f.y1 - f.y0));
+    [['blue', '#3d8bff'], ['red', '#ff4d5e']].forEach(([al, col]) => FLD.CELLS[al].forEach((c, ci) => { ctx.strokeStyle = col; ctx.fillStyle = al === 'red' && ci === 1 ? 'rgba(255,77,94,.16)' : 'rgba(255,255,255,.03)'; ctx.lineWidth = al === 'red' && ci === 1 ? 3 : 1.5; ctx.fillRect(X(c.x - 8), X(c.y - 10), X(16), X(20)); ctx.strokeRect(X(c.x - 8), X(c.y - 10), X(16), X(20)); }));
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = fs(46, 700); ctx.fillText('STUP', X(72), X(72) + 4); ctx.fillText('ZONA ROȘIE', X(37), X(141.4)); ctx.fillText('ZONA ALBASTRĂ', X(107), X(8));
+    ctx.fillStyle = 'rgba(255,201,51,.6)'; ctx.font = fs(60); ctx.fillText('grădină', X(133), X(112)); ctx.fillStyle = 'rgba(255,77,94,.7)'; ctx.fillText('celula ta', X(85.5), X(85) + X(13.5));
+    const selP = edSel >= 0 ? pts[edSel] : null, wantsFl = selP && ((selP.act || []).some((a) => a.t === 'take' || a.t === 'deposit') || selP.h === 'flower');
+    FLD.FLOWERS.forEach(([x, y], k) => {
+      if (wantsFl) { ctx.strokeStyle = 'rgba(255,201,51,.22)'; ctx.setLineDash([5, 6]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(x), X(y), X(22), 0, 6.283); ctx.stroke(); ctx.setLineDash([]); }
+      ctx.fillStyle = 'rgba(255,201,51,.22)'; ctx.strokeStyle = '#ffc933'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(X(x), X(y), X(4.6), 0, 6.283); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#ffc933'; ctx.font = fs(62, 800); const ly = y < 14 ? y + 11 : y - 7, lx = x < 14 ? x + 9 : x > 130 ? x - 9 : x; ctx.fillText('F' + (k + 1), X(lx), X(ly));
+    });
+    ctx.save(); ctx.translate(X(FLD.START.x), X(FLD.START.y)); ctx.fillStyle = 'rgba(255,77,94,.3)'; ctx.strokeStyle = '#ff4d5e'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.fillRect(-X(R), -X(R), X(R * 2), X(R * 2)); ctx.strokeRect(-X(R), -X(R), X(R * 2), X(R * 2)); ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -X(R)); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = '#ff8a96'; ctx.font = fs(62, 800); ctx.fillText('START', X(FLD.START.x), X(FLD.START.y) + X(R + 4.5));
+    // path: glow + line + direction arrows
+    let px = FLD.START.x, py = FLD.START.y; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    pts.forEach((p) => {
+      const b = hitsFrame(px, py, p.x, p.y), col = b ? '#ff6b7a' : '#7be0a0';
+      ctx.strokeStyle = b ? 'rgba(255,107,122,.18)' : 'rgba(123,224,160,.16)'; ctx.lineWidth = 11; ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(X(px), X(py)); ctx.lineTo(X(p.x), X(p.y)); ctx.stroke();
+      ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.setLineDash(b ? [8, 6] : []); ctx.beginPath(); ctx.moveTo(X(px), X(py)); ctx.lineTo(X(p.x), X(p.y)); ctx.stroke(); ctx.setLineDash([]);
+      const L = Math.hypot(p.x - px, p.y - py);
+      if (L > 14) { const mx = (px + p.x) / 2, my = (py + p.y) / 2, an = Math.atan2(p.y - py, p.x - px); ctx.save(); ctx.translate(X(mx), X(my)); ctx.rotate(an); ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(X(2.6), 0); ctx.lineTo(-X(1.8), -X(2.2)); ctx.lineTo(-X(1.8), X(2.2)); ctx.closePath(); ctx.fill(); ctx.restore(); }
+      px = p.x; py = p.y;
+    });
+    pts.forEach((p) => {   // aiming / working lines
       const acts = p.act || [];
-      if (acts.some((a) => a.t === 'shoot')) { const c = FLD.CELLS.red[1]; ctx.strokeStyle = 'rgba(249,5,108,.55)'; ctx.setLineDash([4, 5]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(p.x), X(p.y)); ctx.lineTo(X(c.x), X(c.y)); ctx.stroke(); ctx.setLineDash([]); }
-      if (acts.some((a) => a.t === 'take' || a.t === 'deposit')) { let b = null, bd = 1e9; FLD.FLOWERS.forEach(([x, y]) => { const d = Math.hypot(x - p.x, y - p.y); if (d < bd) { bd = d; b = [x, y]; } }); ctx.strokeStyle = 'rgba(255,201,51,.6)'; ctx.setLineDash([4, 5]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(p.x), X(p.y)); ctx.lineTo(X(b[0]), X(b[1])); ctx.stroke(); ctx.setLineDash([]); }
+      if (acts.some((a) => a.t === 'shoot')) { const c = FLD.CELLS.red[1]; ctx.strokeStyle = 'rgba(249,5,108,.6)'; ctx.setLineDash([4, 5]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(p.x), X(p.y)); ctx.lineTo(X(c.x), X(c.y)); ctx.stroke(); ctx.setLineDash([]); }
+      if (acts.some((a) => a.t === 'take' || a.t === 'deposit') || p.h === 'flower') {
+        let b = null, bd = 1e9; FLD.FLOWERS.forEach(([x, y]) => { const d = Math.hypot(x - p.x, y - p.y); if (d < bd) { bd = d; b = [x, y]; } });
+        ctx.strokeStyle = 'rgba(255,201,51,.7)'; ctx.setLineDash([4, 5]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(p.x), X(p.y)); ctx.lineTo(X(b[0]), X(b[1])); ctx.stroke(); ctx.setLineDash([]);
+        const tk = acts.filter((a) => a.t === 'take').reduce((s, a) => s + (a.n || 1), 0); if (tk) { ctx.fillStyle = '#ffc933'; ctx.font = fs(48, 800); ctx.fillText('×' + tk, X((p.x + b[0]) / 2), X((p.y + b[1]) / 2) - X(2)); }
+      }
     });
     px = FLD.START.x; py = FLD.START.y;
     pts.forEach((p, i) => {
       const sel = i === edSel, a = headingOf(p, { x: px, y: py });
+      ctx.save(); ctx.translate(X(p.x), X(p.y)); ctx.rotate(a + Math.PI / 2); ctx.fillStyle = sel ? 'rgba(255,61,143,.16)' : 'rgba(255,255,255,.05)'; ctx.strokeStyle = sel ? 'rgba(255,61,143,.75)' : 'rgba(255,255,255,.18)'; ctx.lineWidth = sel ? 2 : 1.2; ctx.fillRect(-X(R), -X(R), X(R * 2), X(R * 2)); ctx.strokeRect(-X(R), -X(R), X(R * 2), X(R * 2)); ctx.strokeStyle = sel ? '#ff3d8f' : 'rgba(255,255,255,.5)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-X(R), -X(R)); ctx.lineTo(X(R), -X(R)); ctx.stroke(); ctx.restore();
       ctx.strokeStyle = sel ? '#ff3d8f' : '#b9b5bd'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(p.x), X(p.y)); ctx.lineTo(X(p.x + Math.cos(a) * 8), X(p.y + Math.sin(a) * 8)); ctx.stroke();
-      ctx.fillStyle = '#101013'; ctx.strokeStyle = sel ? '#ff3d8f' : bad.has(i) ? '#ffc933' : '#7be0a0'; ctx.lineWidth = sel ? 3 : 2; ctx.beginPath(); ctx.arc(X(p.x), X(p.y), X(sel ? 4 : 3.4), 0, 6.283); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.font = '700 ' + Math.round(W / 40) + 'px "JetBrains Mono", monospace'; ctx.textAlign = 'center'; ctx.fillText(String(i + 1), X(p.x), X(p.y) + W / 105);
-      (p.act || []).forEach((ac, k) => { ctx.fillStyle = '#ffc933'; ctx.font = '700 ' + Math.round(W / 50) + 'px "JetBrains Mono", monospace'; ctx.fillText(ACT_TAG[ac.t] || '?', X(p.x) + (k - ((p.act.length - 1) / 2)) * W / 40, X(p.y) - X(6.3)); });
-      if (bad.has(i)) { ctx.fillStyle = '#ffc933'; ctx.font = '800 ' + Math.round(W / 36) + 'px "Bricolage Grotesque", sans-serif'; ctx.fillText('!', X(p.x) + X(5.5), X(p.y) - X(2.5)); }
-      if (sel) { const hx = p.x + Math.cos(a) * 13, hy = p.y + Math.sin(a) * 13; ctx.strokeStyle = 'rgba(255,61,143,.6)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(X(p.x), X(p.y)); ctx.lineTo(X(hx), X(hy)); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#ff3d8f'; ctx.beginPath(); ctx.arc(X(hx), X(hy), X(2.6), 0, 6.283); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); }
+      ctx.fillStyle = '#101013'; ctx.strokeStyle = sel ? '#ff3d8f' : bad.has(i) ? '#ffc933' : '#7be0a0'; ctx.lineWidth = sel ? 3.5 : 2.5; ctx.beginPath(); ctx.arc(X(p.x), X(p.y), X(sel ? 4.2 : 3.6), 0, 6.283); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = fs(38, 700); ctx.fillText(String(i + 1), X(p.x), X(p.y) + W / 100);
+      const acts = p.act || [];
+      acts.forEach((ac, k) => { const cx = X(p.x) + (k - (acts.length - 1) / 2) * 17 * (W / 720), cy = X(p.y) - X(R + 2.2), rr = 8 * (W / 720); ctx.fillStyle = 'rgba(16,16,19,.92)'; ctx.strokeStyle = '#ffc933'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, rr, 0, 6.283); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#ffc933'; ctx.font = fs(58, 800); ctx.fillText(ACT_TAG[ac.t] || '?', cx, cy + rr * 0.38); });
+      if (bad.has(i)) { ctx.fillStyle = '#ffc933'; ctx.font = '800 ' + Math.round(W / 30) + 'px "Bricolage Grotesque", sans-serif'; ctx.fillText('!', X(p.x) + X(6), X(p.y) + X(8)); }
+      if (sel) { const hx = p.x + Math.cos(a) * 13, hy = p.y + Math.sin(a) * 13; ctx.strokeStyle = 'rgba(255,61,143,.6)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(X(p.x), X(p.y)); ctx.lineTo(X(hx), X(hy)); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#ff3d8f'; ctx.beginPath(); ctx.arc(X(hx), X(hy), X(2.8), 0, 6.283); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); }
       px = p.x; py = p.y;
     });
-    if (edPlay && (edPlay.t > 0 || edPlay.playing)) { const q = poseAt(edPlay.tl, edPlay.t); ctx.save(); ctx.translate(X(q.x), X(q.y)); ctx.rotate(q.a + Math.PI / 2); ctx.fillStyle = 'rgba(255,61,143,.28)'; ctx.strokeStyle = '#ff3d8f'; ctx.lineWidth = 3; ctx.fillRect(-X(9), -X(9), X(18), X(18)); ctx.strokeRect(-X(9), -X(9), X(18), X(18)); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -X(9)); ctx.stroke(); ctx.restore(); }
+    if (edPlay && (edPlay.t > 0 || edPlay.playing)) { const q = poseAt(edPlay.tl, edPlay.t); ctx.save(); ctx.translate(X(q.x), X(q.y)); ctx.rotate(q.a + Math.PI / 2); ctx.fillStyle = 'rgba(255,61,143,.3)'; ctx.strokeStyle = '#ff3d8f'; ctx.lineWidth = 3; ctx.fillRect(-X(R), -X(R), X(R * 2), X(R * 2)); ctx.strokeRect(-X(R), -X(R), X(R * 2), X(R * 2)); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -X(R)); ctx.stroke(); ctx.restore(); }
+    if (edHover && !edPlay) { const h = edHover, tx = Math.min(X(h.x) + 12, W - 96), ty = Math.max(X(h.y) - 10, 22); ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(X(h.x), 0); ctx.lineTo(X(h.x), W); ctx.moveTo(0, X(h.y)); ctx.lineTo(W, X(h.y)); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = 'rgba(10,10,13,.88)'; ctx.fillRect(tx - 5, ty - 15, 92, 21); ctx.fillStyle = '#fff'; ctx.font = fs(48, 600); ctx.textAlign = 'left'; ctx.fillText('x ' + Math.round(h.x) + ' · y ' + Math.round(h.y), tx, ty); ctx.textAlign = 'center'; }
   }
   // ---- preview / scrub ----
   function stopPlay() { edPlay = null; updateTlUi(); }
@@ -628,9 +655,42 @@
     if (kind === 'shoot') { const c = FLD.CELLS.red[1]; np = { x: c.x + 27, y: c.y, h: 'cell', act: [{ t: 'shoot', n: 4 }] }; }
     else if (kind === 'garden') np = { x: 133, y: 133, h: 0, act: [{ t: 'intake', s: 1.5 }] };
     else if (kind === 'park') np = { x: 37, y: 132, h: 'auto', act: [{ t: 'wait', s: 0.5 }] };
-    else { let b = null, bd = 1e9; FLD.FLOWERS.forEach(([x, y]) => { const d = Math.hypot(x - last.x, y - last.y); if (d < bd) { bd = d; b = [x, y]; } }); const dx = 72 - b[0], dy = 72 - b[1], d = Math.hypot(dx, dy); np = { x: inField(b[0] + dx / d * 16), y: inField(b[1] + dy / d * 16), h: 'flower', act: [{ t: 'take' }, { t: 'take' }, { t: 'take' }] }; }
+    else { let b = null, bd = 1e9; FLD.FLOWERS.forEach(([x, y]) => { const d = Math.hypot(x - last.x, y - last.y); if (d < bd) { bd = d; b = [x, y]; } }); const dx = 72 - b[0], dy = 72 - b[1], d = Math.hypot(dx, dy); np = { x: inField(b[0] + dx / d * 16), y: inField(b[1] + dy / d * 16), h: 'flower', act: [{ t: 'take', n: 3 }] }; }
     insertPt(np, edSel >= 0 && edSel < A.pts.length ? edSel + 1 : A.pts.length); stopPlay(); commit(); refreshAll();
   }
+  // ---- "+ Comandă nouă": every command becomes a new point (with its action) placed after the selected one ----
+  const COMMANDS = [
+    ['move', '📍', 'Mergi la un punct', 'Doar deplasare. Apoi apasă pe teren.'],
+    ['shoot', '🎯', 'Trage în stup', 'Punct în fața celulei, cu 4 mingi.'],
+    ['flower', '🌼', 'Ia mingi din floare', 'Stă cu fața la floare și scoate mingile.'],
+    ['deposit', '🌸', 'Depune în floare', 'Pune o minge în floarea din față.'],
+    ['garden', '🍯', 'Mingi din grădină', 'Intake în zona de colț.'],
+    ['wait', '⏱', 'Așteaptă', 'Pauză de o secundă.'],
+    ['park', '🅿', 'Parcare', 'Termină în zona roșie.']
+  ];
+  function addCommand(kind) {
+    const A = S.autos[edSlot];
+    if (kind === 'move') { edMode = 'add'; edPick = false; refreshAll(); toast('Apasă pe teren ca să pui punctul.'); return; }
+    if (A.pts.length >= 14) return toast('Maximum 14 puncte.');
+    if (kind === 'wait') {
+      const at0 = edSel >= 0 && A.pts[edSel] ? edSel : A.pts.length - 1;
+      if (at0 >= 0) { A.pts[at0].act = A.pts[at0].act || []; A.pts[at0].act.push({ t: 'wait', s: 1 }); edSel = at0; }
+      else insertPt({ x: FLD.START.x, y: FLD.START.y - 20, h: 'auto', act: [{ t: 'wait', s: 1 }] }, 0);
+      edPick = false; stopPlay(); commit(); refreshAll(); return;
+    }
+    if (kind === 'deposit') {
+      const last = A.pts.length ? A.pts[A.pts.length - 1] : { x: FLD.START.x, y: FLD.START.y }; let b = null, bd = 1e9;
+      FLD.FLOWERS.forEach(([x, y]) => { const d = Math.hypot(x - last.x, y - last.y); if (d < bd) { bd = d; b = [x, y]; } });
+      const dx = 72 - b[0], dy = 72 - b[1], d = Math.hypot(dx, dy);
+      insertPt({ x: inField(b[0] + dx / d * 16), y: inField(b[1] + dy / d * 16), h: 'flower', act: [{ t: 'deposit' }] }, edSel >= 0 && edSel < A.pts.length ? edSel + 1 : A.pts.length);
+      edPick = false; stopPlay(); commit(); refreshAll(); return;
+    }
+    edPick = false; quickAdd(kind);
+  }
+  function pickerEl() {
+    return el('div', { class: 'ap-pick' }, COMMANDS.map(([k, ic, t, d]) => el('button', { class: 'ap-pk', onclick: () => addCommand(k) }, el('span', { class: 'ic', text: ic }), el('b', { text: t }), el('small', { text: d }))));
+  }
+  function togglePick() { edPick = !edPick; renderAutoPanel(); const h = document.getElementById('apPickHost'); if (h && edPick) h.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
   function bindEditor(cv) {
     edCv = cv; let drag = null; cv.tabIndex = 0;
     const at = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * FLD.IN, y: (e.clientY - r.top) / r.height * FLD.IN }; };
@@ -648,12 +708,14 @@
       refreshAll();
     });
     cv.addEventListener('pointermove', (e) => {
-      if (!drag) return; const pts = curPts(), q = pts[drag.i], p = at(e); if (!q) return;
+      if (!drag) { const h = at(e); edHover = { x: clamp(h.x, 0, FLD.IN), y: clamp(h.y, 0, FLD.IN) }; if (!edPlay || !edPlay.playing) drawEditor(); return; }
+      const pts = curPts(), q = pts[drag.i], p = at(e); if (!q) return;
       if (drag.k === 'move') { q.x = sn(inField(p.x)); q.y = sn(inField(p.y)); } else { let d = Math.atan2(p.y - q.y, p.x - q.x) * 180 / Math.PI; d = Math.round(((d % 360) + 360) % 360 / 5) * 5 % 360; q.h = d; }
       drawEditor();
     });
     const up = () => { if (drag) { drag = null; commit(); refreshAll(); } };
     cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+    cv.addEventListener('pointerleave', () => { edHover = null; if (!drag) drawEditor(); });
     if (!edKeysBound) {
       edKeysBound = true;
       window.addEventListener('keydown', (e) => {
@@ -688,12 +750,13 @@
       const p = A.pts[edSel], hmode = typeof p.h === 'number' ? 'fix' : p.h;
       edit = el('div', { class: 'ap-edit' }, el('div', { class: 'cr-eyebrow', text: 'Punctul ' + (edSel + 1) + ' · ce face aici' }),
         el('label', { class: 'ap-f' }, el('span', { text: 'Încotro se uită robotul (poți trage și mânerul roz de pe teren)' }),
-          el('select', { class: 'cr-in cr-sel', onchange: set((e) => { const v = e.target.value; p.h = v === 'fix' ? 0 : v; }) }, [['auto', 'Pe direcția de mers'], ['cell', 'Spre celula stupului (pentru tras)'], ['flower', 'Spre cea mai apropiată floare'], ['fix', 'Unghi fix']].map(([v, t]) => el('option', { value: v, text: t, selected: hmode === v })))),
+          el('select', { class: 'cr-in cr-sel', onchange: set((e) => { const v = e.target.value; p.h = v === 'fix' ? 0 : v; }) }, [['auto', 'Pe direcția de mers'], ['cell', 'Spre celula stupului (pentru tras)'], ['flower', 'Spre cea mai apropiată floare (pentru a lua mingi)'], ['fix', 'Unghi fix']].map(([v, t]) => el('option', { value: v, text: t, selected: hmode === v })))),
         hmode === 'fix' ? el('label', { class: 'ap-f' }, el('span', { text: 'Unghi (0° = dreapta, 90° = în jos)' }), el('input', { class: 'cr-in', type: 'number', min: 0, max: 359, step: 5, value: p.h, onchange: set((e) => { p.h = ((Math.round(+e.target.value || 0) % 360) + 360) % 360; }) })) : null,
         el('div', { class: 'ap-sub', text: 'Apasă ca să adaugi o acțiune (se fac în ordine)' }),
-        el('div', { class: 'ap-chips' }, Object.keys(ACT_LABEL).map((t) => el('button', { class: 'ap-chip', title: ACT_LABEL[t], onclick: () => { p.act = p.act || []; p.act.push(t === 'shoot' ? { t, n: 4 } : t === 'wait' || t === 'intake' ? { t, s: 1 } : { t }); stopPlay(); commit(); refreshAll(); } }, el('i', { text: ACT_TAG[t] }), ACT_SHORT[t]))),
+        el('div', { class: 'ap-chips' }, Object.keys(ACT_LABEL).map((t) => el('button', { class: 'ap-chip', title: ACT_LABEL[t], onclick: () => { p.act = p.act || []; p.act.push(t === 'shoot' ? { t, n: 4 } : t === 'take' ? { t, n: 2 } : t === 'wait' || t === 'intake' ? { t, s: 1 } : { t }); stopPlay(); commit(); refreshAll(); } }, el('i', { text: ACT_TAG[t] }), ACT_SHORT[t]))),
         (p.act || []).length ? el('div', { class: 'ap-acts' }, p.act.map((a, k) => el('div', { class: 'ap-act' }, el('b', { text: (k + 1) + '. ' + ACT_LABEL[a.t] }),
           a.t === 'shoot' ? el('label', null, 'mingi ', el('input', { type: 'number', min: 1, max: 4, value: a.n || 4, onchange: set((e) => { a.n = clamp(Math.round(+e.target.value || 1), 1, 4); }) })) : null,
+          a.t === 'take' ? el('label', null, 'mingi ', el('input', { type: 'number', min: 1, max: 4, value: a.n || 1, onchange: set((e) => { a.n = clamp(Math.round(+e.target.value || 1), 1, 4); }) })) : null,
           a.t === 'wait' || a.t === 'intake' ? el('label', null, 'secunde ', el('input', { type: 'number', min: 0.5, max: 8, step: 0.5, value: a.s || 1, onchange: set((e) => { a.s = clamp(+e.target.value || 1, 0.5, 8); }) })) : null,
           el('button', { title: 'Scoate acțiunea', onclick: set(() => { p.act.splice(k, 1); }) }, '✕')))) : el('p', { class: 'cr-note', text: 'Nicio acțiune: robotul doar trece pe aici.' }));
     }
@@ -704,8 +767,9 @@
         el('b', { text: 'Auto ' + (i + 1) }), el('span', { text: a.name }), el('small', { text: a.pts.length ? a.pts.length + ' puncte' : 'gol' }), S.autoSel === i ? el('em', { text: 'activ la meci' }) : null))),
       el('input', { class: 'cr-in', style: 'margin-top:10px', value: A.name, maxlength: 28, title: 'Numele autonomului', onchange: (e) => { A.name = e.target.value.trim() || 'Auto ' + (edSlot + 1); save(); render(); } }),
       el('label', { class: 'ap-switch' }, el('input', { type: 'checkbox', checked: active, onchange: (e) => { S.autoSel = e.target.checked ? edSlot : -1; save(); renderAutoPanel(); toast(S.autoSel < 0 ? 'Autonom oprit: conduci tu de la început.' : A.name + ' e activ la meciuri.'); } }), el('span', { text: 'Folosește acest autonom la meciuri' })),
-      step(2, 'Construiește traseul', 'Apasă pe teren (sau pe o linie ca să inserezi un punct). Sau pornește rapid:'),
-      el('div', { class: 'ap-quick' }, [['shoot', '🎯', 'Punct de tragere'], ['flower', '🌼', 'Polen din floare'], ['garden', '🍯', 'Mingi din grădină'], ['park', '🅿', 'Parcare']].map(([k, ic, t]) => el('button', { class: 'ap-qbtn', onclick: () => quickAdd(k) }, el('span', { text: ic }), t))),
+      step(2, 'Construiește traseul', 'Adaugă comenzi una după alta: robotul le face în ordine.'),
+      el('button', { class: 'ap-newcmd' + (edPick ? ' open' : ''), onclick: togglePick }, el('span', { class: 'plus', text: edPick ? '×' : '+' }), el('b', { text: 'Comandă nouă' }), el('small', { text: edPick ? 'alege ce face robotul' : (A.pts.length ? 'după punctul ' + (edSel >= 0 && A.pts[edSel] ? edSel + 1 : A.pts.length) : 'prima comandă') })),
+      el('div', { id: 'apPickHost' }, edPick ? pickerEl() : null),
       el('div', { class: 'ap-sub', text: 'Sau începe de la un traseu gata făcut' }),
       el('div', { class: 'ap-presets' }, Object.keys(PRESETS).map((k) => el('button', { class: 'ap-preset', onclick: () => { if (!A.pts.length || confirm('Înlocuiești traseul curent cu „' + k + '”?')) { A.pts = clonePts(PRESETS[k]); edSel = -1; stopPlay(); commit(); refreshAll(); } } }, el('b', { text: k }), el('small', { text: PRESET_INFO[k] })))),
       el('div', { class: 'cr-row', style: 'margin:12px 0 4px' },
@@ -736,7 +800,8 @@
   }
   function autoView() {
     ensureAutos(); if (!edLast) histReset();
-    const cv = el('canvas', { class: 'ap-cv', width: 720, height: 720 });
+    const cv = el('canvas', { class: 'ap-cv', width: 900, height: 900 });
+    const mapBox = el('div', { class: 'ap-map' }, cv, el('button', { class: 'ap-fab', title: 'Comandă nouă', onclick: togglePick }, '+'));
     const tb = el('div', { class: 'ap-toolbar' },
       el('div', { class: 'ap-seg' }, [['add', '➕ Adaugă puncte'], ['move', '✋ Doar mută']].map(([m, t]) => el('button', { class: edMode === m ? 'on pink' : '', onclick: (e) => { edMode = m; [...e.target.parentNode.children].forEach((b) => b.classList.remove('on', 'pink')); e.target.classList.add('on', 'pink'); }, title: m === 'add' ? 'Apasă pe teren ca să pui puncte' : 'Apăsările pe teren nu mai adaugă puncte' }, t))),
       el('label', { class: 'ap-switch', style: 'margin:0', title: 'Punctele se lipesc de o grilă de 3 in' }, el('input', { type: 'checkbox', checked: edSnap, onchange: (e) => { edSnap = e.target.checked; drawEditor(); } }), el('span', { text: 'Grilă' })),
@@ -747,11 +812,11 @@
       el('input', { type: 'range', id: 'apScrub', min: 0, max: 1000, value: 0, oninput: (e) => { if (!curPts().length) return; ensurePlay(); edPlay.playing = false; edPlay.t = (+e.target.value / 1000) * edPlay.tl.total; drawEditor(); updateTlUi(); } }), el('span', { id: 'apTime', text: '0,0 / 0,0 s' }));
     const legend = el('div', { class: 'ap-legend' },
       el('span', null, el('i', { class: 'lg-line' }), 'traseu'), el('span', null, el('i', { class: 'lg-line bad' }), 'trece prin stup'), el('span', null, el('i', { class: 'lg-sq' }), 'startul'), el('span', null, el('i', { class: 'lg-dot' }), 'mâner direcție (trage-l)'),
-      ['T trage în stup', 'D depune în floare', 'L ia polen din floare', 'I intake', 'W așteaptă'].map((t) => el('span', null, el('i', { class: 'lg-tag', text: t[0] }), t.slice(2))));
+      ['T trage în stup', 'D depune în floare', 'L ia mingi din floare', 'I intake', 'W așteaptă'].map((t) => el('span', null, el('i', { class: 'lg-tag', text: t[0] }), t.slice(2))));
     const view = el('div', { class: 'cr-grid' },
       el('div', { class: 'cr-card s7' }, el('div', { class: 'cr-eyebrow', text: 'Terenul · vedere de sus' }), el('h2', { text: 'Autonomul robotului' }),
         el('p', { class: 'cr-sub', text: 'În primele 30 de secunde ale meciului robotul merge singur pe traseul de aici. Pornește de jos, ca alianța roșie; la albastru traseul se oglindește singur. Dacă apeși o tastă de mers în meci, preiei controlul.' }),
-        tb, cv, tlrow, el('div', { class: 'ap-tl', id: 'apTl' }), legend,
+        tb, mapBox, tlrow, el('div', { class: 'ap-tl', id: 'apTl' }), legend,
         el('p', { class: 'cr-note', style: 'margin-top:8px', text: 'Scurtături: Delete șterge punctul selectat · săgețile îl mută (Shift = mai mult) · Ctrl+Z anulează · Esc deselectează.' })),
       el('div', { class: 'cr-card s5' }, el('div', { id: 'autoPanel' })));
     setTimeout(() => { bindEditor(cv); renderAutoPanel(); renderTimeline(); drawEditor(); }, 0);
