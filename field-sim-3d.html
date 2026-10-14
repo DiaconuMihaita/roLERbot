@@ -743,6 +743,7 @@
     }
     function standNearFlower(f) { const dx = IN / 2 - f.x, dy = IN / 2 - f.y, d = Math.hypot(dx, dy); return { x: f.x + dx / d * 16, y: f.y + dy / d * 16 }; }
     function botThink(r, dt) {
+      if (r.passive) return { mx: 0, my: 0, rot: 0, shoot: false, slow: false, dep: false, take: false };
       const al = r.al, mine = NECT[al], opn = NECT[OPP[al]], tLeft = MATCH_T - G.t, ph = phaseOf(G.t);
       r.thought -= dt;
       // stuck detection: it wants to go somewhere but has not moved for ~1.2 s -> back off, forget this target and re-plan
@@ -837,6 +838,7 @@
       G.pops.forEach((p) => { p.t += dt; p.y -= 12 * dt; }); G.pops = G.pops.filter((p) => p.t < 1.3);
       eval_();
       if (!G.free && G.t >= MATCH_T) endMatch();
+      if (CAREER && CAREER.type === 'autotest') autotestTick();
     }
 
     function bumpEl(id, v) { const el = $(id); if (el.textContent !== String(v)) { el.textContent = v; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } }
@@ -1503,7 +1505,7 @@
     function setMenu(w) {
       const was = menuState; menuState = w;
       $('home').classList.toggle('hidden', w !== 'home'); $('menu').classList.toggle('hidden', w !== 'setup'); $('pgCareer').classList.toggle('hidden', w !== 'career');
-      if (w === 'career') { const f = $('careerFrame'); if (!f.getAttribute('src')) f.setAttribute('src', 'career.html?embed=1'); }
+      if (w === 'career') { const f = $('careerFrame'); if (!f.getAttribute('src')) f.setAttribute('src', 'career.html?embed=1' + ((location.search.match(/[?&]tab=(\w+)/) || [])[1] ? '&tab=' + location.search.match(/[?&]tab=(\w+)/)[1] : '')); }
       else if (was === 'career') $('careerFrame').removeAttribute('src');
       if (w !== 'settings' && window.closeSettingsPage) window.closeSettingsPage();
       if (w !== 'online' && window.closeOnlinePage) window.closeOnlinePage();
@@ -2313,6 +2315,7 @@
       const me = G.robots[0], op = G.robots[1]; if (!me || !op) return;
       me.mods = CAREER.mods; me.pname = String(CAREER.team.name).slice(0, 16); me.num = String(CAREER.team.num);
       if (CAREER.auto && CAREER.auto.pts && CAREER.auto.pts.length) me.auto = { name: String(CAREER.auto.name || 'Autonom').slice(0, 18), pts: CAREER.auto.pts.map((p) => ({ x: +p.x, y: +p.y, h: p.h, act: (p.act || []).map((a) => Object.assign({}, a)) })), i: 0, ph: 'move', ai: 0, at: 0, wt: 0, t: 0, ex: 0, ey: 0, sig: 1.1 / (CAREER.mods.assist || 1), off: false, s0: 0, h0: 0, c0: 0 };
+      op.passive = !!CAREER.opp.passive;
       op.skill = clamp(+CAREER.opp.skill || 0.5, 0, 1); op.pname = String(CAREER.opp.name).replace(' (antrenament)', '').slice(0, 16);
     }
 
@@ -2324,12 +2327,12 @@
       if (A.off) return manual;
       if (manual.mx || manual.my || manual.rot || manual.shoot || manual.dep || manual.take) { A.off = true; pop(r.x, r.y - 14, 'PREIA TU', r.al); return manual; }
       const inp = { mx: 0, my: 0, rot: 0, shoot: false, slow: false, dep: false, take: false, fc: true };
-      if (A.t === 0) pop(r.x, r.y - 14, 'AUTONOM · ' + A.name, r.al);
+      if (A.t === 0) { pop(r.x, r.y - 14, 'AUTONOM · ' + A.name, r.al); const P0 = G.parts[r.al] || {}; A.base = { cell: P0.cell || 0, garden: P0.garden || 0 }; }
       A.t += dt;
       // where the robot THINKS it is: odometry drift grows with time and shrinks with better electronics
       A.ex += gaussy() * A.sig * Math.sqrt(dt); A.ey += gaussy() * A.sig * Math.sqrt(dt);
       const px = r.x + A.ex, py = r.y + A.ey, P = A.pts[A.i];
-      if (!P) return inp;
+      if (!P) { if (A.doneT === undefined) A.doneT = G.t; return inp; }
       const fcs = r.al === 'blue' ? -1 : 1, cell = upCell(r.al), turret = ROBOTS[r.type].turret;
       const faceTo = (tx, ty) => Math.atan2(ty - py, tx - px);
       const nearFlower = () => { let bf = null, bd = 1e9; for (const f of G.flowers) { const d = Math.hypot(f.x - px, f.y - py); if (d < bd) { bd = d; bf = f; } } return bf ? faceTo(bf.x, bf.y) : r.a; };
@@ -2358,8 +2361,32 @@
       else { const hw = headingFor(); if (hw !== null) rot(hw); if (A.at >= (a.s || 1)) next(); }   // wait / intake
       return inp;
     }
+    // ---- test mode (?test=1): only the autonomous period is played, then a short report ----
+    function autotestTick() {
+      const me = G.robots[0], A = me && me.auto; if (!A || mode !== 'run') return;
+      if (G.t >= AUTO_T || A.off || (A.doneT !== undefined && G.t - A.doneT > 2)) { if (!G.autoDone) autoEnd(); eval_(); endMatch(); }
+    }
+    if (CAREER && CAREER.type === 'autotest') {
+      const bar = document.createElement('div'); bar.style.cssText = 'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:75;display:flex;gap:12px;align-items:center;padding:8px 10px 8px 16px;border-radius:14px;background:rgba(9,9,11,.9);border:1px solid rgba(249,5,108,.6);color:#f4f1ec;font:600 13px "Instrument Sans",system-ui,sans-serif';
+      const lab = document.createElement('span'); lab.textContent = 'TEST AUTONOM · ' + String(CAREER.auto && CAREER.auto.name || ''); const bk = document.createElement('button'); bk.textContent = '← Înapoi la editor';
+      bk.style.cssText = 'background:#17171b;color:#f4f1ec;border:1px solid rgba(244,241,236,.25);border-radius:10px;padding:7px 12px;font:600 12.5px "Instrument Sans",system-ui,sans-serif;cursor:pointer'; bk.onclick = () => { location.href = 'field-sim-3d.html?page=career&tab=auto'; };
+      bar.append(lab, bk); document.body.append(bar);
+    }
     function careerAfterEnd() {
       if (!CAREER) return;
+      if (CAREER.type === 'autotest') {
+        const my = cfg.alliance, P = G.parts[my] || {}, me = G.robots[0], A = me.auto, base = (A && A.base) || { cell: 6, garden: 4 };
+        const cellG = (P.cell || 0) - base.cell, gardG = (P.garden || 0) - base.garden, gain = (P.tip || 0) + (P.lp || 0) + cellG + (P.flower || 0) + gardG, tips = G.hive[my].tips;
+        const parts = [];
+        if (P.tip) parts.push('HIVE ×' + tips + ' (+' + P.tip + ')'); if (P.lp) parts.push('LEAVE/PARK +' + P.lp); if (cellG) parts.push('celulă ' + (cellG > 0 ? '+' : '') + cellG); if (P.flower) parts.push('flori +' + P.flower); if (gardG) parts.push('grădină ' + (gardG > 0 ? '+' : '') + gardG);
+        const rg = document.querySelector('#end .result-grid'); if (rg) rg.style.display = 'none';
+        $('endTitle').textContent = 'TEST AUTONOM';
+        const done = A && A.doneT !== undefined ? 'Traseu terminat în ' + A.doneT.toFixed(1).replace('.', ',') + ' s din 30 s.' : (A && A.off ? 'Ai preluat controlul înainte de final.' : 'Traseul nu s-a terminat în 30 s.');
+        const err = A ? Math.round(Math.hypot(A.ex, A.ey)) : 0;
+        $('endNote').innerHTML = '<b style="color:var(--g-pink-hi);font-size:20px">' + gain + ' puncte din autonom</b><br>' + (parts.length ? parts.join(' · ') : 'Fără puncte marcate') + '<br>' + done + '<br>Eroare de poziție a robotului: ~' + err + ' in';
+        $('btnAgain').textContent = 'Repetă testul'; $('btnMenu').textContent = 'Înapoi la editor'; $('btnMenu').onclick = () => { location.href = 'field-sim-3d.html?page=career&tab=auto'; };
+        return;
+      }
       const my = cfg.alliance, op = OPP[my], me = G.robots[0], P = G.parts[my] || {};
       try { localStorage.setItem('rbCareerResult', JSON.stringify({ id: CAREER.id, my: G.score[my], opp: G.score[op], tips: G.hive[my].tips, lp: P.lp || 0, flowers: P.flower || 0, shots: me.shots, hits: me.hits, ts: Date.now() })); } catch (e) { }
       $('btnAgain').style.display = 'none'; const bm = $('btnMenu'); bm.textContent = 'Continuă cariera'; bm.onclick = () => { location.href = 'field-sim-3d.html?page=career'; };

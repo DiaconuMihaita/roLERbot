@@ -580,54 +580,78 @@
   }
   function renderAutoPanel() {
     const host = document.getElementById('autoPanel'); if (!host || !S) return;
-    const A = S.autos[edSlot], tl = timeline(A.pts), over = tl.total > 30;
+    const A = S.autos[edSlot], tl = timeline(A.pts), over = tl.total > 30, active = S.autoSel === edSlot;
     const set = (fn) => (e) => { fn(e); save(); renderAutoPanel(); drawEditor(); };
     const move = (i, d) => { const j = i + d; if (j < 0 || j >= A.pts.length) return; [A.pts[i], A.pts[j]] = [A.pts[j], A.pts[i]]; edSel = j; save(); renderAutoPanel(); drawEditor(); };
+    const step = (n, title, sub) => el('div', { class: 'ap-step' }, el('b', { text: n }), el('div', null, el('h3', { text: title }), sub ? el('small', { text: sub }) : null));
     const rows = A.pts.map((p, i) => el('div', { class: 'ap-row' + (i === edSel ? ' on' : ''), onclick: () => { edSel = i; renderAutoPanel(); drawEditor(); } },
-      el('b', { text: i + 1 }), el('span', { text: Math.round(p.x) + ', ' + Math.round(p.y) + (p.act && p.act.length ? ' · ' + p.act.map((a) => ACT_TAG[a.t]).join('') : '') }),
-      el('span', { class: 'ap-mv' }, el('button', { title: 'Sus', onclick: (e) => { e.stopPropagation(); move(i, -1); } }, '▲'), el('button', { title: 'Jos', onclick: (e) => { e.stopPropagation(); move(i, 1); } }, '▼'),
-        el('button', { title: 'Șterge', onclick: (e) => { e.stopPropagation(); A.pts.splice(i, 1); edSel = Math.min(edSel, A.pts.length - 1); stopPlay(); save(); renderAutoPanel(); drawEditor(); } }, '✕'))));
+      el('b', { text: i + 1 }), el('span', { text: Math.round(p.x) + ', ' + Math.round(p.y) }), el('span', { class: 'ap-tags' }, (p.act || []).map((a) => el('i', { title: ACT_LABEL[a.t], text: ACT_TAG[a.t] }))),
+      el('span', { class: 'ap-mv' }, el('button', { title: 'Mută mai sus', onclick: (e) => { e.stopPropagation(); move(i, -1); } }, '▲'), el('button', { title: 'Mută mai jos', onclick: (e) => { e.stopPropagation(); move(i, 1); } }, '▼'),
+        el('button', { title: 'Șterge punctul', onclick: (e) => { e.stopPropagation(); A.pts.splice(i, 1); edSel = Math.min(edSel, A.pts.length - 1); stopPlay(); save(); renderAutoPanel(); drawEditor(); } }, '✕'))));
     let edit = null;
     if (edSel >= 0 && A.pts[edSel]) {
       const p = A.pts[edSel], hmode = typeof p.h === 'number' ? 'fix' : p.h;
-      edit = el('div', { class: 'ap-edit' }, el('div', { class: 'cr-eyebrow', text: 'Punctul ' + (edSel + 1) }),
-        el('label', { class: 'ap-f' }, el('span', { text: 'Direcția robotului' }),
-          el('select', { class: 'cr-in cr-sel', onchange: set((e) => { const v = e.target.value; p.h = v === 'fix' ? 0 : v; }) }, [['auto', 'Pe direcția de mers'], ['cell', 'Spre celula stupului'], ['flower', 'Spre cea mai apropiată floare'], ['fix', 'Unghi fix']].map(([v, t]) => el('option', { value: v, text: t, selected: hmode === v })))),
+      edit = el('div', { class: 'ap-edit' }, el('div', { class: 'cr-eyebrow', text: 'Punctul ' + (edSel + 1) + ' · ce face aici' }),
+        el('label', { class: 'ap-f' }, el('span', { text: 'Încotro se uită robotul' }),
+          el('select', { class: 'cr-in cr-sel', onchange: set((e) => { const v = e.target.value; p.h = v === 'fix' ? 0 : v; }) }, [['auto', 'Pe direcția de mers'], ['cell', 'Spre celula stupului (pentru tras)'], ['flower', 'Spre cea mai apropiată floare'], ['fix', 'Unghi fix']].map(([v, t]) => el('option', { value: v, text: t, selected: hmode === v })))),
         hmode === 'fix' ? el('label', { class: 'ap-f' }, el('span', { text: 'Unghi (0° = dreapta, 90° = în jos)' }), el('input', { class: 'cr-in', type: 'number', min: -180, max: 360, step: 15, value: p.h, onchange: set((e) => { p.h = clamp(+e.target.value || 0, -180, 360); }) })) : null,
-        el('div', { class: 'cr-eyebrow', style: 'margin-top:10px', text: 'Acțiuni la acest punct (în ordine)' }),
-        (p.act || []).length ? el('div', { class: 'ap-acts' }, p.act.map((a, k) => el('div', { class: 'ap-act' }, el('b', { text: ACT_LABEL[a.t] }),
+        el('div', { class: 'ap-sub', text: 'Acțiuni, în ordine, după ce ajunge aici' }),
+        (p.act || []).length ? el('div', { class: 'ap-acts' }, p.act.map((a, k) => el('div', { class: 'ap-act' }, el('b', { text: (k + 1) + '. ' + ACT_LABEL[a.t] }),
           a.t === 'shoot' ? el('label', null, 'mingi ', el('input', { type: 'number', min: 1, max: 4, value: a.n || 4, onchange: set((e) => { a.n = clamp(Math.round(+e.target.value || 1), 1, 4); }) })) : null,
           a.t === 'wait' || a.t === 'intake' ? el('label', null, 'secunde ', el('input', { type: 'number', min: 0.5, max: 8, step: 0.5, value: a.s || 1, onchange: set((e) => { a.s = clamp(+e.target.value || 1, 0.5, 8); }) })) : null,
-          el('button', { title: 'Scoate', onclick: set(() => { p.act.splice(k, 1); }) }, '✕')))) : el('p', { class: 'cr-note', text: 'Nicio acțiune: robotul doar trece pe aici.' }),
+          el('button', { title: 'Scoate acțiunea', onclick: set(() => { p.act.splice(k, 1); }) }, '✕')))) : el('p', { class: 'cr-note', text: 'Nicio acțiune: robotul doar trece pe aici.' }),
         el('select', { class: 'cr-in cr-sel', onchange: (e) => { const t = e.target.value; if (!t) return; p.act = p.act || []; p.act.push(t === 'shoot' ? { t, n: 4 } : t === 'wait' || t === 'intake' ? { t, s: 1 } : { t }); e.target.value = ''; save(); renderAutoPanel(); drawEditor(); } },
-          el('option', { value: '', text: '+ Adaugă acțiune…' }), Object.keys(ACT_LABEL).map((t) => el('option', { value: t, text: ACT_LABEL[t] }))));
+          el('option', { value: '', text: '+ Adaugă o acțiune…' }), Object.keys(ACT_LABEL).map((t) => el('option', { value: t, text: ACT_LABEL[t] }))));
     }
+    const atAl = S.atAl === 'blue' ? 'blue' : 'red';
     host.replaceChildren(...[
-      el('div', { class: 'cr-eyebrow', text: 'Autonomul tău' }),
-      el('div', { class: 'cr-row' }, S.autos.map((a, i) => el('button', { class: 'cr-btn sm' + (i === edSlot ? ' pri' : ''), onclick: () => { edSlot = i; edSel = -1; stopPlay(); render(); } }, 'Auto ' + (i + 1) + (S.autoSel === i ? ' ✓' : '')))),
-      el('input', { class: 'cr-in', style: 'margin-top:10px', value: A.name, maxlength: 24, onchange: (e) => { A.name = e.target.value.trim() || 'Auto ' + (edSlot + 1); save(); render(); } }),
-      el('div', { class: 'ap-stats' }, el('div', null, el('small', { text: 'Durată estimată' }), el('b', { class: over ? 'bad' : '', text: tl.total.toFixed(1).replace('.', ',') + ' s / 30 s' })),
+      // ---- 1. which autonomous ----
+      step(1, 'Alege autonomul', 'Ai 3 locuri. Cel bifat „activ” se rulează singur la fiecare meci.'),
+      el('div', { class: 'ap-slots' }, S.autos.map((a, i) => el('button', { class: 'ap-slot' + (i === edSlot ? ' on' : ''), onclick: () => { edSlot = i; S.edSlot = i; edSel = -1; stopPlay(); render(); } },
+        el('b', { text: 'Auto ' + (i + 1) }), el('span', { text: a.name }), el('small', { text: a.pts.length ? a.pts.length + ' puncte' : 'gol' }), S.autoSel === i ? el('em', { text: 'activ la meci' }) : null))),
+      el('input', { class: 'cr-in', style: 'margin-top:10px', value: A.name, maxlength: 24, title: 'Numele autonomului', onchange: (e) => { A.name = e.target.value.trim() || 'Auto ' + (edSlot + 1); save(); render(); } }),
+      el('label', { class: 'ap-switch' }, el('input', { type: 'checkbox', checked: active, onchange: (e) => { S.autoSel = e.target.checked ? edSlot : -1; save(); renderAutoPanel(); toast(S.autoSel < 0 ? 'Autonom oprit: conduci tu de la început.' : A.name + ' e activ la meciuri.'); } }), el('span', { text: 'Folosește acest autonom la meciuri' })),
+      // ---- 2. draw ----
+      step(2, 'Desenează traseul', 'Apasă pe teren ca să pui un punct, trage-l ca să-l muți.'),
+      el('div', { class: 'cr-row', style: 'margin-bottom:10px' },
+        el('select', { class: 'cr-in cr-sel', style: 'flex:1;min-width:160px', onchange: (e) => { const k = e.target.value; if (!k) return; if (!A.pts.length || confirm('Înlocuiești traseul curent cu presetul „' + k + '”?')) { A.pts = clonePts(PRESETS[k]); edSel = -1; stopPlay(); save(); } e.target.value = ''; renderAutoPanel(); drawEditor(); } }, el('option', { value: '', text: 'Pornește de la un preset…' }), Object.keys(PRESETS).map((k) => el('option', { value: k, text: k }))),
+        el('button', { class: 'cr-btn sm', text: 'Oglindește', title: 'Stânga ↔ dreapta', onclick: set(() => { A.pts.forEach((p) => { p.x = FLD.IN - p.x; if (typeof p.h === 'number') p.h = ((180 - p.h) % 360 + 360) % 360; }); stopPlay(); }) }),
+        el('button', { class: 'cr-btn sm', text: 'Golește', onclick: set(() => { A.pts = []; edSel = -1; stopPlay(); }) })),
+      A.pts.length ? el('div', { class: 'ap-list' }, rows) : el('p', { class: 'cr-note', text: 'Niciun punct încă. Apasă pe teren, în stânga, ca să pui primul punct.' }),
+      edit,
+      // ---- 3. test ----
+      step(3, 'Testează', 'Vezi cum merge înainte să-l folosești într-un meci.'),
+      el('div', { class: 'ap-stats' }, el('div', null, el('small', { text: 'Durată estimată' }), el('b', { class: over ? 'bad' : '', text: tl.total.toFixed(1).replace('.', ',') + ' s din 30 s' })),
         el('div', null, el('small', { text: 'Precizie (după electronică)' }), el('b', { text: '±' + Math.round(tl.err) + ' in' }))),
       tl.bad ? el('p', { class: 'cr-note', style: 'color:var(--gold)', text: tl.bad + ' segment' + (tl.bad > 1 ? 'e trec' : ' trece') + ' prin stup (linie roșie). Robotul le ocolește singur, dar pierde timp.' }) : null,
       over ? el('p', { class: 'cr-note', style: 'color:#ff8a96', text: 'Traseul durează mai mult de 30 s: ultimele puncte nu se vor executa.' }) : null,
-      el('div', { class: 'cr-row', style: 'margin:10px 0' },
-        el('button', { class: 'cr-btn sm pri', text: edPlay ? '■ Oprește' : '▶ Previzualizează', onclick: () => { if (edPlay) { stopPlay(); renderAutoPanel(); drawEditor(); } else startPlay(); } }),
-        el('button', { class: 'cr-btn sm', text: 'Oglindește', title: 'Stânga ↔ dreapta', onclick: set(() => { A.pts.forEach((p) => { p.x = FLD.IN - p.x; if (typeof p.h === 'number') p.h = ((180 - p.h) % 360 + 360) % 360; }); stopPlay(); }) }),
-        el('button', { class: 'cr-btn sm', text: 'Golește', onclick: set(() => { A.pts = []; edSel = -1; stopPlay(); }) })),
-      el('label', { class: 'ap-f' }, el('span', { text: 'Preset' }), el('select', { class: 'cr-in cr-sel', onchange: (e) => { const k = e.target.value; if (!k) return; if (!A.pts.length || confirm('Înlocuiești traseul curent cu presetul „' + k + '”?')) { A.pts = clonePts(PRESETS[k]); edSel = -1; stopPlay(); save(); } e.target.value = ''; renderAutoPanel(); drawEditor(); } }, el('option', { value: '', text: 'Alege un preset…' }), Object.keys(PRESETS).map((k) => el('option', { value: k, text: k })))),
-      el('label', { class: 'ap-f' }, el('span', { text: 'Folosește la meciuri' }), autoSelect()),
-      el('div', { class: 'cr-eyebrow', style: 'margin-top:14px', text: 'Puncte (' + A.pts.length + '/14)' }),
-      A.pts.length ? el('div', { class: 'ap-list' }, rows) : el('p', { class: 'cr-note', text: 'Apasă pe teren ca să pui primul punct.' }),
-      edit].filter(Boolean));
+      el('div', { class: 'cr-row', style: 'margin:10px 0 6px' },
+        el('button', { class: 'cr-btn pri big', disabled: !A.pts.length, text: '▶ Testează pe terenul 3D', onclick: testAuto3d }),
+        el('button', { class: 'cr-btn', text: edPlay ? '■ Oprește' : '▶ Previzualizează', title: 'Animație rapidă pe harta de mai sus', onclick: () => { if (edPlay) { stopPlay(); renderAutoPanel(); drawEditor(); } else startPlay(); } })),
+      el('div', { class: 'cr-row', style: 'gap:14px' },
+        el('div', { class: 'ap-seg' }, ['red', 'blue'].map((al) => el('button', { class: atAl === al ? 'on ' + al : al, onclick: () => { S.atAl = al; save(); renderAutoPanel(); } }, al === 'red' ? 'Alianța roșie' : 'Alianța albastră'))),
+        el('label', { class: 'ap-switch', style: 'margin:0' }, el('input', { type: 'checkbox', checked: !!S.atOpp, onchange: (e) => { S.atOpp = e.target.checked; save(); } }), el('span', { text: 'Cu adversar AI' }))),
+      el('p', { class: 'cr-note', style: 'margin-top:6px', text: 'Testul se joacă pe terenul 3D, fără meci: vezi robotul urmând traseul, apoi primești puncte, timp și eroarea de poziție.' })
+    ].filter(Boolean));
+  }
+  function testAuto3d() {
+    const A = S.autos[edSlot]; if (!A.pts.length) return toast('Adaugă mai întâi puncte pe teren.');
+    const alliance = S.atAl === 'blue' ? 'blue' : 'red';
+    const payload = { id: 'autotest-' + Date.now(), type: 'autotest', label: 'Test autonom · ' + A.name, alliance, robot: canTurret() ? S.type : 'strafe', mods: modsOf(S), team: S.team, opp: { name: 'Adversar', skill: 0.4, passive: !S.atOpp }, auto: { name: A.name, pts: alliance === 'blue' ? A.pts.map(mirrorPt) : clonePts(A.pts) }, ts: Date.now() };
+    try { localStorage.setItem(MATCH_KEY, JSON.stringify(payload)); localStorage.removeItem(RESULT_KEY); } catch (e) { return toast('Nu pot porni testul (stocarea e blocată).'); }
+    S.edSlot = edSlot; save(); flushCloud(1200).then(() => goTop('field-sim-3d.html?career=1&test=1'));
   }
   function autoView() {
     ensureAutos();
     const cv = el('canvas', { class: 'ap-cv', width: 720, height: 720 });
+    const legend = el('div', { class: 'ap-legend' },
+      el('span', null, el('i', { class: 'lg-line' }), 'traseu'), el('span', null, el('i', { class: 'lg-line bad' }), 'trece prin stup'), el('span', null, el('i', { class: 'lg-sq' }), 'startul robotului'),
+      ['T trage în stup', 'D depune în floare', 'L ia din floare', 'I intake', 'W așteaptă'].map((t) => el('span', null, el('i', { class: 'lg-tag', text: t[0] }), t.slice(2))));
     const panel = el('div', { id: 'autoPanel' });
     const view = el('div', { class: 'cr-grid' },
-      el('div', { class: 'cr-card s7' }, el('div', { class: 'cr-eyebrow', text: 'Pregătește autonomul' }), el('h2', { text: 'Desenează traseul robotului' }),
-        el('p', { class: 'cr-sub', text: 'Robotul pornește de jos (alianța roșie; pentru albastru traseul se oglindește singur). Apasă pe teren ca să adaugi puncte, trage-le ca să le muți și alege la fiecare ce face: trage în stup, depune în floare, așteaptă. În primele 30 de secunde ale meciului robotul urmează traseul singur. Dacă apeși o tastă de mers, preiei controlul.' }),
-        cv, el('p', { class: 'cr-note', style: 'margin-top:8px', text: 'T trage · D depune · L ia din floare · I intake · W așteaptă. Electronica mai bună înseamnă mai puțină derivă: robotul ratează mai puțin punctele.' })),
+      el('div', { class: 'cr-card s7' }, el('div', { class: 'cr-eyebrow', text: 'Terenul · vedere de sus' }), el('h2', { text: 'Autonomul robotului' }),
+        el('p', { class: 'cr-sub', text: 'În primele 30 de secunde ale meciului robotul merge singur pe traseul de aici. Robotul pornește de jos, ca alianța roșie. La albastru traseul se oglindește singur. Dacă apeși o tastă de mers în timpul meciului, preiei controlul.' }),
+        cv, legend),
       el('div', { class: 'cr-card s5' }, panel));
     setTimeout(() => { bindEditor(cv); renderAutoPanel(); drawEditor(); }, 0);
     return view;
@@ -646,6 +670,8 @@
 
   // ---------- boot: pick up a finished match from the game ----------
   S = load();
+  { const q = location.search.match(/[?&]tab=(\w+)/); if (q && ['hub', 'robot', 'auto', 'sponsors', 'event', 'history'].includes(q[1])) tab = q[1]; }
+  edSlot = clamp((S && S.edSlot) | 0, 0, 2);
   if (S) {
     let res = null; try { res = JSON.parse(localStorage.getItem(RESULT_KEY) || 'null'); } catch (e) { }
     if (res && res.id && applyResult(res)) { localStorage.removeItem(RESULT_KEY); localStorage.removeItem(MATCH_KEY); if (S.event || S.summary) tab = 'event'; }
