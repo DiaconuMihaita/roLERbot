@@ -46,18 +46,18 @@
 .fs-tool:hover { background: var(--g-pink); border-color: var(--g-pink); color: #fff; }
 
 /* immersive: the stage fills the window, the side panel becomes a small HUD */
-body.immersive { padding: 0; display: block; overflow: hidden; min-height: 100vh; }
-body.immersive .fs { display: block; width: 100vw; height: 100vh; }
-body.immersive .stage-wrap { position: fixed; inset: 0; display: block; z-index: 1; }
-body.immersive .stage { position: fixed; inset: 0; width: 100vw; height: 100vh; max-height: none; min-height: 0; aspect-ratio: auto; border-radius: 0; box-shadow: none; margin: 0; }
-body.immersive .topbar2 { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); width: min(720px, calc(100vw - 150px)); z-index: 30; padding: 8px 16px; border-radius: 18px; }
-body.immersive .tb-score b, body.immersive .tb-time { font-size: 30px; }
-body.immersive .side { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; justify-content: space-between; align-items: flex-end; padding: 14px; pointer-events: none; }
-body.immersive .side > * { display: none !important; }
-body.immersive .side > .card2:first-child, body.immersive .side > .card2:nth-child(3) { display: block !important; width: 250px; padding: 12px 14px; border-radius: 18px; background: rgba(9, 9, 11, .62); backdrop-filter: blur(8px); }
-body.immersive .side .card2 h3 { font-size: 15px; margin-bottom: 8px; }
-body.immersive .side .kv { font-size: 12px; padding: 4px 0; }
-body.immersive .side > .card2:first-child .kv ~ .kv { display: none; }
-body.immersive .side > .card2:first-child .pip { width: 28px; height: 28px; }
-body.immersive .side > .card2:first-child .pips { margin-bottom: 8px; }
+body.immersive, body.in-menu { padding: 0; display: block; overflow: hidden; min-height: 100vh; }
+body.immersive .fs, body.in-menu .fs { display: block; width: 100vw; height: 100vh; }
+body.immersive .stage-wrap, body.in-menu .stage-wrap { position: fixed; inset: 0; display: block; z-index: 1; }
+body.immersive .stage, body.in-menu .stage { position: fixed; inset: 0; width: 100vw; height: 100vh; max-height: none; min-height: 0; aspect-ratio: auto; border-radius: 0; box-shadow: none; margin: 0; }
+body.immersive .topbar2, body.in-menu .topbar2 { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); width: min(720px, calc(100vw - 150px)); z-index: 30; padding: 8px 16px; border-radius: 18px; }
+body.immersive .tb-score b, body.immersive .tb-time, body.in-menu .tb-score b, body.in-menu .tb-time { font-size: 30px; }
+body.immersive .side, body.in-menu .side { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; justify-content: space-between; align-items: flex-end; padding: 14px; pointer-events: none; }
+body.immersive .side > *, body.in-menu .side > * { display: none !important; }
+body.immersive .side > .card2:first-child, body.immersive .side > .card2:nth-child(3), body.in-menu .side > .card2:first-child, body.in-menu .side > .card2:nth-child(3) { display: block !important; width: 250px; padding: 12px 14px; border-radius: 18px; background: rgba(9, 9, 11, .62); backdrop-filter: blur(8px); }
+body.immersive .side .card2 h3, body.in-menu .side .card2 h3 { font-size: 15px; margin-bottom: 8px; }
+body.immersive .side .kv, body.in-menu .side .kv { font-size: 12px; padding: 4px 0; }
+body.immersive .side > .card2:first-child .kv ~ .kv, body.in-menu .side > .card2:first-child .kv ~ .kv { display: none; }
+body.immersive .side > .card2:first-child .pip, body.in-menu .side > .card2:first-child .pip { width: 28px; height: 28px; }
+body.immersive .side > .card2:first-child .pips, body.in-menu .side > .card2:first-child .pips { margin-bottom: 8px; }
 @media (max-width: 760px) { body.immersive .side > .card2:nth-child(3) { display: none !important; } body.immersive .topbar2 { width: calc(100vw - 24px); top: 56px; } }

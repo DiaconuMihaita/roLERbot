@@ -103,12 +103,13 @@
     @media (max-width: 980px) { .fs { grid-template-columns: 1fr; } .stage { max-height: none; } .tb-score b, .tb-time { font-size: 30px; } }
   </style>
 <link href="css/online.css?v=1" rel="stylesheet" />
-  <link href="css/settings.css?v=1" rel="stylesheet" />
+  <link href="css/settings.css?v=2" rel="stylesheet" />
+  <link href="css/menu.css?v=2" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="js/supabase-config.js"></script>
 </head>
 
-<body>
+<body class="in-menu">
   <div class="fs">
     <div class="stage-wrap">
       <div class="topbar2">
@@ -134,20 +135,34 @@
           <div class="tbtn t-take" id="tTake">IA</div>
         </div>
 
-        <div class="overlay-screen" id="menu">
-          <h1>BIOBUZZ<br>FIELD SIM 3D</h1>
-          <h2>2026/27 · versiune 3D · după manualul oficial (TU04) · neoficial</h2>
-          <div class="lbl">Alianța ta</div>
-          <div class="seg" id="segAlliance"><button class="on" data-al="red">Roșu</button><button data-al="blue">Albastru</button></div>
-          <div class="lbl">Robot</div>
-          <div class="seg" id="segRobot"><button class="on pink" data-rb="strafe">Full strafe</button><button data-rb="turret">Turelă independentă</button></div>
-          <div class="lbl">Sesiune</div>
-          <div class="seg" id="segMode"><button class="on pink" data-mode="1v1">Meci 1v1</button><button data-mode="2v2">Meci 2v2 + AI</button><button data-mode="free">Free drive</button></div>
-          <div class="row2" style="margin-top:10px">
-            <button class="btn-retro" id="btnStart">Intră pe teren</button>
-            <button class="btn-retro" id="btnCareer" onclick="location.href='career.html'">Mod carieră</button>
+        <div class="overlay-screen su hidden" id="menu">
+          <button class="su-back" id="suBack">← Înapoi</button>
+          <div class="su-head"><div class="hm-kicker">Joacă</div><h2>Pregătește meciul</h2></div>
+          <div class="su-grid">
+            <section>
+              <div class="su-lbl">1 · Alianța ta</div>
+              <div class="pick two" id="segAlliance">
+                <button class="red on" data-al="red"><b>Roșu</b><small>Nectar roșu, stupul roșu de partea ta a terenului.</small></button>
+                <button class="blue" data-al="blue"><b>Albastru</b><small>Nectar albastru, stupul albastru de partea ta a terenului.</small></button>
+              </div>
+            </section>
+            <section>
+              <div class="su-lbl">2 · Robot</div>
+              <div class="pick two" id="segRobot">
+                <button class="on" data-rb="strafe"><b>Full strafe</b><small>Rapid, trage des. Tragi în direcția în care e orientat robotul.</small><span class="mini"><u>Viteză<s style="--v:92%"></s></u><u>Cadență<s style="--v:88%"></s></u><u>Țintire<s style="--v:55%"></s></u></span></button>
+                <button data-rb="turret"><b>Turelă independentă</b><small>Țintește celula singură, fără să te întorci cu tot robotul.</small><span class="mini"><u>Viteză<s style="--v:80%"></s></u><u>Cadență<s style="--v:62%"></s></u><u>Țintire<s style="--v:92%"></s></u></span></button>
+              </div>
+            </section>
+            <section>
+              <div class="su-lbl">3 · Sesiune</div>
+              <div class="pick three" id="segMode">
+                <button class="on" data-mode="1v1"><b>Meci 1v1</b><small>Tu contra unui robot AI, 2:30.</small></button>
+                <button data-mode="2v2"><b>Meci 2v2 + AI</b><small>Tu și un partener AI contra altor doi roboți.</small></button>
+                <button data-mode="free"><b>Free drive</b><small>Fără cronometru, exersează liber.</small></button>
+              </div>
+            </section>
           </div>
-          <div class="lbl" id="bestLine"></div>
+          <div class="su-foot"><div class="lbl" id="bestLine"></div><button class="btn-retro su-go" id="btnStart">Intră pe teren →</button></div>
         </div>
 
         <div class="overlay-screen hidden" id="countdown"><div class="big" id="cdText">3</div></div>
@@ -228,6 +243,34 @@
       </div>
       <div class="set-foot"><button class="set-btn" id="setReset">Resetează tot</button><button class="set-btn primary" id="setDone">Gata</button></div>
     </div>
+  </div>
+  <div class="ld" id="loading">
+    <div class="ld-bg"></div>
+    <div class="ld-center">
+      <div class="ld-kicker">roLERbot prezintă</div>
+      <h1 class="ld-title"><span><i>BIOBUZZ</i></span><span><i>FIELD SIM 3D</i></span></h1>
+      <div class="ld-honey" id="ldHoney"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="ld-bar"><i id="ldBar"></i></div>
+      <div class="ld-row"><span id="ldMsg">Se pornește motorul grafic…</span><b id="ldPct">0%</b></div>
+      <div class="ld-tip" id="ldTip"></div>
+      <div class="ld-press hidden" id="ldPress">Apasă orice tastă pentru a continua</div>
+    </div>
+  </div>
+  <div class="hm hidden" id="home">
+    <div class="hm-shade"></div>
+    <div class="hm-brand">
+      <div class="hm-kicker">roLERbot · FTC 2026/27</div>
+      <h1><b>BIOBUZZ</b><span>FIELD SIM <em>3D</em></span></h1>
+      <p>Simulator neoficial, după manualul oficial TU04.</p>
+    </div>
+    <nav class="hm-menu" id="hmMenu">
+      <button data-a="play"><span class="n">01</span><span class="t">Joacă</span><small>Meci rapid: 1v1, 2v2 cu AI sau free drive</small></button>
+      <button data-a="career"><span class="n">02</span><span class="t">Mod carieră<em id="hmCareerBadge"></em></span><small>Construiește-ți echipa, upgrade-uri, sponsori, evenimente</small></button>
+      <button data-a="online"><span class="n">03</span><span class="t">Online<em id="hmOnlineBadge"></em></span><small>Conturi, prieteni, invitații, meciuri 1v1 și 2v2</small></button>
+      <button data-a="settings"><span class="n">04</span><span class="t">Setări</span><small>Taste, grafică și opțiuni de joc</small></button>
+      <button data-a="site" class="minor"><span class="n">←</span><span class="t">Înapoi la site</span></button>
+    </nav>
+    <div class="hm-foot"><span>↑ ↓ navighează · Enter alege</span><button id="hmFull">⛶ Ecran complet</button><span>neoficial · roLERbot</span></div>
   </div>
   <script>
   (() => {
@@ -769,6 +812,7 @@
       st.isBound = (code) => !!code && Object.values(st.binds).some((b) => b.includes(code));
       return st;
     })();
+    const LOAD = { p: 0, cadDone: false };
     let render3d = null, gfxApply = null, camMode = CFG.game.cam;
     function render() { if (render3d) render3d(); }
 
@@ -989,7 +1033,7 @@
       };
       const FL_CAD = [[48.6, 3.8], [140.2, 48.6], [3.8, 95.4], [95.4, 140.2]];   // flower ring centres in the CAD, same order as FLOWER_POS
       function loadCad() {
-        if (!THREE.GLTFLoader) { console.warn('GLTFLoader missing, using the built-in field'); return; }
+        if (!THREE.GLTFLoader) { console.warn('GLTFLoader missing, using the built-in field'); LOAD.cadDone = true; return; }
         const MPI = 39.3701;
         new THREE.GLTFLoader().load('assets/cad/field_cad.glb?v=4', (gltf) => {
           const meshes = []; gltf.scene.traverse((o) => { if (o.isMesh) meshes.push(o); });
@@ -1034,8 +1078,8 @@
           FL_CAD.forEach(([x, z], i) => {
             const ring = new THREE.Mesh(new THREE.TorusGeometry(3.1, .28, 8, 44), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .95 })); ring.rotation.x = Math.PI / 2; ring.position.set(x, 22.2, z); ring.visible = false; scene.add(ring); flowerObjs[i].own = ring;
           });
-          cad.ok = true;
-        }, undefined, (e) => { console.warn('field CAD not loaded, using the built-in field', e && e.message); });
+          cad.ok = true; LOAD.p = 1; LOAD.cadDone = true;
+        }, (e) => { if (e && e.total) LOAD.p = Math.min(1, e.loaded / e.total); else if (e && e.loaded) LOAD.p = Math.min(.9, e.loaded / 19e6); }, (e) => { console.warn('field CAD not loaded, using the built-in field', e && e.message); LOAD.cadDone = true; });
       }
       loadCad();
 
@@ -1379,7 +1423,13 @@
     }
 
     // ---------- flow ----------
-    const show = (id, on) => $(id).classList.toggle('hidden', !on);
+    let menuState = 'loading';
+    function setMenu(w) {
+      menuState = w; $('home').classList.toggle('hidden', w !== 'home'); $('menu').classList.toggle('hidden', w !== 'setup');
+      document.body.classList.toggle('in-menu', w !== 'none' || !$('loading').classList.contains('hidden'));
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
+    }
+    const show = (id, on) => { if (id === 'menu') { setMenu(on ? 'home' : 'none'); return; } $(id).classList.toggle('hidden', !on); };
     function startCountdown() {
       G = newGame(); applyCareer(); eval_(); hud(); mode = 'count'; show('menu', false); show('end', false); show('countdown', true);
       let n = 3; $('cdText').textContent = n;
@@ -2183,8 +2233,73 @@
       $('endNote').innerHTML = '<b style="color:var(--g-pink-hi)">' + CAREER.label + '</b><br>Rezultatul se salvează în carieră.';
     }
     // ================= /CARIERĂ =================
+    // ================= ECRAN DE ÎNCĂRCARE + MENIU PRINCIPAL =================
+    {
+      const ld = $('loading'), home = $('home');
+      const TIPS = ['Nectarul intră în flori doar în ultimele 60 de secunde. Înainte, e fault major.', 'Mingea intră în celulă doar din partea ei deschisă: așază-te în fața ei.', 'F depune în floarea din fața ta, C scoate polenul de jos.', 'Shift îți dă precizie: mergi mai încet, dar țintești mai bine.', 'Poți schimba tastele și grafica din Setări.', 'Când celula se umple, stupul se răstoarnă: +20 de puncte.', 'Nu controla nectarul adversarului: întâi avertisment, apoi fault.', 'În modul carieră, upgrade-urile îți schimbă robotul cu adevărat.', 'La final, parchează în zona de încărcare pentru +5 puncte.'];
+      // floating hexagons in the background
+      for (let i = 0; i < 16; i++) { const h = document.createElement('div'); h.className = 'fh' + (i % 4 === 0 ? ' g' : ''); h.style.cssText = '--x:' + Math.round(Math.random() * 100) + '%;--s:' + (22 + Math.round(Math.random() * 70)) + 'px;--t:' + (11 + Math.round(Math.random() * 12)) + 's;--d:-' + Math.round(Math.random() * 18) + 's'; ld.querySelector('.ld-bg').after(h); }
+      const tipEl = $('ldTip'); let tipI = Math.floor(Math.random() * TIPS.length);
+      const showTip = () => { tipEl.classList.remove('in'); setTimeout(() => { tipEl.textContent = 'SFAT · ' + TIPS[tipI++ % TIPS.length]; tipEl.classList.add('in'); }, 260); };
+      showTip(); const tipTimer = setInterval(showTip, 3800);
+      const hexes = [...document.querySelectorAll('#ldHoney i')], bar = $('ldBar'), pct = $('ldPct'), msg = $('ldMsg'), press = $('ldPress');
+      const t0 = performance.now(); let shown = 0, finished = false;
+      const MSG = [[0, CAREER ? 'Se pregătește meciul…' : 'Se pornește motorul grafic…'], [.25, 'Se încarcă terenul oficial…'], [.9, 'Se pregătesc roboții…'], [1, 'Gata!']];
+      function step() {
+        const el = (performance.now() - t0) / 1000, real = LOAD.cadDone ? 1 : clamp(.06 + .86 * clamp(LOAD.p, 0, 1), .06, .92);
+        const target = Math.min(real, .03 + el / 2.6);
+        shown += (target - shown) * .16; if (target - shown < .003) shown = target;
+        bar.style.width = (shown * 100).toFixed(1) + '%'; pct.textContent = Math.round(shown * 100) + '%';
+        hexes.forEach((h, i) => h.classList.toggle('on', shown >= (i + 1) / hexes.length - .001));
+        msg.textContent = MSG.filter((m) => shown >= m[0]).pop()[1];
+        if (!finished && shown >= .999 && LOAD.cadDone) { finished = true; clearInterval(tipTimer); ready(); } else if (!finished) setTimeout(step, 33);
+      }
+      step();
+      function dismiss() {
+        window.removeEventListener('keydown', onKey); ld.removeEventListener('pointerdown', dismiss);
+        ld.classList.add('out');
+        setTimeout(() => { ld.classList.add('hidden'); if (CAREER) { setMenu('none'); startCountdown(); } else { setMenu('home'); home.classList.remove('enter'); void home.offsetWidth; home.classList.add('enter'); } }, 620);
+      }
+      const onKey = (e) => { if (/^(F\d+|Control|Alt|Meta|Shift|Tab|CapsLock)/.test(e.code)) return; e.preventDefault(); dismiss(); };
+      function ready() {
+        if (CAREER) { dismiss(); return; }
+        press.classList.remove('hidden'); window.addEventListener('keydown', onKey); ld.addEventListener('pointerdown', dismiss);
+      }
+
+      // ---- main menu ----
+      const items = [...document.querySelectorAll('#hmMenu button')]; let idx = 0;
+      const focusIdx = (i) => { idx = (i + items.length) % items.length; items.forEach((b, k) => b.classList.toggle('sel', k === idx)); };
+      focusIdx(0);
+      try { const c = JSON.parse(localStorage.getItem('rbCareer') || 'null'); $('hmCareerBadge').textContent = c && c.v === 1 ? c.team.name + ' · sezon ' + c.season + ' · săpt. ' + c.week : 'nou'; } catch (e) { }
+      const onlineBtn = items.find((b) => b.dataset.a === 'online'); if (!SB_OK) { onlineBtn.classList.add('off'); $('hmOnlineBadge').textContent = 'indisponibil'; }
+      function act(a) {
+        if (a === 'play') setMenu('setup');
+        else if (a === 'career') { document.body.classList.add('leaving'); setTimeout(() => { location.href = 'career.html'; }, 280); }
+        else if (a === 'online') { if (SB_OK) openOnl(); else flash('Online nu e configurat încă.'); }
+        else if (a === 'settings') window.openSettings();
+        else if (a === 'site') { document.body.classList.add('leaving'); setTimeout(() => { location.href = 'index.html'; }, 280); }
+      }
+      items.forEach((b, k) => { b.addEventListener('mouseenter', () => focusIdx(k)); b.addEventListener('click', () => act(b.dataset.a)); });
+      $('suBack').onclick = () => setMenu('home');
+      $('hmFull').onclick = () => $('fsFull').click();
+      addEventListener('keydown', (e) => {
+        const st = menuState;
+        if (!ld.classList.contains('hidden') || (st !== 'home' && st !== 'setup')) return;
+        if (!$('setModal').classList.contains('hidden') || !onlRoot.classList.contains('hidden')) return;
+        if (/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
+        if (st === 'home') {
+          if (e.code === 'ArrowDown' || e.code === 'KeyS') { focusIdx(idx + 1); e.preventDefault(); }
+          else if (e.code === 'ArrowUp' || e.code === 'KeyW') { focusIdx(idx - 1); e.preventDefault(); }
+          else if (e.code === 'Enter' || e.code === 'Space') { act(items[idx].dataset.a); e.preventDefault(); }
+        } else if (st === 'setup') {
+          if (e.code === 'Escape' || e.code === 'Backspace') { setMenu('home'); e.preventDefault(); }
+          else if (e.code === 'Enter') { $('btnStart').click(); e.preventDefault(); }
+        }
+      });
+    }
+    // ================= /MENIU =================
     bestLine(); G = newGame(); eval_(); requestAnimationFrame(frame);
-    if (CAREER) { $('menu').classList.add('hidden'); startCountdown(); }
+
   })();
   </script>
 </body>
