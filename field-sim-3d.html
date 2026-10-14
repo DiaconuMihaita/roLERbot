@@ -687,17 +687,82 @@
       for (let t = 0; t <= 1; t += 0.05) { const x = ax + (bx - ax) * t, y = ay + (by - ay) * t; if (x > x0 && x < x1 && y > y0 && y < y1) return true; }
       return false;
     }
+    // A* on a 6 in grid: the HIVE frame, the walls and the other robots are obstacles. Replaces the old "go to the nearest corner" steering,
+    // which could pick the corner the robot already stood on and then never move again.
+    const GR = 6, GN = Math.ceil(IN / GR);
+    function planPath(r, tx, ty) {
+      const pad = R + 1.5, blk = new Uint8Array(GN * GN), others = G.robots.filter((o) => o !== r);
+      for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) {
+        const x = i * GR + GR / 2, y = j * GR + GR / 2; let b = 0;
+        if (x > FRAME.x0 - pad && x < FRAME.x1 + pad && y > FRAME.y0 - pad && y < FRAME.y1 + pad) b = 1;
+        else if (x < R - 1 || x > IN - R + 1 || y < R - 1 || y > IN - R + 1) b = 1;
+        else for (const o of others) if (Math.hypot(o.x - x, o.y - y) < R * 2 - 1) { b = 1; break; }
+        blk[j * GN + i] = b;
+      }
+      const cell = (x, y) => clamp(Math.floor(y / GR), 0, GN - 1) * GN + clamp(Math.floor(x / GR), 0, GN - 1);
+      const s = cell(r.x, r.y); blk[s] = 0;
+      let g0 = cell(tx, ty);
+      if (blk[g0]) {   // target inside an obstacle: aim for the closest free cell
+        let best = -1, bd = 1e9; const gx = g0 % GN, gy = (g0 / GN) | 0;
+        for (let j = Math.max(0, gy - 5); j <= Math.min(GN - 1, gy + 5); j++) for (let i = Math.max(0, gx - 5); i <= Math.min(GN - 1, gx + 5); i++) if (!blk[j * GN + i]) { const d = (i - gx) * (i - gx) + (j - gy) * (j - gy); if (d < bd) { bd = d; best = j * GN + i; } }
+        if (best < 0) return [[tx, ty]]; g0 = best;
+      }
+      const gScore = new Float32Array(GN * GN).fill(1e9), from = new Int16Array(GN * GN).fill(-1), closed = new Uint8Array(GN * GN), open = [s];
+      gScore[s] = 0; const gx0 = g0 % GN, gy0 = (g0 / GN) | 0;
+      const hF = (c) => { const dx = Math.abs((c % GN) - gx0), dy = Math.abs(((c / GN) | 0) - gy0); return (dx + dy) + (1.414 - 2) * Math.min(dx, dy); };
+      let found = false;
+      while (open.length) {
+        let bi = 0, bf = 1e9; for (let k = 0; k < open.length; k++) { const f = gScore[open[k]] + hF(open[k]); if (f < bf) { bf = f; bi = k; } }
+        const c = open.splice(bi, 1)[0]; if (c === g0) { found = true; break; } if (closed[c]) continue; closed[c] = 1;
+        const cx = c % GN, cy = (c / GN) | 0;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue; const nx = cx + dx, ny = cy + dy; if (nx < 0 || ny < 0 || nx >= GN || ny >= GN) continue;
+          const n = ny * GN + nx; if (blk[n] || closed[n]) continue;
+          if (dx && dy && (blk[cy * GN + nx] || blk[ny * GN + cx])) continue;   // no cutting corners
+          const ng = gScore[c] + (dx && dy ? 1.414 : 1) + (n === g0 ? 0 : 0); if (ng < gScore[n]) { gScore[n] = ng; from[n] = c; open.push(n); }
+        }
+      }
+      if (!found) return [[tx, ty]];
+      const cells = []; for (let c = g0; c !== -1; c = from[c]) cells.push(c); cells.reverse();
+      const pts = cells.map((c) => [(c % GN) * GR + GR / 2, ((c / GN) | 0) * GR + GR / 2]);
+      const free = (x, y) => { const c = cell(x, y); return c === s || !blk[c]; };
+      const clear = (ax, ay, bx, by) => { const L = Math.hypot(bx - ax, by - ay), n = Math.max(1, Math.ceil(L / 2.5)); for (let k = 1; k < n; k++) if (!free(ax + (bx - ax) * k / n, ay + (by - ay) * k / n)) return false; return true; };
+      // string pulling: keep only the corners that are really needed
+      const out = []; let cx = r.x, cy = r.y, i = 0;
+      while (i < pts.length) {
+        let j = pts.length - 1; while (j > i && !clear(cx, cy, pts[j][0], pts[j][1])) j--;
+        out.push(pts[j]); cx = pts[j][0]; cy = pts[j][1]; i = j + 1;
+      }
+      if (!blk[cell(tx, ty)] || cell(tx, ty) === g0) out.push([tx, ty]);
+      return out;
+    }
     function steerTo(r, tx, ty) {
-      if (!segHitsFrame(r.x, r.y, tx, ty)) return [tx, ty];
-      const pad = R + 6, cs = [[FRAME.x0 - pad, FRAME.y0 - pad], [FRAME.x1 + pad, FRAME.y0 - pad], [FRAME.x0 - pad, FRAME.y1 + pad], [FRAME.x1 + pad, FRAME.y1 + pad]];
-      let bestC = null, bl = 1e9;
-      for (const [cx, cy] of cs) { if (segHitsFrame(r.x, r.y, cx, cy)) continue; const l = Math.hypot(cx - r.x, cy - r.y) + Math.hypot(tx - cx, ty - cy); if (l < bl) { bl = l; bestC = [cx, cy]; } }
-      return bestC || [tx, ty];
+      if (!r.plan || G.t - r.planT > 0.2 || Math.hypot(tx - r.planTx, ty - r.planTy) > 4) { r.plan = planPath(r, tx, ty); r.planT = G.t; r.planTx = tx; r.planTy = ty; }
+      for (const p of r.plan) if (Math.hypot(p[0] - r.x, p[1] - r.y) > 7) return p;
+      return [tx, ty];
     }
     function standNearFlower(f) { const dx = IN / 2 - f.x, dy = IN / 2 - f.y, d = Math.hypot(dx, dy); return { x: f.x + dx / d * 16, y: f.y + dy / d * 16 }; }
     function botThink(r, dt) {
       const al = r.al, mine = NECT[al], opn = NECT[OPP[al]], tLeft = MATCH_T - G.t, ph = phaseOf(G.t);
       r.thought -= dt;
+      // stuck detection: it wants to go somewhere but has not moved for ~1.2 s -> back off, forget this target and re-plan
+      if (!r.stk) r.stk = { t: 0, x: r.x, y: r.y, n: 0 };
+      r.stk.t += dt;
+      if (r.stk.t >= 0.6) {
+        const moved = Math.hypot(r.x - r.stk.x, r.y - r.stk.y), want = Math.hypot(r.tx - r.x, r.ty - r.y);
+        const waiting = (r.role === 'park' && want < 9) || (r.role === 'launch' && want < 20) || ((r.role === 'flower' || r.role === 'pull') && want < 26) || r.cd > 0.3;
+        r.stk.n = moved < 2.5 && !waiting && want > 5 ? r.stk.n + 1 : 0; r.stk.t = 0; r.stk.x = r.x; r.stk.y = r.y;
+        if (r.stk.n >= 2) {
+          r.stk.n = 0; r.ban = { x: r.tx, y: r.ty, until: G.t + 9 };
+          let ex = 72 - r.x, ey = 72 - r.y, nd = 40;   // away from the closest robot, otherwise toward the middle of the field
+          for (const o of G.robots) if (o !== r) { const d = Math.hypot(o.x - r.x, o.y - r.y); if (d < nd) { nd = d; ex = r.x - o.x; ey = r.y - o.y; } }
+          const el = Math.hypot(ex, ey) || 1; r.esc = { until: G.t + 0.9, mx: ex / el, my: ey / el }; r.thought = 0; r.plan = null;
+        }
+      }
+      if (r.esc && G.t < r.esc.until) {
+        const inp = { mx: r.esc.mx, my: -r.esc.my, rot: 0, shoot: false, slow: false, dep: false, take: false };
+        return inp;
+      }
       if (r.thought <= 0) {
         r.thought = 0.25; r.fl = null;
         const hasN = r.hold.includes(mine), hasY = r.hold.includes('y');
@@ -705,7 +770,7 @@
         const owned = (f) => { let top = null; f.stack.forEach((c) => { if (c !== 'y') top = c; }); return top === mine; };
         const collect = () => {
           let bb = null, bd = 1e9;
-          for (const b of G.balls) { if (b.st !== 'floor' || b.c === opn) continue; if (b.x > FRAME.x0 - 8 && b.x < FRAME.x1 + 8 && b.y > FRAME.y0 - 8 && b.y < FRAME.y1 + 8) continue; const d = Math.hypot(b.x - r.x, b.y - r.y) + Math.random() * 8 + (r.slot ? Math.abs(b.y - 72) * .08 : 0); if (d < bd) { bd = d; bb = b; } }
+          for (const b of G.balls) { if (b.st !== 'floor' || b.c === opn) continue; if (r.ban && G.t < r.ban.until && Math.hypot(b.x - r.ban.x, b.y - r.ban.y) < 12) continue; if (b.x > FRAME.x0 - 8 && b.x < FRAME.x1 + 8 && b.y > FRAME.y0 - 8 && b.y < FRAME.y1 + 8) continue; const d = Math.hypot(b.x - r.x, b.y - r.y) + Math.random() * 8 + (r.slot ? Math.abs(b.y - 72) * .08 : 0); if (d < bd) { bd = d; bb = b; } }
           if (bb) { r.role = 'collect'; r.tx = bb.x + (bb.x < 6 ? 7 : bb.x > IN - 6 ? -7 : 0); r.ty = bb.y + (bb.y < 6 ? 7 : bb.y > IN - 6 ? -7 : 0); return true; }
           let bf = null; bd = 1e9;
           G.flowers.forEach((f) => { if (f.stack[0] !== 'y') return; const d = Math.hypot(f.x - r.x, f.y - r.y); if (d < bd) { bd = d; bf = f; } });
@@ -730,7 +795,7 @@
       let want = r.a;
       if (r.role === 'flower' && r.fl && fd < 26) want = Math.atan2(r.fl.y - r.y, r.fl.x - r.x);
       else if (r.role === 'pull' && r.fl && fd < 26) want = Math.atan2(r.fl.y - r.y, r.fl.x - r.x);
-      else if (r.role === 'launch' && fd < 24 && !ROBOTS[r.type].turret) { const c = upCell(al); want = Math.atan2(c.y - r.y, c.x - r.x); }
+      else if (r.role === 'launch' && fd < 24) { const c = upCell(al); want = Math.atan2(c.y - r.y, c.x - r.x); }   // the turret only swings +-66 deg: the chassis must face the cell too
       else if (d > 1) want = Math.atan2(dy, dx);
       const da = ((want - r.a + Math.PI) % TAU + TAU) % TAU - Math.PI;
       inp.rot = clamp(da * 2.2, -1, 1);
