@@ -551,10 +551,10 @@
   }
   // the red hive during the preview: every 6 balls shot tip it to the other side (like in the game)
   function hiveAt(tl, t) {
-    let c = 0, tips = 0, last = -9;
+    let c = 3, tips = 0, last = -9;   // the up cell starts with 3 preloaded nectar balls
     (tl && tl.shots || []).forEach((st) => { if (st <= t) { c++; if (c >= 6) { c = 0; tips++; last = st; } } });
     const k = tips ? smooth(clamp((t - last) / 0.9, 0, 1)) : 1;
-    return { p: tips ? (tips % 2 ? 1 - k : k) : 1, n: c, tips, k };
+    return { p: tips ? (tips % 2 ? 1 - k : k) : 1, n: c, tips, k, pre: tips ? 0 : 3 };
   }
   // ---- checks: tell the player WHY a point will not work ----
   function checkPts(pts) {
@@ -612,7 +612,7 @@
     });
     const f = FLD.FRAME; ctx.strokeStyle = 'rgba(200,200,210,.55)'; ctx.lineWidth = 3 * k; ctx.strokeRect(X(f.x0), X(f.y0), X(f.x1 - f.x0), X(f.y1 - f.y0)); ctx.beginPath(); ctx.moveTo(X(72), X(f.y0)); ctx.lineTo(X(72), X(f.y1)); ctx.stroke();
     ctx.fillStyle = 'rgba(40,40,46,.9)'; ctx.fillRect(X(70), X(f.y0), X(4), X(f.y1 - f.y0));
-    const hv0 = edPlay && (edPlay.t > 0 || edPlay.playing) ? hiveAt(edPlay.tl, edPlay.t) : { p: 1, n: 0, tips: 0, k: 1 };
+    const hv0 = edPlay && (edPlay.t > 0 || edPlay.playing) ? hiveAt(edPlay.tl, edPlay.t) : { p: 1, n: 3, tips: 0, k: 1, pre: 3 };
     [['blue', '#3d8bff'], ['red', '#ff4d5e']].forEach(([al, col]) => {
       const mid = FLD.CELLS[al][0].y, P = al === 'red' ? hv0.p : 0, sh = (P - 0.5) * 3.2; ctx.fillStyle = 'rgba(255,201,51,.9)'; ctx.fillRect(X(67 + sh), X(mid - 11), X(3.2), X(22)); ctx.fillRect(X(74 + sh), X(mid - 11), X(3.2), X(22));
       FLD.CELLS[al].forEach((c, ci) => {
@@ -620,7 +620,7 @@
         ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = (8 + 22 * h) * k; ctx.shadowOffsetY = (3 + 12 * h) * k; ctx.fillStyle = col + (up ? '66' : '22'); rrp(x, y, w, hh, 10 * k * sc); ctx.fill(); ctx.shadowColor = 'transparent';
         ctx.globalAlpha = .45 + .55 * h; ctx.lineWidth = (3 + 3 * h) * k; ctx.strokeStyle = col; rrp(x, y, w, hh, 10 * k * sc); ctx.stroke(); ctx.globalAlpha = 1;
         ctx.fillStyle = 'rgba(0,0,0,' + (0.45 * (1 - h)) + ')'; rrp(x + 4, y + 4, w - 8, hh - 8, 8 * k * sc); ctx.fill();
-        if (al === 'red' && up) { for (let i = 0; i < hv0.n; i++) { ctx.fillStyle = '#ffc933'; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x + w * (.25 + (i % 3) * .25), y + hh * (.22 + Math.floor(i / 3) * .2), X(1.9) * sc * .8, 0, 6.283); ctx.fill(); ctx.stroke(); }
+        if (al === 'red' && up) { for (let i = 0; i < hv0.n; i++) { ctx.fillStyle = i < hv0.pre ? '#ff4d5e' : '#ffc933'; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x + w * (.25 + (i % 3) * .25), y + hh * (.22 + Math.floor(i / 3) * .2), X(1.9) * sc * .8, 0, 6.283); ctx.fill(); ctx.stroke(); }
           ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fillRect(x + 6, y + hh - 9, w - 12, 4); ctx.fillStyle = col; ctx.fillRect(x + 6, y + hh - 9, (w - 12) * clamp(hv0.n / 6, 0, 1), 4); }
         ctx.restore();
       });
