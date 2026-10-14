@@ -531,16 +531,31 @@
   }
   const prevOf = (pts, i) => (i > 0 ? pts[i - 1] : FLD.START);
   function timeline(pts) {
-    const m = modsOf(S), v = 62 * m.speed * 0.62; let x = FLD.START.x, y = FLD.START.y, t = 0, bad = 0; const seg = [], bars = [];
+    const m = modsOf(S), v = 62 * m.speed * 0.62; let x = FLD.START.x, y = FLD.START.y, t = 0, bad = 0, pa = -Math.PI / 2; const seg = [], bars = [], shots = [];
     pts.forEach((p, i) => {
       const d = Math.hypot(p.x - x, p.y - y), dt = d / v, a = headingOf(p, { x, y }); if (hitsFrame(x, y, p.x, p.y)) bad++;
-      seg.push({ t0: t, t1: t + dt, x0: x, y0: y, x1: p.x, y1: p.y, a }); bars.push({ t0: t, t1: t + dt, k: 'move', i }); t += dt;
-      (p.act || []).forEach((ac) => { const ad = actDur(ac); seg.push({ t0: t, t1: t + ad, x0: p.x, y0: p.y, x1: p.x, y1: p.y, a }); bars.push({ t0: t, t1: t + ad, k: ac.t, i }); t += ad; });
+      seg.push({ t0: t, t1: t + dt, x0: x, y0: y, x1: p.x, y1: p.y, a, a0: pa }); bars.push({ t0: t, t1: t + dt, k: 'move', i }); t += dt; pa = a;
+      (p.act || []).forEach((ac) => { const ad = actDur(ac); if (ac.t === 'shoot') for (let q = 0; q < (ac.n || 4); q++) shots.push(t + 0.25 + q * 0.62); seg.push({ t0: t, t1: t + ad, x0: p.x, y0: p.y, x1: p.x, y1: p.y, a }); bars.push({ t0: t, t1: t + ad, k: ac.t, i }); t += ad; });
       seg.push({ t0: t, t1: t + 0.25, x0: p.x, y0: p.y, x1: p.x, y1: p.y, a }); bars.push({ t0: t, t1: t + 0.25, k: 'settle', i }); t += 0.25; x = p.x; y = p.y;
     });
-    return { seg, bars, total: t, bad, err: (1.1 / m.assist) * Math.sqrt(Math.max(t, 1)) };
+    return { seg, bars, shots, total: t, bad, err: (1.1 / m.assist) * Math.sqrt(Math.max(t, 1)) };
   }
-  function poseAt(tl, t) { for (const s of tl.seg) if (t <= s.t1) { const k = s.t1 > s.t0 ? (t - s.t0) / (s.t1 - s.t0) : 1; return { x: s.x0 + (s.x1 - s.x0) * k, y: s.y0 + (s.y1 - s.y0) * k, a: s.a }; } const l = tl.seg[tl.seg.length - 1]; return l ? { x: l.x1, y: l.y1, a: l.a } : { x: FLD.START.x, y: FLD.START.y, a: -Math.PI / 2 }; }
+  const smooth = (k) => k * k * (3 - 2 * k);
+  const lerpAng = (a0, a1, k) => a0 + ((((a1 - a0 + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) - Math.PI) * k;
+  function poseAt(tl, t) {
+    for (const s of tl.seg) if (t <= s.t1) {
+      const k = s.t1 > s.t0 ? (t - s.t0) / (s.t1 - s.t0) : 1, mv = s.x0 !== s.x1 || s.y0 !== s.y1, ke = mv ? smooth(k) : k;   // ease in/out of every move; turn first, then drive
+      return { x: s.x0 + (s.x1 - s.x0) * ke, y: s.y0 + (s.y1 - s.y0) * ke, a: s.a0 === undefined ? s.a : lerpAng(s.a0, s.a, smooth(clamp(k / 0.5, 0, 1))) };
+    }
+    const l = tl.seg[tl.seg.length - 1]; return l ? { x: l.x1, y: l.y1, a: l.a } : { x: FLD.START.x, y: FLD.START.y, a: -Math.PI / 2 };
+  }
+  // the red hive during the preview: every 6 balls shot tip it to the other side (like in the game)
+  function hiveAt(tl, t) {
+    let c = 0, tips = 0, last = -9;
+    (tl && tl.shots || []).forEach((st) => { if (st <= t) { c++; if (c >= 6) { c = 0; tips++; last = st; } } });
+    const k = tips ? smooth(clamp((t - last) / 0.9, 0, 1)) : 1;
+    return { p: tips ? (tips % 2 ? 1 - k : k) : 1, n: c, tips, k };
+  }
   // ---- checks: tell the player WHY a point will not work ----
   function checkPts(pts) {
     const out = []; const c = FLD.CELLS.red[1]; let shots = 0, coll = 0;
@@ -597,9 +612,18 @@
     });
     const f = FLD.FRAME; ctx.strokeStyle = 'rgba(200,200,210,.55)'; ctx.lineWidth = 3 * k; ctx.strokeRect(X(f.x0), X(f.y0), X(f.x1 - f.x0), X(f.y1 - f.y0)); ctx.beginPath(); ctx.moveTo(X(72), X(f.y0)); ctx.lineTo(X(72), X(f.y1)); ctx.stroke();
     ctx.fillStyle = 'rgba(40,40,46,.9)'; ctx.fillRect(X(70), X(f.y0), X(4), X(f.y1 - f.y0));
+    const hv0 = edPlay && (edPlay.t > 0 || edPlay.playing) ? hiveAt(edPlay.tl, edPlay.t) : { p: 1, n: 0, tips: 0, k: 1 };
     [['blue', '#3d8bff'], ['red', '#ff4d5e']].forEach(([al, col]) => {
-      const mid = FLD.CELLS[al][0].y; ctx.fillStyle = 'rgba(255,201,51,.9)'; ctx.fillRect(X(67), X(mid - 11), X(3.2), X(22)); ctx.fillRect(X(74), X(mid - 11), X(3.2), X(22));
-      FLD.CELLS[al].forEach((c, ci) => { const mine = al === 'red' && ci === 1, w = X(16), h = X(20), x = X(c.x) - w / 2, y = X(c.y) - h / 2; ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = 14 * k; ctx.shadowOffsetY = 6 * k; ctx.fillStyle = col + (mine ? '66' : '22'); rrp(x, y, w, h, 10 * k); ctx.fill(); ctx.shadowColor = 'transparent'; ctx.globalAlpha = mine ? 1 : .55; ctx.lineWidth = (mine ? 6 : 3.5) * k; ctx.strokeStyle = col; rrp(x, y, w, h, 10 * k); ctx.stroke(); ctx.restore(); });
+      const mid = FLD.CELLS[al][0].y, P = al === 'red' ? hv0.p : 0, sh = (P - 0.5) * 3.2; ctx.fillStyle = 'rgba(255,201,51,.9)'; ctx.fillRect(X(67 + sh), X(mid - 11), X(3.2), X(22)); ctx.fillRect(X(74 + sh), X(mid - 11), X(3.2), X(22));
+      FLD.CELLS[al].forEach((c, ci) => {
+        const h = clamp(ci === 0 ? 1 - P : P, 0, 1), mine = al === 'red' && ci === 1, up = h > .5, sc = 0.84 + 0.3 * h, w = X(16) * sc, hh = X(20) * sc, x = X(c.x) - w / 2, y = X(c.y) - hh / 2;
+        ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = (8 + 22 * h) * k; ctx.shadowOffsetY = (3 + 12 * h) * k; ctx.fillStyle = col + (up ? '66' : '22'); rrp(x, y, w, hh, 10 * k * sc); ctx.fill(); ctx.shadowColor = 'transparent';
+        ctx.globalAlpha = .45 + .55 * h; ctx.lineWidth = (3 + 3 * h) * k; ctx.strokeStyle = col; rrp(x, y, w, hh, 10 * k * sc); ctx.stroke(); ctx.globalAlpha = 1;
+        ctx.fillStyle = 'rgba(0,0,0,' + (0.45 * (1 - h)) + ')'; rrp(x + 4, y + 4, w - 8, hh - 8, 8 * k * sc); ctx.fill();
+        if (al === 'red' && up) { for (let i = 0; i < hv0.n; i++) { ctx.fillStyle = '#ffc933'; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x + w * (.25 + (i % 3) * .25), y + hh * (.22 + Math.floor(i / 3) * .2), X(1.9) * sc * .8, 0, 6.283); ctx.fill(); ctx.stroke(); }
+          ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fillRect(x + 6, y + hh - 9, w - 12, 4); ctx.fillStyle = col; ctx.fillRect(x + 6, y + hh - 9, (w - 12) * clamp(hv0.n / 6, 0, 1), 4); }
+        ctx.restore();
+      });
     });
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.font = fs(60, 700); ctx.fillText('ZONA ROȘIE', X(37), X(141.4)); ctx.fillText('ZONA ALBASTRĂ', X(107), X(8));
