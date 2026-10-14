@@ -567,25 +567,41 @@
     const cv = edCv; if (!cv || !cv.isConnected || !S) return; const ctx = cv.getContext('2d'), W = cv.width, sc = W / FLD.IN, pts = curPts(), X = (v) => v * sc, chk = checkPts(pts), bad = new Set(chk.map((c) => c.i));
     const MONO = '"JetBrains Mono", monospace', fs = (k, w) => (w || 600) + ' ' + Math.round(W / k) + 'px ' + MONO, R = 9;
     ctx.clearRect(0, 0, W, W);
-    const bg = ctx.createLinearGradient(0, 0, 0, W); bg.addColorStop(0, '#1a1b22'); bg.addColorStop(1, '#14151a'); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, W);
-    for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) if ((r + c) % 2 === 0) { ctx.fillStyle = 'rgba(255,255,255,.025)'; ctx.fillRect(X(c * 24), X(r * 24), X(24), X(24)); }
-    ctx.strokeStyle = edSnap ? 'rgba(255,255,255,.14)' : 'rgba(255,255,255,.07)'; ctx.lineWidth = 1; const gs = edSnap ? 3 : 24; for (let k = gs; k < FLD.IN; k += gs) { ctx.beginPath(); ctx.moveTo(X(k), 0); ctx.lineTo(X(k), W); ctx.moveTo(0, X(k)); ctx.lineTo(W, X(k)); ctx.stroke(); }
-    ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.font = fs(64); ctx.textAlign = 'left'; for (let k = 24; k < FLD.IN; k += 24) { ctx.fillText(String(k), X(k) + 3, W - 5); ctx.fillText(String(k), 4, X(k) - 3); }
-    const zone = (z, col) => { ctx.fillStyle = col; ctx.fillRect(X(z.x), X(z.y), X(z.w), X(z.h)); };
-    zone(FLD.LZ.red, 'rgba(255,77,94,.28)'); zone(FLD.LZ.blue, 'rgba(61,139,255,.28)');
-    ctx.fillStyle = 'rgba(61,139,255,.55)'; ctx.fillRect(0, 0, X(3.5), X(23)); ctx.fillStyle = 'rgba(255,77,94,.55)'; ctx.fillRect(X(FLD.IN - 3.5), X(FLD.IN - 23), X(3.5), X(23));
-    const gz = ctx.createRadialGradient(X(133), X(133), 0, X(133), X(133), X(24)); gz.addColorStop(0, 'rgba(255,201,51,.16)'); gz.addColorStop(1, 'rgba(255,201,51,0)'); ctx.fillStyle = gz; ctx.fillRect(X(100), X(100), X(44), X(44));
-    const f = FLD.FRAME; ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(X(f.x0), X(f.y0), X(f.x1 - f.x0), X(f.y1 - f.y0)); ctx.strokeStyle = 'rgba(249,5,108,.85)'; ctx.lineWidth = 2; ctx.strokeRect(X(f.x0), X(f.y0), X(f.x1 - f.x0), X(f.y1 - f.y0));
-    [['blue', '#3d8bff'], ['red', '#ff4d5e']].forEach(([al, col]) => FLD.CELLS[al].forEach((c, ci) => { ctx.strokeStyle = col; ctx.fillStyle = al === 'red' && ci === 1 ? 'rgba(255,77,94,.16)' : 'rgba(255,255,255,.03)'; ctx.lineWidth = al === 'red' && ci === 1 ? 3 : 1.5; ctx.fillRect(X(c.x - 8), X(c.y - 10), X(16), X(20)); ctx.strokeRect(X(c.x - 8), X(c.y - 10), X(16), X(20)); }));
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = fs(46, 700); ctx.fillText('STUP', X(72), X(72) + 4); ctx.fillText('ZONA ROȘIE', X(37), X(141.4)); ctx.fillText('ZONA ALBASTRĂ', X(107), X(8));
-    ctx.fillStyle = 'rgba(255,201,51,.6)'; ctx.font = fs(60); ctx.fillText('grădină', X(133), X(112)); ctx.fillStyle = 'rgba(255,77,94,.7)'; ctx.fillText('celula ta', X(85.5), X(85) + X(13.5));
-    const selP = edSel >= 0 ? pts[edSel] : null, wantsFl = selP && ((selP.act || []).some((a) => a.t === 'take' || a.t === 'deposit') || selP.h === 'flower');
-    FLD.FLOWERS.forEach(([x, y], k) => {
-      if (wantsFl) { ctx.strokeStyle = 'rgba(255,201,51,.22)'; ctx.setLineDash([5, 6]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(x), X(y), X(22), 0, 6.283); ctx.stroke(); ctx.setLineDash([]); }
-      ctx.fillStyle = 'rgba(255,201,51,.22)'; ctx.strokeStyle = '#ffc933'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(X(x), X(y), X(4.6), 0, 6.283); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#ffc933'; ctx.font = fs(62, 800); const ly = y < 14 ? y + 11 : y - 7, lx = x < 14 ? x + 9 : x > 130 ? x - 9 : x; ctx.fillText('F' + (k + 1), X(lx), X(ly));
+    // ---- field drawn like field-sim.html: black floor, 24 in grid, U-shaped landing zones, hive with yellow arms, hex flowers ----
+    const k = W / 960, rrp = (x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
+    ctx.fillStyle = '#050506'; ctx.fillRect(0, 0, W, W);
+    ctx.strokeStyle = edSnap ? 'rgba(190,190,200,.4)' : 'rgba(190,190,200,.28)'; ctx.lineWidth = 2 * k; for (let i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(X(i * 24), 0); ctx.lineTo(X(i * 24), W); ctx.moveTo(0, X(i * 24)); ctx.lineTo(W, X(i * 24)); ctx.stroke(); }
+    if (edSnap) { ctx.strokeStyle = 'rgba(190,190,200,.1)'; ctx.lineWidth = 1; for (let i = 3; i < FLD.IN; i += 3) { ctx.beginPath(); ctx.moveTo(X(i), 0); ctx.lineTo(X(i), W); ctx.moveTo(0, X(i)); ctx.lineTo(W, X(i)); ctx.stroke(); } }
+    [['red', '#ff4d5e'], ['blue', '#3d8bff']].forEach(([al, c]) => {
+      const z = FLD.LZ[al]; ctx.fillStyle = c + '1c'; ctx.fillRect(X(z.x), X(z.y), X(z.w), X(z.h)); ctx.strokeStyle = c; ctx.lineWidth = 6 * k; ctx.lineJoin = 'miter'; ctx.beginPath();
+      if (al === 'blue') { ctx.moveTo(X(z.x), 0); ctx.lineTo(X(z.x), X(z.h)); ctx.lineTo(X(z.x + z.w), X(z.h)); ctx.lineTo(X(z.x + z.w), 0); } else { ctx.moveTo(X(z.x), W); ctx.lineTo(X(z.x), X(z.y)); ctx.lineTo(X(z.x + z.w), X(z.y)); ctx.lineTo(X(z.x + z.w), W); }
+      ctx.stroke(); ctx.fillStyle = c; if (al === 'blue') ctx.fillRect(0, 0, X(3.5), X(23)); else ctx.fillRect(X(FLD.IN - 3.5), X(FLD.IN - 23), X(3.5), X(23));
     });
+    const f = FLD.FRAME; ctx.strokeStyle = 'rgba(200,200,210,.55)'; ctx.lineWidth = 3 * k; ctx.strokeRect(X(f.x0), X(f.y0), X(f.x1 - f.x0), X(f.y1 - f.y0)); ctx.beginPath(); ctx.moveTo(X(72), X(f.y0)); ctx.lineTo(X(72), X(f.y1)); ctx.stroke();
+    ctx.fillStyle = 'rgba(40,40,46,.9)'; ctx.fillRect(X(70), X(f.y0), X(4), X(f.y1 - f.y0));
+    [['blue', '#3d8bff'], ['red', '#ff4d5e']].forEach(([al, col]) => {
+      const mid = FLD.CELLS[al][0].y; ctx.fillStyle = 'rgba(255,201,51,.9)'; ctx.fillRect(X(67), X(mid - 11), X(3.2), X(22)); ctx.fillRect(X(74), X(mid - 11), X(3.2), X(22));
+      FLD.CELLS[al].forEach((c, ci) => { const mine = al === 'red' && ci === 1, w = X(16), h = X(20), x = X(c.x) - w / 2, y = X(c.y) - h / 2; ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = 14 * k; ctx.shadowOffsetY = 6 * k; ctx.fillStyle = col + (mine ? '66' : '22'); rrp(x, y, w, h, 10 * k); ctx.fill(); ctx.shadowColor = 'transparent'; ctx.globalAlpha = mine ? 1 : .55; ctx.lineWidth = (mine ? 6 : 3.5) * k; ctx.strokeStyle = col; rrp(x, y, w, h, 10 * k); ctx.stroke(); ctx.restore(); });
+    });
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.font = fs(60, 700); ctx.fillText('ZONA ROȘIE', X(37), X(141.4)); ctx.fillText('ZONA ALBASTRĂ', X(107), X(8));
+    ctx.fillStyle = 'rgba(255,77,94,.75)'; ctx.fillText('celula ta', X(85.5), X(85) + X(13.5));
+    ctx.fillStyle = 'rgba(255,201,51,.5)'; ctx.fillText('grădină', X(133), X(112));
+    const selP = edSel >= 0 ? pts[edSel] : null, wantsFl = selP && ((selP.act || []).some((a) => a.t === 'take' || a.t === 'deposit') || selP.h === 'flower');
+    const hexP = (cx, cy, rad) => { ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 3 * i + Math.PI / 6, x = cx + Math.cos(a) * rad, y = cy + Math.sin(a) * rad; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.closePath(); };
+    FLD.FLOWERS.forEach(([fx, fy], i) => {
+      const x = X(fx), y = X(fy), rad = X(4.1), wall = Math.atan2(FLD.IN / 2 - fy, FLD.IN / 2 - fx) + Math.PI;
+      if (wantsFl) { ctx.strokeStyle = 'rgba(255,201,51,.28)'; ctx.setLineDash([5, 6]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, X(22), 0, 6.283); ctx.stroke(); ctx.setLineDash([]); }
+      ctx.strokeStyle = '#6f6a52'; ctx.lineWidth = 3 * k * 1.1; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(wall) * X(6), y + Math.sin(wall) * X(6)); ctx.stroke();
+      hexP(x, y, rad); ctx.fillStyle = '#d9b43c'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#8a6f1a'; ctx.stroke();
+      ctx.fillStyle = '#17140a'; ctx.beginPath(); ctx.arc(x, y, rad * .58, 0, 6.283); ctx.fill();
+      ctx.strokeStyle = '#efe7c6'; ctx.lineWidth = 1.6; for (let j = 0; j < 4; j++) { const a2 = j * Math.PI / 2 + Math.PI / 4; ctx.beginPath(); ctx.moveTo(x + Math.cos(a2) * rad * .58, y + Math.sin(a2) * rad * .58); ctx.lineTo(x + Math.cos(a2) * rad * .86, y + Math.sin(a2) * rad * .86); ctx.stroke(); }
+      ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, rad * .58, 0, 6.283); ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#8a8470'; ctx.beginPath(); ctx.arc(x, y, rad * .74, wall - .8, wall + .8); ctx.stroke();
+      ctx.fillStyle = '#ffc933'; ctx.beginPath(); ctx.arc(x, y, X(1.5), 0, 6.283); ctx.fill();
+      ctx.fillStyle = '#ffc933'; ctx.font = fs(62, 800); ctx.fillText('F' + (i + 1), X(fx < 14 ? fx + 9 : fx > 130 ? fx - 9 : fx), X(fy < 14 ? fy + 11 : fy - 7));
+    });
+    ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 4 * k; ctx.strokeRect(2, 2, W - 4, W - 4);
     ctx.save(); ctx.translate(X(FLD.START.x), X(FLD.START.y)); ctx.fillStyle = 'rgba(255,77,94,.3)'; ctx.strokeStyle = '#ff4d5e'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.fillRect(-X(R), -X(R), X(R * 2), X(R * 2)); ctx.strokeRect(-X(R), -X(R), X(R * 2), X(R * 2)); ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -X(R)); ctx.stroke(); ctx.restore();
     ctx.fillStyle = '#ff8a96'; ctx.font = fs(62, 800); ctx.fillText('START', X(FLD.START.x), X(FLD.START.y) + X(R + 4.5));
     // path: glow + line + direction arrows
@@ -801,7 +817,7 @@
   function autoView() {
     ensureAutos(); if (!edLast) histReset();
     const cv = el('canvas', { class: 'ap-cv', width: 900, height: 900 });
-    const mapBox = el('div', { class: 'ap-map' }, cv, el('button', { class: 'ap-fab', title: 'Comandă nouă', onclick: togglePick }, '+'));
+    const mapBox = el('div', { class: 'ap-map' }, cv);
     const tb = el('div', { class: 'ap-toolbar' },
       el('div', { class: 'ap-seg' }, [['add', '➕ Adaugă puncte'], ['move', '✋ Doar mută']].map(([m, t]) => el('button', { class: edMode === m ? 'on pink' : '', onclick: (e) => { edMode = m; [...e.target.parentNode.children].forEach((b) => b.classList.remove('on', 'pink')); e.target.classList.add('on', 'pink'); }, title: m === 'add' ? 'Apasă pe teren ca să pui puncte' : 'Apăsările pe teren nu mai adaugă puncte' }, t))),
       el('label', { class: 'ap-switch', style: 'margin:0', title: 'Punctele se lipesc de o grilă de 3 in' }, el('input', { type: 'checkbox', checked: edSnap, onchange: (e) => { edSnap = e.target.checked; drawEditor(); } }), el('span', { text: 'Grilă' })),
