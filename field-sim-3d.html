@@ -816,7 +816,7 @@
       if (!G.free && !G.autoDone && G.t >= AUTO_T) autoEnd();
       const inp = frozen ? ZERO : readInput();
       for (const r of G.robots) {
-        const i = frozen ? ZERO : (r.pid ? (ONL && r.pid === ONL.uid ? inp : onlineInput(r.pid)) : (r.human ? inp : botThink(r, dt)));
+        const i = frozen ? ZERO : (r.pid ? (ONL && r.pid === ONL.uid ? inp : onlineInput(r.pid)) : (r.human ? (r.auto && !r.auto.off && !G.free && G.t < AUTO_T ? autoThink(r, dt, inp) : inp) : botThink(r, dt)));
         driveRobot(r, i, dt);
         if (!frozen) { if (i.dep) deposit(r); if (i.take) takeFlower(r); }
         if (i.shoot) shoot(r, r.human ? (ROBOTS[r.type].turret ? 0.02 : 0.04) * (r.mods ? r.mods.spread : 1) : (r.skill != null ? 0.45 - 0.25 * r.skill : 0.3));
@@ -1454,6 +1454,10 @@
           ctx.fillStyle = r.al === 'red' ? '#ff6b7a' : '#6aa6ff'; ctx.fillRect(q.x - w / 2, q.y - h / 2, 3 * U, h);
           ctx.fillStyle = '#fff'; ctx.font = '600 ' + 9.5 * U + 'px JetBrains Mono, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(name, q.x + U, q.y + .5 * U); ctx.textBaseline = 'alphabetic';
         });
+        { const me0 = G.robots[0]; if (me0 && me0.auto && !me0.auto.off && G.t < AUTO_T) {
+          ctx.strokeStyle = 'rgba(120,255,170,.85)'; ctx.fillStyle = 'rgba(120,255,170,.95)'; ctx.lineWidth = 2.2 * U; ctx.setLineDash([7 * U, 6 * U]); ctx.beginPath();
+          const ap = [{ x: me0.x, y: me0.y }].concat(me0.auto.pts.slice(me0.auto.i)); ap.forEach((p, k) => { const q = proj(p.x, 1.2, p.y); if (k) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); }); ctx.stroke(); ctx.setLineDash([]);
+          me0.auto.pts.slice(me0.auto.i).forEach((p) => { const q = proj(p.x, 1.2, p.y); if (q.vis) { ctx.beginPath(); ctx.arc(q.x, q.y, 4 * U, 0, TAU); ctx.fill(); } }); } }
         G.pops.forEach((p) => {
           const q = proj(p.x, 24 + p.t * 14, p.y); if (!q.vis) return; const k2 = 1 + .6 * Math.max(0, 1 - p.t * 5);
           ctx.globalAlpha = clamp(1.3 - p.t, 0, 1); ctx.fillStyle = /FAULT|AVERT/.test(p.txt) ? '#ff6b7a' : '#fff'; ctx.font = '800 ' + 19 * U * k2 + 'px Bricolage Grotesque, sans-serif'; ctx.textAlign = 'center';
@@ -2308,7 +2312,51 @@
       if (!CAREER || !G) return;
       const me = G.robots[0], op = G.robots[1]; if (!me || !op) return;
       me.mods = CAREER.mods; me.pname = String(CAREER.team.name).slice(0, 16); me.num = String(CAREER.team.num);
+      if (CAREER.auto && CAREER.auto.pts && CAREER.auto.pts.length) me.auto = { name: String(CAREER.auto.name || 'Autonom').slice(0, 18), pts: CAREER.auto.pts.map((p) => ({ x: +p.x, y: +p.y, h: p.h, act: (p.act || []).map((a) => Object.assign({}, a)) })), i: 0, ph: 'move', ai: 0, at: 0, wt: 0, t: 0, ex: 0, ey: 0, sig: 1.1 / (CAREER.mods.assist || 1), off: false, s0: 0, h0: 0, c0: 0 };
       op.skill = clamp(+CAREER.opp.skill || 0.5, 0, 1); op.pname = String(CAREER.opp.name).replace(' (antrenament)', '').slice(0, 16);
+    }
+
+    // ---- autonomous period: the robot follows the path drawn in the career editor ----
+    const gaussy = () => (Math.random() + Math.random() + Math.random() + Math.random() - 2) * 0.9;
+    const wrapA = (a) => ((a + Math.PI) % TAU + TAU) % TAU - Math.PI;
+    function autoThink(r, dt, manual) {
+      const A = r.auto;
+      if (A.off) return manual;
+      if (manual.mx || manual.my || manual.rot || manual.shoot || manual.dep || manual.take) { A.off = true; pop(r.x, r.y - 14, 'PREIA TU', r.al); return manual; }
+      const inp = { mx: 0, my: 0, rot: 0, shoot: false, slow: false, dep: false, take: false, fc: true };
+      if (A.t === 0) pop(r.x, r.y - 14, 'AUTONOM · ' + A.name, r.al);
+      A.t += dt;
+      // where the robot THINKS it is: odometry drift grows with time and shrinks with better electronics
+      A.ex += gaussy() * A.sig * Math.sqrt(dt); A.ey += gaussy() * A.sig * Math.sqrt(dt);
+      const px = r.x + A.ex, py = r.y + A.ey, P = A.pts[A.i];
+      if (!P) return inp;
+      const fcs = r.al === 'blue' ? -1 : 1, cell = upCell(r.al), turret = ROBOTS[r.type].turret;
+      const faceTo = (tx, ty) => Math.atan2(ty - py, tx - px);
+      const nearFlower = () => { let bf = null, bd = 1e9; for (const f of G.flowers) { const d = Math.hypot(f.x - px, f.y - py); if (d < bd) { bd = d; bf = f; } } return bf ? faceTo(bf.x, bf.y) : r.a; };
+      const headingFor = () => (P.h === 'cell' ? faceTo(cell.x, cell.y) : P.h === 'flower' ? nearFlower() : typeof P.h === 'number' ? P.h * Math.PI / 180 : null);
+      const rot = (w) => { const da = wrapA(w - r.a); inp.rot = clamp(da * 2.4, -1, 1); return da; };
+      const drive = (tx, ty, gain) => { const dx = tx - px, dy = ty - py, d = Math.hypot(dx, dy); if (d > 1.2) { const m = clamp(d / gain, 0.22, 1); inp.mx = dx / d * m * fcs; inp.my = -(dy / d) * m * fcs; } return d; };
+      const next = () => { A.ai++; A.at = 0; A.s0 = r.shots; A.h0 = r.hold.length; A.c0 = capOf(r); };
+      if (A.ph === 'move') {
+        A.wt += dt;
+        let wx = P.x, wy = P.y; const d0 = Math.hypot(P.x - px, P.y - py);
+        if (d0 > 8 && segHitsFrame(px, py, P.x, P.y)) { const w = steerTo(r, P.x, P.y); wx = w[0]; wy = w[1]; }   // never drive into the HIVE: go around it
+        const d = drive(wx, wy, 16), hw = headingFor();
+        const da = rot(hw === null ? (d > 6 ? Math.atan2(wy - py, wx - px) : r.a) : hw);
+        if ((d0 < 2.6 && (hw === null || Math.abs(da) < 0.13)) || A.wt > 7.5) { A.ph = 'act'; A.ai = 0; A.at = 0; A.wt = 0; A.s0 = r.shots; A.h0 = r.hold.length; A.c0 = capOf(r); }
+        return inp;
+      }
+      const a = P.act && P.act[A.ai];
+      if (!a) { A.i++; A.ph = 'move'; A.wt = 0; return inp; }
+      A.at += dt; drive(P.x, P.y, 22);   // hold the spot while acting
+      if (a.t === 'shoot') {
+        const want = faceTo(cell.x, cell.y), da = rot(want), tAim = turret ? Math.abs(wrapA(want - r.ta)) < 0.1 : Math.abs(da) < 0.12;
+        if (tAim && r.cd <= 0 && r.hold.length) inp.shoot = true;
+        if (r.shots - A.s0 >= (a.n || 4) || !r.hold.length || A.at > 5) next();
+      } else if (a.t === 'deposit') { rot(nearFlower()); inp.dep = true; if (r.hold.length < A.h0 || A.at > 1.4) next(); }
+      else if (a.t === 'take') { rot(nearFlower()); inp.take = true; if (capOf(r) > A.c0 || A.at > 1.4) next(); }
+      else { const hw = headingFor(); if (hw !== null) rot(hw); if (A.at >= (a.s || 1)) next(); }   // wait / intake
+      return inp;
     }
     function careerAfterEnd() {
       if (!CAREER) return;

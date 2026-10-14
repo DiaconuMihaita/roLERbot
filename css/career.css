@@ -133,3 +133,24 @@ body.embed { background: linear-gradient(180deg, #0d0d11, #09090b); background-i
 body.embed .cr-nav { padding-left: clamp(18px, 6vw, 90px); padding-right: clamp(18px, 6vw, 90px); max-width: 1180px; margin: 14px auto 0; }
 body.embed .cr-main { padding-left: clamp(18px, 6vw, 90px); padding-right: clamp(18px, 6vw, 90px); }
 body.embed .welcome { margin-top: 3vh; }
+
+/* autonomous editor */
+.ap-cv { width: 100%; max-width: 640px; display: block; border-radius: 14px; border: 1px solid var(--line); touch-action: none; cursor: crosshair; background: #16171c; margin: 0 auto; }
+.cr-sel { appearance: auto; padding: 9px 11px; font-size: 14px; }
+.ap-f { display: grid; gap: 5px; margin-top: 10px; font-size: 13px; color: var(--dim); }
+.ap-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.ap-stats > div { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: #0e0e11; }
+.ap-stats small { display: block; font: 500 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.ap-stats b { font: 700 17px var(--display); } .ap-stats b.bad { color: #ff8a96; }
+.ap-list { display: grid; gap: 6px; max-height: 210px; overflow: auto; }
+.ap-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: #0e0e11; cursor: pointer; font: 500 13px var(--mono); }
+.ap-row.on { border-color: var(--pink); background: rgba(249, 5, 108, .1); }
+.ap-row b { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: #1b1c22; color: #fff; font-size: 12px; }
+.ap-row span:first-of-type { flex: 1; }
+.ap-mv button, .ap-act button { background: none; border: 1px solid var(--line); color: var(--dim); border-radius: 7px; width: 26px; height: 24px; cursor: pointer; font-size: 11px; margin-left: 3px; }
+.ap-mv button:hover, .ap-act button:hover { color: #fff; border-color: #fff; }
+.ap-edit { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.ap-acts { display: grid; gap: 6px; margin: 8px 0; }
+.ap-act { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: #0e0e11; font-size: 13px; }
+.ap-act b { flex: 1; font-weight: 600; }
+.ap-act input { width: 58px; padding: 4px 6px; background: #09090b; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); font: 500 13px var(--mono); }
