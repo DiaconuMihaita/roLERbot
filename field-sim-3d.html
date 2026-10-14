@@ -104,7 +104,7 @@
   </style>
 <link href="css/online.css?v=1" rel="stylesheet" />
   <link href="css/settings.css?v=2" rel="stylesheet" />
-  <link href="css/menu.css?v=2" rel="stylesheet" />
+  <link href="css/menu.css?v=3" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="js/supabase-config.js"></script>
 </head>
@@ -226,7 +226,7 @@
 
   <div class="set-modal hidden" id="setModal">
     <div class="set-card">
-      <div class="set-head"><h2>Setări</h2><button class="set-x2" id="setClose" aria-label="Închide">✕</button></div>
+      <div class="set-head"><button class="su-back set-back" id="setBack">← Înapoi</button><h2>Setări</h2><button class="set-x2" id="setClose" aria-label="Închide">✕</button></div>
       <div class="set-tabs"><button class="on" data-t="keys">Taste</button><button data-t="gfx">Grafică</button><button data-t="game">Joc</button></div>
       <div class="set-body">
         <div class="set-pane" id="paneKeys"></div>
@@ -264,14 +264,16 @@
       <p>Simulator neoficial, după manualul oficial TU04.</p>
     </div>
     <nav class="hm-menu" id="hmMenu">
-      <button data-a="play"><span class="n">01</span><span class="t">Joacă</span><small>Meci rapid: 1v1, 2v2 cu AI sau free drive</small></button>
-      <button data-a="career"><span class="n">02</span><span class="t">Mod carieră<em id="hmCareerBadge"></em></span><small>Construiește-ți echipa, upgrade-uri, sponsori, evenimente</small></button>
-      <button data-a="online"><span class="n">03</span><span class="t">Online<em id="hmOnlineBadge"></em></span><small>Conturi, prieteni, invitații, meciuri 1v1 și 2v2</small></button>
-      <button data-a="settings"><span class="n">04</span><span class="t">Setări</span><small>Taste, grafică și opțiuni de joc</small></button>
-      <button data-a="site" class="minor"><span class="n">←</span><span class="t">Înapoi la site</span></button>
+      <button data-a="play" data-d="Meci rapid: 1v1, 2v2 cu AI sau free drive."><span class="n">01</span><span class="t">Joacă</span></button>
+      <button data-a="career" data-d="Construiește-ți echipa: upgrade-uri, sponsori, evenimente."><span class="n">02</span><span class="t">Mod carieră<em id="hmCareerBadge"></em></span></button>
+      <button data-a="online" data-d="Conturi, prieteni, invitații, meciuri 1v1 și 2v2."><span class="n">03</span><span class="t">Online<em id="hmOnlineBadge"></em></span></button>
+      <button data-a="settings" data-d="Taste, grafică și opțiuni de joc."><span class="n">04</span><span class="t">Setări</span></button>
+      <button data-a="site" class="minor" data-d="Revino pe pagina echipei roLERbot."><span class="n">←</span><span class="t">Înapoi la site</span></button>
     </nav>
+    <div class="hm-desc" id="hmDesc"></div>
     <div class="hm-foot"><span>↑ ↓ navighează · Enter alege</span><button id="hmFull">⛶ Ecran complet</button><span>neoficial · roLERbot</span></div>
   </div>
+  <div class="pg hidden" id="pgCareer"><iframe id="careerFrame" title="Mod carieră"></iframe></div>
   <script>
   (() => {
     'use strict';
@@ -812,9 +814,9 @@
       st.isBound = (code) => !!code && Object.values(st.binds).some((b) => b.includes(code));
       return st;
     })();
-    const LOAD = { p: 0, cadDone: false };
+    const LOAD = { p: 0, cadDone: false }, MENU = { lite: true, pause: false, n: 0 };
     let render3d = null, gfxApply = null, camMode = CFG.game.cam;
-    function render() { if (render3d) render3d(); }
+    function render() { if (!render3d || MENU.pause) return; if (MENU.lite && (MENU.n ^= 1)) return; render3d(); }
 
     if (!window.THREE) {
       stageEl.insertAdjacentHTML('afterbegin', '<div style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font:600 15px sans-serif;padding:24px;text-align:center;z-index:3">Nu s-a putut încărca three.js. Verifică conexiunea la internet și reîncarcă pagina.</div>');
@@ -1424,9 +1426,19 @@
 
     // ---------- flow ----------
     let menuState = 'loading';
+    const MENU_PAGES = ['settings', 'online', 'career'];
     function setMenu(w) {
-      menuState = w; $('home').classList.toggle('hidden', w !== 'home'); $('menu').classList.toggle('hidden', w !== 'setup');
-      document.body.classList.toggle('in-menu', w !== 'none' || !$('loading').classList.contains('hidden'));
+      const was = menuState; menuState = w;
+      $('home').classList.toggle('hidden', w !== 'home'); $('menu').classList.toggle('hidden', w !== 'setup'); $('pgCareer').classList.toggle('hidden', w !== 'career');
+      if (w === 'career') { const f = $('careerFrame'); if (!f.getAttribute('src')) f.setAttribute('src', 'career.html?embed=1'); }
+      else if (was === 'career') $('careerFrame').removeAttribute('src');
+      if (w !== 'settings' && window.closeSettingsPage) window.closeSettingsPage();
+      if (w !== 'online' && window.closeOnlinePage) window.closeOnlinePage();
+      if (w === 'settings' && window.openSettingsPage) window.openSettingsPage();
+      if (w === 'online' && window.openOnlinePage) window.openOnlinePage();
+      const loadingOn = !$('loading').classList.contains('hidden');
+      MENU.pause = w === 'setup' || MENU_PAGES.includes(w); MENU.lite = w === 'home' || loadingOn;
+      document.body.classList.toggle('in-menu', w !== 'none' || loadingOn);
       setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
     }
     const show = (id, on) => { if (id === 'menu') { setMenu(on ? 'home' : 'none'); return; } $(id).classList.toggle('hidden', !on); };
@@ -1531,14 +1543,16 @@
         if (!modal.classList.contains('hidden')) return; keys = {}; modal.classList.remove('hidden'); showTab(tab);
         pausedBySet = false; if (!(ONL && ONL.room) && mode === 'run') { togglePause(); pausedBySet = true; }
       }
-      function closeSet() { listening = null; modal.classList.add('hidden'); if (pausedBySet && mode === 'pause') togglePause(); pausedBySet = false; }
+      function closeSet() { listening = null; if (modal.classList.contains('page')) { setMenu('home'); return; } modal.classList.add('hidden'); if (pausedBySet && mode === 'pause') togglePause(); pausedBySet = false; }
+      window.openSettingsPage = () => { modal.classList.add('page'); openSet(); };
+      window.closeSettingsPage = () => { if (modal.classList.contains('page')) { modal.classList.remove('page'); modal.classList.add('hidden'); listening = null; } };
       window.openSettings = openSet;
-      $('btnSettings').onclick = openSet; $('setClose').onclick = closeSet; $('setDone').onclick = closeSet;
-      modal.addEventListener('mousedown', (e) => { if (e.target === modal) closeSet(); });
+      $('btnSettings').onclick = openSet; $('setClose').onclick = closeSet; $('setDone').onclick = closeSet; $('setBack').onclick = closeSet;
+      modal.addEventListener('mousedown', (e) => { if (e.target === modal && !modal.classList.contains('page')) closeSet(); });
       ['keydown', 'keyup'].forEach((t) => modal.addEventListener(t, (e) => { if (!listening) e.stopPropagation(); }));
       addEventListener('keydown', (e) => {
         if (e.repeat || /INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
-        if (CFG.matches('settings', e.code)) { if (modal.classList.contains('hidden')) openSet(); else closeSet(); }
+        if (CFG.matches('settings', e.code)) { if (menuState === 'home') setMenu('settings'); else if (modal.classList.contains('hidden')) openSet(); else closeSet(); }
       });
       $('setReset').onclick = () => { if (!confirm('Resetezi toate setările (taste, grafică, joc)?')) return; CFG.binds = CFG.copy(CFG.DEF_BINDS); CFG.gfx = CFG.copy(CFG.DEF_GFX); CFG.game = CFG.copy(CFG.DEF_GAME); CFG.save(); if (gfxApply) gfxApply(CFG.gfx); camMode = CFG.game.cam; syncGame(); showTab(tab); updateHint(); updateFps(); };
 
@@ -2189,12 +2203,14 @@
       onlRoot.classList.toggle('hidden', !onlOpen); if (!onlOpen) return;
       const act = document.activeElement, keep = act && act.id && onlRoot.contains(act) ? { id: act.id, s: act.selectionStart, e: act.selectionEnd } : null;
       const card = el('div', { class: 'onl-card' }, !SB_OK ? setupView() : !ACC.user ? authView() : ACC.view === 'name' ? nameView() : ONL && ACC.view === 'lobby' ? lobbyView() : homeView());
-      onlRoot.replaceChildren(card);
+      onlRoot.replaceChildren(...(onlRoot.classList.contains('page') ? [el('button', { class: 'su-back onl-back', text: '← Înapoi', onclick: closeOnl }), card] : [card]));
       if (keep) { const n = document.getElementById(keep.id); if (n) { n.focus(); try { n.setSelectionRange(keep.s, keep.e); } catch (e) { } } }
     }
     function openOnl() { onlOpen = true; if (ACC.user && ACC.name) ACC.view = ONL ? 'lobby' : 'home'; queue(); }
-    function closeOnl() { onlOpen = false; queue(); }
-    onlRoot.addEventListener('mousedown', (e) => { if (e.target === onlRoot && !(ONL && ACC.view === 'lobby')) closeOnl(); });
+    function closeOnl() { if (onlRoot.classList.contains('page')) { setMenu('home'); return; } onlOpen = false; queue(); }
+    window.openOnlinePage = () => { onlRoot.classList.add('page'); openOnl(); };
+    window.closeOnlinePage = () => { if (onlRoot.classList.contains('page')) { onlRoot.classList.remove('page'); onlOpen = false; queue(); } };
+    onlRoot.addEventListener('mousedown', (e) => { if (e.target === onlRoot && !onlRoot.classList.contains('page') && !(ONL && ACC.view === 'lobby')) closeOnl(); });
     { const row = document.querySelector('#menu .row2'); if (row && SB_OK) row.append(el('button', { class: 'btn-retro', id: 'btnOnline', text: 'Online · prieteni', onclick: openOnl })); }
     // pill to reopen the room while the lobby is hidden in the menu
     { const pill = el('button', { class: 'onl-btn pri sm', style: 'position:fixed;left:14px;bottom:14px;z-index:80;display:none', onclick: openOnl }); document.body.append(pill);
@@ -2217,7 +2233,7 @@
     if (CAREER) {
       cfg.alliance = CAREER.alliance === 'blue' ? 'blue' : 'red'; cfg.robot = CAREER.robot === 'turret' ? 'turret' : 'strafe'; cfg.mode = '1v1';
       document.title = 'Carieră · ' + CAREER.label;
-      const back = document.querySelector('.fs-tool[href="index.html"]'); if (back) { back.href = 'career.html'; back.title = 'Înapoi la carieră'; }
+      const back = document.querySelector('.fs-tool[href="index.html"]'); if (back) { back.href = 'field-sim-3d.html?page=career'; back.title = 'Înapoi la carieră'; }
     }
     function applyCareer() {
       if (!CAREER || !G) return;
@@ -2229,7 +2245,7 @@
       if (!CAREER) return;
       const my = cfg.alliance, op = OPP[my], me = G.robots[0], P = G.parts[my] || {};
       try { localStorage.setItem('rbCareerResult', JSON.stringify({ id: CAREER.id, my: G.score[my], opp: G.score[op], tips: G.hive[my].tips, lp: P.lp || 0, flowers: P.flower || 0, shots: me.shots, hits: me.hits, ts: Date.now() })); } catch (e) { }
-      $('btnAgain').style.display = 'none'; const bm = $('btnMenu'); bm.textContent = 'Continuă cariera'; bm.onclick = () => { location.href = 'career.html'; };
+      $('btnAgain').style.display = 'none'; const bm = $('btnMenu'); bm.textContent = 'Continuă cariera'; bm.onclick = () => { location.href = 'field-sim-3d.html?page=career'; };
       $('endNote').innerHTML = '<b style="color:var(--g-pink-hi)">' + CAREER.label + '</b><br>Rezultatul se salvează în carieră.';
     }
     // ================= /CARIERĂ =================
@@ -2243,6 +2259,7 @@
       const showTip = () => { tipEl.classList.remove('in'); setTimeout(() => { tipEl.textContent = 'SFAT · ' + TIPS[tipI++ % TIPS.length]; tipEl.classList.add('in'); }, 260); };
       showTip(); const tipTimer = setInterval(showTip, 3800);
       const hexes = [...document.querySelectorAll('#ldHoney i')], bar = $('ldBar'), pct = $('ldPct'), msg = $('ldMsg'), press = $('ldPress');
+      const PAGE = (location.search.match(/[?&]page=(career|online|settings)/) || [])[1];
       const t0 = performance.now(); let shown = 0, finished = false;
       const MSG = [[0, CAREER ? 'Se pregătește meciul…' : 'Se pornește motorul grafic…'], [.25, 'Se încarcă terenul oficial…'], [.9, 'Se pregătesc roboții…'], [1, 'Gata!']];
       function step() {
@@ -2258,35 +2275,40 @@
       function dismiss() {
         window.removeEventListener('keydown', onKey); ld.removeEventListener('pointerdown', dismiss);
         ld.classList.add('out');
-        setTimeout(() => { ld.classList.add('hidden'); if (CAREER) { setMenu('none'); startCountdown(); } else { setMenu('home'); home.classList.remove('enter'); void home.offsetWidth; home.classList.add('enter'); } }, 620);
+        setTimeout(() => { ld.classList.add('hidden'); if (CAREER) { setMenu('none'); startCountdown(); } else if (PAGE) setMenu(PAGE); else { setMenu('home'); home.classList.remove('enter'); void home.offsetWidth; home.classList.add('enter'); setTimeout(() => home.classList.remove('enter'), 1800); } }, 620);
       }
       const onKey = (e) => { if (/^(F\d+|Control|Alt|Meta|Shift|Tab|CapsLock)/.test(e.code)) return; e.preventDefault(); dismiss(); };
       function ready() {
-        if (CAREER) { dismiss(); return; }
+        if (CAREER || PAGE) { dismiss(); return; }
         press.classList.remove('hidden'); window.addEventListener('keydown', onKey); ld.addEventListener('pointerdown', dismiss);
       }
 
       // ---- main menu ----
       const items = [...document.querySelectorAll('#hmMenu button')]; let idx = 0;
-      const focusIdx = (i) => { idx = (i + items.length) % items.length; items.forEach((b, k) => b.classList.toggle('sel', k === idx)); };
+      const desc = $('hmDesc');
+      const focusIdx = (i) => { idx = (i + items.length) % items.length; items.forEach((b, k) => b.classList.toggle('sel', k === idx)); desc.textContent = items[idx].dataset.d || ''; };
       focusIdx(0);
       try { const c = JSON.parse(localStorage.getItem('rbCareer') || 'null'); $('hmCareerBadge').textContent = c && c.v === 1 ? c.team.name + ' · sezon ' + c.season + ' · săpt. ' + c.week : 'nou'; } catch (e) { }
       const onlineBtn = items.find((b) => b.dataset.a === 'online'); if (!SB_OK) { onlineBtn.classList.add('off'); $('hmOnlineBadge').textContent = 'indisponibil'; }
       function act(a) {
         if (a === 'play') setMenu('setup');
-        else if (a === 'career') { document.body.classList.add('leaving'); setTimeout(() => { location.href = 'career.html'; }, 280); }
-        else if (a === 'online') { if (SB_OK) openOnl(); else flash('Online nu e configurat încă.'); }
-        else if (a === 'settings') window.openSettings();
+        else if (a === 'career') setMenu('career');
+        else if (a === 'online') { if (SB_OK) setMenu('online'); else flash('Online nu e configurat încă.'); }
+        else if (a === 'settings') setMenu('settings');
         else if (a === 'site') { document.body.classList.add('leaving'); setTimeout(() => { location.href = 'index.html'; }, 280); }
       }
       items.forEach((b, k) => { b.addEventListener('mouseenter', () => focusIdx(k)); b.addEventListener('click', () => act(b.dataset.a)); });
       $('suBack').onclick = () => setMenu('home');
       $('hmFull').onclick = () => $('fsFull').click();
+      addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.rb === 'career-back') setMenu('home'); });
       addEventListener('keydown', (e) => {
         const st = menuState;
-        if (!ld.classList.contains('hidden') || (st !== 'home' && st !== 'setup')) return;
-        if (!$('setModal').classList.contains('hidden') || !onlRoot.classList.contains('hidden')) return;
+        if (!ld.classList.contains('hidden') || (st !== 'home' && st !== 'setup' && st !== 'settings' && st !== 'online')) return;
+        const sm = $('setModal'), floating = (!sm.classList.contains('hidden') && !sm.classList.contains('page')) || (!onlRoot.classList.contains('hidden') && !onlRoot.classList.contains('page'));
+        if (floating) return;
         if (/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
+        if ((st === 'settings' || st === 'online') && e.code === 'Escape') { setMenu('home'); e.preventDefault(); return; }
+        if (st === 'settings' || st === 'online') return;
         if (st === 'home') {
           if (e.code === 'ArrowDown' || e.code === 'KeyS') { focusIdx(idx + 1); e.preventDefault(); }
           else if (e.code === 'ArrowUp' || e.code === 'KeyW') { focusIdx(idx - 1); e.preventDefault(); }

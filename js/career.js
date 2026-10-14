@@ -5,6 +5,10 @@
   const KEY = 'rbCareer', MATCH_KEY = 'rbCareerMatch', RESULT_KEY = 'rbCareerResult';
   const WEEK_COST = 150, MAX_SPONSORS = 3;
   const app = document.getElementById('app');
+  const FRAMED = window.top !== window.self;   // opened inside the game menu
+  const goTop = (url) => { (FRAMED ? window.top : window).location.href = url; };
+  if (FRAMED) document.body.classList.add('embed');
+  const menuLink = () => (FRAMED ? el('button', { class: 'cr-link', onclick: () => window.parent.postMessage({ rb: 'career-back' }, location.origin) }, '← Meniu') : el('a', { class: 'cr-link', href: 'field-sim-3d.html' }, '← Meniu joc'));
 
   // ---------- helpers ----------
   const rnd = (a, b) => a + Math.random() * (b - a), irnd = (a, b) => Math.floor(rnd(a, b + 1));
@@ -191,7 +195,7 @@
     else { opp = { name: pick(TEAM_NAMES) + ' (antrenament)', skill: clamp(rnd(0.25, 0.6) + (S.season - 1) * .05, 0, .95) }; alliance = pick(['red', 'blue']); label = 'Antrenament'; }
     S.pending = { id, kind }; save();
     try { localStorage.setItem(MATCH_KEY, JSON.stringify({ id, type: kind, label, alliance, robot: canTurret() ? S.type : 'strafe', mods: modsOf(S), team: S.team, opp: { name: opp.name, skill: opp.skill }, ts: Date.now() })); localStorage.removeItem(RESULT_KEY); } catch (e) { return toast('Nu pot salva meciul (stocarea e blocată).'); }
-    location.href = 'field-sim-3d.html?career=1';
+    goTop('field-sim-3d.html?career=1');
   }
   function applyResult(res) {
     const p = S.pending; if (!p || p.id !== res.id) return false;
@@ -249,13 +253,13 @@
   function header() {
     const ev = nextEvent();
     return el('header', { class: 'cr-top' },
-      el('a', { class: 'cr-brand', href: 'index.html' }, 'ro', el('span', { text: 'LER' }), 'bot'),
+      el('a', { class: 'cr-brand', href: 'index.html', target: FRAMED ? '_top' : null }, 'ro', el('span', { text: 'LER' }), 'bot'),
       el('div', { class: 'cr-team' }, el('b', { text: S.team.name }), el('small', { text: '#' + S.team.num + ' · ' + repLevel(S.rep) })),
       el('div', { class: 'cr-stats' },
         el('div', { class: 'cr-chip money' }, el('small', { text: 'Buget' }), el('b', { text: eur(S.money) })),
         el('div', { class: 'cr-chip rep' }, el('small', { text: 'Reputație' }), el('b', { text: Math.round(S.rep) })),
         el('div', { class: 'cr-chip' }, el('small', { text: 'Sezon ' + S.season }), el('b', { text: 'Săpt. ' + S.week }))),
-      el('div', { class: 'cr-links' }, el('a', { class: 'cr-link', href: 'field-sim-3d.html' }, 'Joc liber'), el('a', { class: 'cr-link', href: 'index.html' }, '← Site')));
+      el('div', { class: 'cr-links' }, menuLink(), FRAMED ? null : el('a', { class: 'cr-link', href: 'index.html' }, '← Site')));
   }
   function nav() {
     const dot = (id) => (id === 'sponsors' && S.offers.length && activeSponsors().length < MAX_SPONSORS) || (id === 'event' && S.week >= nextEvent().week) ? el('span', { class: 'dot' }) : null;
@@ -366,7 +370,7 @@
       el('h1', null, 'Construiește-ți ', el('span', { text: 'echipa' }), '.'),
       el('p', { class: 'cr-sub', text: 'Începi cu un robot simplu și un buget mic. Cumperi hardware mai bun, semnezi sponsori, câștigi evenimente și urci de la echipă locală la campionatul național. Meciurile se joacă în simulatorul 3D, iar upgrade-urile îți schimbă robotul cu adevărat.' }),
       el('div', { class: 'cr-eyebrow', style: 'margin-top:20px', text: 'Numele echipei' }), inp,
-      el('div', { class: 'cr-row', style: 'margin-top:14px' }, el('button', { class: 'cr-btn pri', text: 'Începe cariera', onclick: go }), el('a', { class: 'cr-link', href: 'field-sim-3d.html' }, 'Joc liber'), el('a', { class: 'cr-link', href: 'index.html' }, '← Site'))));
+      el('div', { class: 'cr-row', style: 'margin-top:14px' }, el('button', { class: 'cr-btn pri', text: 'Începe cariera', onclick: go }), menuLink(), FRAMED ? null : el('a', { class: 'cr-link', href: 'index.html' }, '← Site'))));
   }
 
   // ---------- popups ----------
