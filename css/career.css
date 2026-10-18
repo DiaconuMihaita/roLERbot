@@ -252,3 +252,16 @@ body.embed .welcome { margin-top: 3vh; }
 .cal-row em{font:600 10.5px var(--mono);font-style:normal;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
 .cal-row.next{border-color:var(--pink);background:rgba(249,5,108,.1)}.cal-row.done{opacity:.6}.cal-row.done em{color:var(--ok)}.cal-row.off{opacity:.45}
 .st-scroll{max-height:420px;overflow:auto}
+
+/* ---- meci 2v2: lista meciurilor ---- */
+.vs2{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;margin:14px 0 16px;padding:14px;border:1px solid var(--line);border-radius:16px;background:#0e0e11}
+.vs2 .side{display:grid;gap:4px}.vs2 .side.r{text-align:right}.vs2 .side b{font:700 17px var(--display)}.vs2 .side small{font:500 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.vs2 .mid{font:800 14px var(--display);color:var(--dim)}
+.al-red{color:var(--red)}.al-blue{color:var(--blue)}
+.sched{max-height:480px}
+.sched td.al-red,.sched td.al-blue{color:inherit}
+.sched td.al-red{border-left:3px solid var(--red)}.sched td.al-blue{border-left:3px solid var(--blue)}
+.sched td .me{font-weight:800;color:#fff}.sched td i{font-style:normal;color:var(--dim);font-size:11px}
+.sched tr.mine{background:rgba(249,5,108,.09)}.sched tr.cur{outline:1.5px solid var(--pink);outline-offset:-1.5px}.sched tr.done{opacity:.75}
+.hist .h.now{border-color:var(--pink);background:rgba(249,5,108,.08)}
+@media(max-width:620px){.vs2{grid-template-columns:1fr}.vs2 .side.r{text-align:left}}

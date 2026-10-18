@@ -184,6 +184,7 @@
     if (!S) return;
     if (!Array.isArray(S.cal)) { S.cal = buildCal(); S.event = null; S.pending = null; S.week = 1; S.evCount = S.evCount || 0; }
     if (!Array.isArray(S.mscores)) S.mscores = [];
+    if (S.event && !S.event.matches) { S.event = null; S.pending = null; }   // event started before the 2v2 schedule existed
   }
   function modsOf(s, withBuffs = true) {
     const m = { speed: 1, accel: 1, turn: 1, intake: 1, reload: 1, spread: 1, assist: 1 };
@@ -279,7 +280,7 @@
     const n = Math.max(6, S.mscores.length);
     const rows = regionPool(S.region).filter((t) => !isMe(t)).map((t) => {
       const sk = skillFor(t.num, 'meet', false), r = rng(Number(t.num) * 7919 + S.season * 31), sc = [];
-      for (let i = 0; i < n; i++) sc.push(Math.max(0, Math.round(10 + 48 * sk + (r() + r() + r() + r() - 2) * 0.9 * 9)));
+      for (let i = 0; i < n; i++) sc.push(Math.max(0, Math.round(12 + 54 * sk + (r() + r() + r() + r() - 2) * 0.9 * 10)));
       sc.sort((a, b) => b - a); return { name: t.name, sum: sc.slice(0, 10).reduce((a, b) => a + b, 0) };
     });
     rows.push({ name: S.team.name, sum: topTen(), me: true }); rows.sort((a, b) => b.sum - a.sum);
@@ -295,31 +296,61 @@
     if (S.week >= it.week) return toast('Înscrierile la acest meet s-au închis.');
     it.enrolled = !it.enrolled; log((it.enrolled ? 'Te-ai înscris la ' : 'Te-ai retras de la ') + itemName(it) + '.'); save(); render();
   }
+  // un meci = 2 alianțe de câte 2 roboți (2 roșii + 2 albaștri). La începutul evenimentului se generează lista TUTUROR meciurilor; fiecare echipă joacă n meciuri,
+  // cu parteneri și culori diferite (poate fi de ex. 4× albastru + 2× roșu).
+  function genSchedule(N, n) {
+    const matches = [], per = Math.ceil(N / 4);
+    for (let r = 0; r < n; r++) {
+      const order = shuffle([...Array(N).keys()]);
+      for (let c = 0; c < per; c++) {
+        const grp = order.slice(c * 4, c * 4 + 4), sur = [];   // when N is not a multiple of 4, some slots are filled by "surrogate" teams whose extra match does not count
+        while (grp.length < 4) { let t; do { t = 1 + Math.floor(Math.random() * (N - 1)); } while (grp.includes(t)); grp.push(t); sur.push(t); }
+        const g = shuffle(grp); matches.push({ no: matches.length + 1, red: g.slice(0, 2), blue: g.slice(2), sur, done: false });
+      }
+    }
+    return matches;
+  }
+  const allScore = (a, b) => Math.max(0, Math.round(12 + 54 * ((a.skill || 0) + (b.skill || 0)) / 2 + gauss() * 10));
+  function applyAlliance(ev, m, sr, sb, extra) {
+    const res = sr > sb ? [3, 0] : sr < sb ? [0, 3] : [1, 1];
+    [['red', 0, sr], ['blue', 1, sb]].forEach(([al, k, sc]) => m[al].forEach((ti) => {
+      if (m.sur.includes(ti)) return; const t = ev.teams[ti];
+      t.rp += res[k] + (extra[al] || 0); t.pts += sc; t.played++; if (res[k] === 3) t.w++; else if (res[k] === 1) t.t++; else t.l++;
+    }));
+    m.sr = sr; m.sb = sb; m.done = true;
+  }
+  function simMatch(ev, m) {
+    const sr = allScore(ev.teams[m.red[0]], ev.teams[m.red[1]]), sb = allScore(ev.teams[m.blue[0]], ev.teams[m.blue[1]]);
+    applyAlliance(ev, m, sr, sb, { red: sr >= 45 && Math.random() < .6 ? 1 : 0, blue: sb >= 45 && Math.random() < .6 ? 1 : 0 });
+  }
+  const simUpTo = (ev, no) => { ev.matches.forEach((m) => { if (!m.done && m.no < no && !m.red.concat(m.blue).includes(0)) simMatch(ev, m); }); };
+  const myMatch = (ev) => ev.matches.find((x) => x.no === ev.mine[ev.round]);
+  const myColor = (m) => (m.red.includes(0) ? 'red' : 'blue');
   function startEvent() {
     const it = nextEvent(); if (!it) return; const def = STAGES[it.type], teams = buildField(it);
-    const idx = shuffle(teams.map((t, i) => i).slice(1)), sched = []; for (let i = 0; i < def.n; i++) sched.push(idx[i % idx.length]);
+    const matches = genSchedule(teams.length, def.n), mine = matches.filter((m) => m.red.concat(m.blue).includes(0) && !m.sur.includes(0)).map((m) => m.no);
     let seed = 0;
     if (it.type === 'reg' && S.mscores.length) { const b = meetBoard(), rk = b.findIndex((x) => x.me) + 1, f = rk / b.length; seed = f <= .15 ? 3 : f <= .4 ? 2 : f <= .7 ? 1 : 0; teams[0].rp = seed; }
-    S.event = { id: it.id, type: it.type, name: itemName(it), n: def.n, teams, round: 0, sched, alliances: sched.map(() => pick(['red', 'blue'])), hist: [], po: null, seed };
-    log('Ai intrat la ' + S.event.name + ' (' + teams.length + ' echipe, ' + def.n + ' meciuri de calificare).' + (seed ? ' Bonus de seed din Top 10 meciuri: +' + seed + ' RP.' : '')); save(); render();
+    S.event = { id: it.id, type: it.type, name: itemName(it), n: def.n, teams, matches, mine, round: 0, hist: [], po: null, seed };
+    log('Ai intrat la ' + S.event.name + ' (' + teams.length + ' echipe, ' + matches.length + ' meciuri, tu joci ' + def.n + ').' + (seed ? ' Bonus de seed din Top 10 meciuri: +' + seed + ' RP.' : '')); save(); render();
   }
-  function simScore(t) { return Math.max(0, Math.round(10 + 48 * t.skill + gauss() * 9)); }
-  function simPair(a, b) {
-    const sa = simScore(a), sb = simScore(b), ra = sa > sb ? 3 : sa === sb ? 1 : 0, rb = sb > sa ? 3 : sa === sb ? 1 : 0;
-    a.rp += ra + (sa >= 38 && Math.random() < .6 ? 1 : 0); b.rp += rb + (sb >= 38 && Math.random() < .6 ? 1 : 0); a.pts += sa; b.pts += sb; a.played++; b.played++;
-    if (ra > rb) { a.w++; b.l++; } else if (rb > ra) { b.w++; a.l++; } else { a.t++; b.t++; }
-  }
-  const simPO = (a, b) => { const sa = simScore(a), sb = simScore(b); return sa > sb || (sa === sb && a.rp >= b.rp) ? a : b; };
+  const simAlliance = (p, q) => { const sa = allScore(p.cap, p.par), sb = allScore(q.cap, q.par); return sa > sb || (sa === sb && (p.cap.rp || 0) >= (q.cap.rp || 0)) ? 0 : 1; };
   const qualSorted = (ev) => ev.teams.slice().sort((a, b) => b.rp - a.rp || b.pts - a.pts);
+  const asAI = (t) => ({ name: t.name, skill: t.skill == null ? 0.5 : t.skill, num: t.num });
   async function launch(kind) {
-    const id = Date.now() + '-' + irnd(1000, 9999);
-    let opp, alliance, label;
-    if (kind === 'qual') { const ev = S.event; opp = ev.teams[ev.sched[ev.round]]; alliance = ev.alliances[ev.round]; label = ev.name + ' · meciul ' + (ev.round + 1) + '/' + ev.n; }
-    else if (kind === 'playoff') { const ev = S.event; opp = ev.po.opp; alliance = ev.po.al; label = ev.name + ' · ' + (ev.po.phase === 'sf' ? 'semifinală' : 'finala'); }
-    else { opp = { name: pick(TEAM_NAMES) + ' (antrenament)', skill: clamp(rnd(0.25, 0.6) + (S.season - 1) * .05, 0, .95) }; alliance = pick(['red', 'blue']); label = 'Antrenament'; }
+    const id = Date.now() + '-' + irnd(1000, 9999), ev = S.event;
+    let opp, alliance, label, partner = null, opps = null;
+    if (kind === 'qual') {
+      const m = myMatch(ev), col = myColor(m), oc = col === 'red' ? 'blue' : 'red', mate = m[col].find((i) => i !== 0);
+      alliance = col; partner = asAI(ev.teams[mate]); opps = m[oc].map((i) => asAI(ev.teams[i])); opp = opps[0];
+      label = ev.name + ' · meciul ' + (ev.round + 1) + '/' + ev.n + ' (meci #' + m.no + ')';
+    } else if (kind === 'playoff') {
+      const po = ev.po; alliance = po.al; partner = asAI(po.partner); opps = [asAI(po.opp), asAI(po.oppPartner)]; opp = opps[0];
+      label = ev.name + ' · ' + (po.phase === 'sf' ? 'semifinală' : 'finala');
+    } else { opp = { name: pick(TEAM_NAMES) + ' (antrenament)', skill: clamp(rnd(0.25, 0.6) + (S.season - 1) * .05, 0, .95) }; alliance = pick(['red', 'blue']); label = 'Antrenament'; }
     S.pending = { id, kind }; save();
     ensureAutos(); const AU = S.autos[S.autoSel], auto = AU && AU.pts.length ? { name: AU.name, pts: alliance === 'blue' ? AU.pts.map(mirrorPt) : clonePts(AU.pts) } : null;
-    try { localStorage.setItem(MATCH_KEY, JSON.stringify({ id, type: kind, label, alliance, robot: canTurret() ? S.type : 'strafe', mods: modsOf(S), team: S.team, opp: { name: opp.name, skill: opp.skill }, auto, ts: Date.now() })); localStorage.removeItem(RESULT_KEY); } catch (e) { return toast('Nu pot salva meciul (stocarea e blocată).'); }
+    try { localStorage.setItem(MATCH_KEY, JSON.stringify({ id, type: kind, label, alliance, robot: canTurret() ? S.type : 'strafe', mods: modsOf(S), team: S.team, opp: { name: opp.name, skill: opp.skill, num: opp.num }, partner, opps, auto, ts: Date.now() })); localStorage.removeItem(RESULT_KEY); } catch (e) { return toast('Nu pot salva meciul (stocarea e blocată).'); }
     await flushCloud(1800);
     goTop('field-sim-3d.html?career=1');
   }
@@ -330,18 +361,19 @@
     let rp = win ? 3 : tie ? 1 : 0; const tags = [];
     if (p.kind !== 'playoff') { if ((res.lp || 0) >= 16) { rp++; tags.push('SWARM'); } if ((res.tips || 0) >= 4) { rp++; tags.push('POLLINATOR 1'); } if ((res.tips || 0) >= 7) { rp++; tags.push('POLLINATOR 2'); } }
     S.stats.tips += res.tips || 0; if (win) S.stats.w++; else if (tie && p.kind !== 'playoff') S.stats.t++; else S.stats.l++;
-    const lm = { kind: p.kind, my, op, win, tie: tie && p.kind !== 'playoff', rp, tags, flowers: res.flowers || 0, tips: res.tips || 0, opp: null, money: 0, sponsors: [], eventDone: false, po: null };
+    const lm = { kind: p.kind, my, op, win, tie: tie && p.kind !== 'playoff', rp, tags, flowers: res.flowers || 0, tips: res.tips || 0, opp: null, partner: null, money: 0, sponsors: [], eventDone: false, po: null };
     if (p.kind === 'qual' && ev) {
-      const opp = ev.teams[ev.sched[ev.round]], me = ev.teams[0]; lm.opp = opp.name;
-      me.rp += rp; me.pts += my; me.played++; if (win) me.w++; else if (tie) me.t++; else me.l++;
-      opp.rp += win ? 0 : tie ? 1 : 3; opp.pts += op; opp.played++; if (win) opp.l++; else if (tie) opp.t++; else opp.w++;
-      const rest = shuffle(ev.teams.slice(1).filter((t) => t !== opp)); for (let i = 0; i + 1 < rest.length; i += 2) simPair(rest[i], rest[i + 1]);
-      ev.hist.push({ opp: opp.name, my, op, rp }); ev.round++; S.mscores.push(my);
-      log('Meci ' + ev.round + '/' + ev.n + ' vs ' + opp.name + ': ' + my + '–' + op + (win ? ' (victorie)' : tie ? ' (egal)' : ' (înfrângere)') + ', +' + rp + ' RP.');
+      const m = myMatch(ev), col = myColor(m), oc = col === 'red' ? 'blue' : 'red', mate = m[col].find((i) => i !== 0);
+      simUpTo(ev, m.no);
+      lm.opp = m[oc].map((i) => ev.teams[i].name).join(' + '); lm.partner = ev.teams[mate].name;
+      const extra = { red: 0, blue: 0 }; extra[col] = rp - (win ? 3 : tie ? 1 : 0); extra[oc] = op >= 45 && Math.random() < .6 ? 1 : 0;
+      applyAlliance(ev, m, col === 'red' ? my : op, col === 'red' ? op : my, extra);
+      ev.round++; S.mscores.push(my);
+      log('Meci ' + ev.round + '/' + ev.n + ' (' + (col === 'red' ? 'roșu' : 'albastru') + ', cu ' + lm.partner + ') vs ' + lm.opp + ': ' + my + '–' + op + (win ? ' (victorie)' : tie ? ' (egal)' : ' (înfrângere)') + ', +' + rp + ' RP.');
     } else if (p.kind === 'playoff' && ev && ev.po) {
-      const po = ev.po; lm.opp = po.opp.name; lm.po = po.phase; lm.rp = 0;
-      ev.hist.push({ opp: po.opp.name, my, op, rp: 0, po: po.phase });
-      log((po.phase === 'sf' ? 'Semifinală' : 'Finală') + ' vs ' + po.opp.name + ': ' + my + '–' + op + (win ? ' (câștigată)' : ' (pierdută)') + '.');
+      const po = ev.po; lm.opp = po.opp.name + ' + ' + po.oppPartner.name; lm.partner = po.partner.name; lm.po = po.phase; lm.rp = 0;
+      ev.hist.push({ opp: lm.opp, partner: lm.partner, my, op, po: po.phase });
+      log((po.phase === 'sf' ? 'Semifinală' : 'Finală') + ' vs ' + lm.opp + ': ' + my + '–' + op + (win ? ' (câștigată)' : ' (pierdută)') + '.');
     } else if (p.kind === 'practice') {
       const gain = 120 + Math.min(my, 40) * 5 + (win ? 100 : 0); S.money += gain; lm.money = gain; if (win) S.rep += 1; S.practiceWeek = S.week;
       log('Antrenament: ' + my + '–' + op + ', +' + eur(gain) + (win ? ', +1 reputație' : '') + '.');
@@ -349,16 +381,20 @@
     lm.sponsors = evalSponsors({ kind: 'match', res });
     S.pending = null;
     if (p.kind === 'qual' && ev && ev.round >= ev.n) {
+      simUpTo(ev, Infinity);   // the rest of the schedule is played by the other teams
       const sorted = qualSorted(ev), rank = sorted.findIndex((t) => t.me) + 1;
-      if (rank <= 4 && STAGES[ev.type].n && ev.type !== 'meet') {
-        const seedOpp = sorted[4 - rank]; ev.po = { phase: 'sf', mySeed: rank, oppSeed: 5 - rank, opp: seedOpp, others: sorted.slice(0, 4).filter((t) => !t.me && t !== seedOpp), sorted, al: pick(['red', 'blue']) };
-        lm.po = 'start'; log('Calificări încheiate: locul ' + rank + '. Intri în playoff.');
+      if (rank <= 4 && ev.type !== 'meet') {
+        const pairs = [1, 2, 3, 4].map((s) => ({ cap: sorted[s - 1], par: sorted[3 + s] })), os = 5 - rank;   // each top-4 seed picks a partner from the next teams
+        ev.po = { phase: 'sf', mySeed: rank, oppSeed: os, pairs, sorted, partner: pairs[rank - 1].par, opp: pairs[os - 1].cap, oppPartner: pairs[os - 1].par, al: pick(['red', 'blue']) };
+        lm.po = 'start'; log('Calificări încheiate: locul ' + rank + '. Intri în playoff cu ' + ev.po.partner.name + '.');
       } else { lm.eventDone = true; finishEvent(null); }
     } else if (p.kind === 'playoff' && ev && ev.po) {
       const po = ev.po;
       if (po.phase === 'sf') {
-        if (win) { const w = simPO(po.others[0], po.others[1]); po.phase = 'f'; po.opp = w; po.oppSeed = po.sorted.findIndex((t) => t.name === w.name) + 1; po.al = pick(['red', 'blue']); }
-        else { lm.eventDone = true; finishEvent(3); }
+        if (win) {
+          const o = [1, 2, 3, 4].filter((s) => s !== po.mySeed && s !== po.oppSeed), ws = o[simAlliance(po.pairs[o[0] - 1], po.pairs[o[1] - 1])];
+          po.phase = 'f'; po.oppSeed = ws; po.opp = po.pairs[ws - 1].cap; po.oppPartner = po.pairs[ws - 1].par; po.al = pick(['red', 'blue']);
+        } else { lm.eventDone = true; finishEvent(3); }
       } else { lm.eventDone = true; finishEvent(win ? 1 : 2); }
     }
     S.lastMatch = lm; save(); return true;
@@ -438,7 +474,7 @@
       el('div', { class: 'st-scroll' }, el('table', { class: 'st' }, el('thead', null, el('tr', null, ['#', 'Echipă', 'Top 10'].map((h) => el('th', { text: h })))),
         el('tbody', null, rows.map((t) => el('tr', { class: t.me ? 'me' : '' }, el('td', { class: 'n', text: b.indexOf(t) + 1 }), el('td', { text: t.name }), el('td', { text: t.sum })))))));
   }
-  const RULES = 'Meet: 6 meciuri, 8–20 echipe, în orice regiune; recomandat 2–5 meet-uri, câte unul pe săptămână. Pentru regională contează cele mai bune 10 meciuri din toate meet-urile (în joc: bonus de seed). Regionala: 6 meciuri de calificare și playoff pentru primele 4 locuri; primele 3 merg la Național, iar primele 2 de la Național la Mondiale.';
+  const RULES = 'Un meci se joacă 2 contra 2 (2 roboți roșii, 2 albaștri). La începutul fiecărui eveniment primești lista tuturor meciurilor; fiecare echipă joacă 6, cu parteneri și culori diferite (poate fi de ex. 4 albastre și 2 roșii). Meet: 6 meciuri, 8–20 echipe, în orice regiune; recomandat 2–5 meet-uri, câte unul pe săptămână. Pentru regională contează cele mai bune 10 meciuri din toate meet-urile (în joc: bonus de seed). Regionala: 6 meciuri de calificare și playoff pentru primele 4 locuri; primele 3 merg la Național, iar primele 2 de la Național la Mondiale.';
   function hubView() {
     const ev = nextEvent(), left = ev ? ev.week - S.week : 0, m = modsOf(S), practiced = S.practiceWeek === S.week, reg = regionOf(S.region);
     const played = S.cal.filter((x) => x.type === 'meet' && x.done).length, enr = S.cal.filter((x) => x.type === 'meet' && x.enrolled && !x.done).length;
@@ -507,6 +543,19 @@
     return el('div', { class: 'st-scroll' }, el('table', { class: 'st' }, el('thead', null, el('tr', null, ['#', 'Echipă', 'RP', 'Puncte', 'V-E-Î'].map((h) => el('th', { text: h })))),
       el('tbody', null, sorted.map((t, i) => el('tr', { class: t.me ? 'me' : '' }, el('td', { class: 'n', text: i + 1 }), el('td', { text: t.name }), el('td', { text: t.rp }), el('td', { text: t.pts }), el('td', { text: t.w + '-' + t.t + '-' + t.l }))))));
   }
+  function scheduleCard(ev) {
+    const nm = (i, m) => { const t = ev.teams[i]; return el('span', { class: t.me ? 'me' : '' }, t.name, m.sur.includes(i) ? el('i', { text: ' (sur.)' }) : null); };
+    const cur = ev.round < ev.n ? ev.mine[ev.round] : -1;
+    return el('div', { class: 'cr-card' }, el('div', { class: 'cr-eyebrow', text: 'Lista meciurilor · ' + ev.matches.length + ' meciuri, fiecare echipă joacă ' + ev.n }),
+      el('p', { class: 'cr-note', text: 'Un meci = 2 roboți roșii + 2 roboți albaștri. Meciurile tale sunt evidențiate. „sur.” = echipă surogat (meciul ei nu contează).' }),
+      el('div', { class: 'st-scroll sched' }, el('table', { class: 'st' }, el('thead', null, el('tr', null, ['#', 'Alianța roșie', 'Alianța albastră', 'Scor'].map((h) => el('th', { text: h })))),
+        el('tbody', null, ev.matches.map((m) => {
+          const mine = m.red.concat(m.blue).includes(0) && !m.sur.includes(0);
+          return el('tr', { class: (mine ? 'mine ' : '') + (m.no === cur ? 'cur' : '') + (m.done ? ' done' : '') },
+            el('td', { class: 'n', text: m.no }), el('td', { class: 'al-red' }, nm(m.red[0], m), ' + ', nm(m.red[1], m)), el('td', { class: 'al-blue' }, nm(m.blue[0], m), ' + ', nm(m.blue[1], m)),
+            el('td', { text: m.done ? m.sr + ' – ' + m.sb : '' }));
+        })))));
+  }
   function eventView() {
     const ev = S.event, nx = nextEvent();
     if (!ev) {
@@ -521,15 +570,21 @@
         boardCard(),
         el('div', { class: 'cr-card s5' }, el('div', { class: 'cr-eyebrow', text: 'Premii' }), el('h3', { text: nx ? itemName(nx) : '' }), nx ? el('div', { class: 'log' }, ['Locul 1', 'Locul 2', 'Locurile 3–4', 'Restul'].map((l, i) => el('div', { text: l + ': ' + eur(STAGES[nx.type].pay[i] * (1 + (S.season - 1) * .25)) + ' · +' + STAGES[nx.type].rep[i] + ' reputație' }))) : null));
     }
-    const r = ev.round, po = ev.po, inQual = r < ev.n, opp = po ? po.opp : inQual ? ev.teams[ev.sched[r]] : null, al = po ? po.al : (ev.alliances[r] || 'red');
-    const title = inQual ? 'Meciul ' + (r + 1) + ' din ' + ev.n : po ? (po.phase === 'sf' ? 'Playoff · semifinală' : 'Playoff · finala') : 'Calificări încheiate';
+    const r = ev.round, po = ev.po, inQual = r < ev.n, m = inQual ? myMatch(ev) : null, T = (i) => ev.teams[i].name;
+    let me2, op2, al, meta;
+    if (inQual) { al = myColor(m); const oc = al === 'red' ? 'blue' : 'red'; me2 = [S.team.name, T(m[al].find((i) => i !== 0))]; op2 = m[oc].map(T); meta = 'Meci #' + m.no + ' din ' + ev.matches.length; }
+    else if (po) { al = po.al; me2 = [S.team.name, po.partner.name]; op2 = [po.opp.name, po.oppPartner.name]; meta = 'Seed ' + po.mySeed + ' vs seed ' + po.oppSeed; }
+    const title = inQual ? 'Meciul tău ' + (r + 1) + ' din ' + ev.n : po ? (po.phase === 'sf' ? 'Playoff · semifinală' : 'Playoff · finala') : 'Calificări încheiate';
+    const prog = ev.mine.map((no, i) => { const mm = ev.matches.find((x) => x.no === no), col = myColor(mm), oc = col === 'red' ? 'blue' : 'red'; return el('div', { class: 'h' + (i === r ? ' now' : '') }, el('div', null, 'Meci #' + no + ' · ' + (col === 'red' ? 'roșu' : 'albastru') + ' · cu ' + T(mm[col].find((x) => x !== 0)), el('small', { text: 'vs ' + mm[oc].map(T).join(' + ') })), el('b', { text: mm.done ? (col === 'red' ? mm.sr + '–' + mm.sb : mm.sb + '–' + mm.sr) : i === r ? 'urmează' : '' })); });
     return el('div', { class: 'cr-grid' },
       el('div', { class: 'cr-card s7' }, el('div', { class: 'cr-eyebrow', text: ev.name + (inQual ? ' · calificări' : ' · playoff') }), el('h2', { text: title }),
-        opp ? el('div', { class: 'vs' }, el('div', { class: 'side' }, el('b', { class: 'al-' + al, text: S.team.name }), el('small', { text: 'Alianța ' + (al === 'red' ? 'roșie' : 'albastră') + (po ? ' · seed ' + po.mySeed : '') })), el('div', { class: 'mid', text: 'VS' }), el('div', { class: 'side r' }, el('b', { class: 'al-' + (al === 'red' ? 'blue' : 'red'), text: opp.name }), el('small', { text: (po ? 'Seed ' + po.oppSeed + ' · ' : '') + 'Nivel: ' + oppLevel(opp.skill) }))) : null,
-        opp ? el('label', { class: 'ap-f', style: 'margin-bottom:12px' }, el('span', { text: 'Autonom la acest meci' }), autoSelect()) : null,
-        opp ? el('div', { class: 'cr-row' }, el('button', { class: 'cr-btn pri', disabled: !!S.pending, text: inQual ? 'Joacă meciul ' + (r + 1) : po.phase === 'sf' ? 'Joacă semifinala' : 'Joacă finala', onclick: () => launch(inQual ? 'qual' : 'playoff') }), el('span', { class: 'cr-note', text: 'Se deschide jocul 3D. La final apeși „Continuă cariera”.' })) : null,
-        ev.hist.length ? el('div', { style: 'margin-top:16px' }, el('div', { class: 'cr-eyebrow', text: 'Meciurile tale' }), el('div', { class: 'hist' }, ev.hist.map((h, i) => el('div', { class: 'h' }, el('div', null, 'vs ' + h.opp, el('small', { text: h.po ? (h.po === 'sf' ? 'Semifinală' : 'Finala') : 'Meciul ' + (i + 1) })), el('b', { text: h.my + '–' + h.op + (h.po ? '' : ' · +' + h.rp + ' RP') }))))) : null),
-      el('div', { class: 'cr-card s5' }, el('h3', { text: 'Clasament' }), standings(ev.teams)));
+        me2 ? el('div', { class: 'vs2' }, el('div', { class: 'side' }, el('small', { text: 'Alianța ' + (al === 'red' ? 'roșie' : 'albastră') + ' · ' + meta }), me2.map((n, i) => el('b', { class: 'al-' + al, text: (i ? '+ ' : '') + n }))), el('div', { class: 'mid', text: 'VS' }), el('div', { class: 'side r' }, el('small', { text: 'Alianța ' + (al === 'red' ? 'albastră' : 'roșie') }), op2.map((n, i) => el('b', { class: 'al-' + (al === 'red' ? 'blue' : 'red'), text: (i ? '+ ' : '') + n })))) : null,
+        me2 ? el('label', { class: 'ap-f', style: 'margin-bottom:12px' }, el('span', { text: 'Autonom la acest meci' }), autoSelect()) : null,
+        me2 ? el('div', { class: 'cr-row' }, el('button', { class: 'cr-btn pri', disabled: !!S.pending, text: inQual ? 'Joacă meciul ' + (r + 1) : po.phase === 'sf' ? 'Joacă semifinala' : 'Joacă finala', onclick: () => launch(inQual ? 'qual' : 'playoff') }), el('span', { class: 'cr-note', text: 'Se deschide jocul 3D, 2 contra 2. La final apeși „Continuă cariera”.' })) : null,
+        el('div', { style: 'margin-top:16px' }, el('div', { class: 'cr-eyebrow', text: 'Programul tău' }), el('div', { class: 'hist' }, prog)),
+        ev.hist.length ? el('div', { style: 'margin-top:12px' }, el('div', { class: 'cr-eyebrow', text: 'Playoff' }), el('div', { class: 'hist' }, ev.hist.map((h) => el('div', { class: 'h' }, el('div', null, 'cu ' + h.partner, el('small', { text: (h.po === 'sf' ? 'Semifinală' : 'Finala') + ' vs ' + h.opp })), el('b', { text: h.my + '–' + h.op }))))) : null),
+      el('div', { class: 'cr-card s5' }, el('h3', { text: 'Clasament' }), standings(ev.teams)),
+      scheduleCard(ev));
   }
   function historyView() {
     const st = S.stats;
@@ -594,7 +649,7 @@
     const box = el('div', null, el('div', { class: 'cr-eyebrow', text: lm.kind === 'qual' ? 'Meci de calificare' : lm.kind === 'playoff' ? 'Playoff' : 'Antrenament' }),
       el('h2', { text: lm.win ? 'Victorie!' : lm.tie ? 'Egalitate' : 'Înfrângere' }),
       el('div', { class: 'vs' }, el('div', { class: 'side' }, el('b', { text: lm.my }), el('small', { text: S.team.name })), el('div', { class: 'mid', text: '–' }), el('div', { class: 'side r' }, el('b', { text: lm.op }), el('small', { text: lm.opp || 'Adversar' }))),
-      lm.kind === 'qual' ? el('p', { class: 'cr-sub', text: '+' + lm.rp + ' puncte de clasament' + (lm.tags.length ? ' (' + lm.tags.join(', ') + ')' : '') + '.' + (lm.po === 'start' ? ' Calificările s-au încheiat: intri în playoff!' : '') }) : lm.kind === 'playoff' ? el('p', { class: 'cr-sub', text: lm.eventDone ? (lm.win ? 'Ai câștigat finala!' : 'Playoff încheiat.') : 'Treci în finală!' }) : el('p', { class: 'cr-sub', text: '+' + eur(lm.money) + ' din antrenament.' }),
+      lm.kind === 'qual' ? el('p', { class: 'cr-sub', text: 'Alianță cu ' + lm.partner + '. +' + lm.rp + ' puncte de clasament' + (lm.tags.length ? ' (' + lm.tags.join(', ') + ')' : '') + '.' + (lm.po === 'start' ? ' Calificările s-au încheiat: intri în playoff!' : '') }) : lm.kind === 'playoff' ? el('p', { class: 'cr-sub', text: lm.eventDone ? (lm.win ? 'Ai câștigat finala!' : 'Playoff încheiat.') : 'Treci în finală!' }) : el('p', { class: 'cr-sub', text: '+' + eur(lm.money) + ' din antrenament.' }),
       lm.sponsors.length ? el('p', { class: 'cr-sub', style: 'color:var(--ok)', text: 'Contract îndeplinit: ' + lm.sponsors.join(', ') + '!' }) : null,
       el('div', { class: 'cr-row' }, el('button', { class: 'cr-btn pri', text: 'Continuă', onclick: () => { mm.close(); render(); } })));
     const mm = modal(box);

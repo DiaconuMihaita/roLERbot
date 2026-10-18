@@ -2306,17 +2306,17 @@
       try { const c = JSON.parse(localStorage.getItem('rbCareerMatch') || 'null'); return c && c.id && c.team && c.opp && c.mods ? c : null; } catch (e) { return null; }
     })();
     if (CAREER) {
-      cfg.alliance = CAREER.alliance === 'blue' ? 'blue' : 'red'; cfg.robot = CAREER.robot === 'turret' ? 'turret' : 'strafe'; cfg.mode = '1v1';
+      cfg.alliance = CAREER.alliance === 'blue' ? 'blue' : 'red'; cfg.robot = CAREER.robot === 'turret' ? 'turret' : 'strafe'; cfg.mode = CAREER.partner && CAREER.opps && CAREER.opps.length === 2 ? '2v2' : '1v1';
       document.title = 'Carieră · ' + CAREER.label;
       const back = document.querySelector('.fs-tool[href="index.html"]'); if (back) { back.href = 'field-sim-3d.html?page=career'; back.title = 'Înapoi la carieră'; }
     }
     function applyCareer() {
       if (!CAREER || !G) return;
-      const me = G.robots[0], op = G.robots[1]; if (!me || !op) return;
+      const two = G.robots.length === 4, me = G.robots[0], op = two ? G.robots[2] : G.robots[1]; if (!me || !op) return;   // 2v2: [me, partner, opp 1, opp 2]
       me.mods = CAREER.mods; me.pname = String(CAREER.team.name).slice(0, 16); me.num = String(CAREER.team.num);
       if (CAREER.auto && CAREER.auto.pts && CAREER.auto.pts.length) me.auto = { name: String(CAREER.auto.name || 'Autonom').slice(0, 18), pts: CAREER.auto.pts.map((p) => ({ x: +p.x, y: +p.y, h: p.h, act: (p.act || []).map((a) => Object.assign({}, a)) })), i: 0, ph: 'move', ai: 0, at: 0, wt: 0, t: 0, ex: 0, ey: 0, sig: 1.1 / (CAREER.mods.assist || 1), off: false, s0: 0, h0: 0, c0: 0 };
-      op.passive = !!CAREER.opp.passive;
-      op.skill = clamp(+CAREER.opp.skill || 0.5, 0, 1); op.pname = String(CAREER.opp.name).replace(' (antrenament)', '').slice(0, 16);
+      const setAI = (r, t) => { if (!r || !t) return; r.passive = !!t.passive; r.skill = clamp(+t.skill || 0.5, 0, 1); r.pname = String(t.name).replace(' (antrenament)', '').slice(0, 16); if (t.num != null) r.num = String(t.num); };
+      if (two) { setAI(G.robots[1], CAREER.partner); setAI(G.robots[2], CAREER.opps[0]); setAI(G.robots[3], CAREER.opps[1]); } else setAI(op, CAREER.opp);
     }
 
     // ---- autonomous period: the robot follows the path drawn in the career editor ----
