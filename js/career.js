@@ -178,22 +178,25 @@
   const log = (m) => { S.log.unshift(m); S.log = S.log.slice(0, 14); };
   function newState(team, region) {
     const s = { v: 1, region, team: { name: team.name, num: String(team.num) }, cal: buildCal(), mscores: [], money: 3000, rep: 0, week: 1, season: 1, evCount: 0, hw: { chassis: 0, motors: 0, intake: 0, launcher: 0, software: 0 }, build: [], type: 'strafe', sponsors: [], offers: [], sponsorLog: [], event: null, pending: null, buffs: [], practiceWeek: 0, history: [], log: [], stats: { w: 0, l: 0, t: 0, tips: 0, titles: 0 }, summary: null, lastMatch: null, card: null };
-    S = s; s.offers = genOffers(); s.notifs = []; log('Ai fondat echipa ' + team.name + ' (#' + s.team.num + '), regiunea ' + regionOf(region).name + '. Sezonul 1 începe.');
+    S = s; s.offers = genOffers(); s.notifs = []; initExtras(s); log('Ai fondat echipa ' + team.name + ' (#' + s.team.num + '), regiunea ' + regionOf(region).name + '. Sezonul 1 începe.');
     notify({ app: 'meets', ic: '📅', title: 'Meet-urile sezonului #11 sunt publicate', text: 'Înscrie-te la 2–5 meet-uri. Regionala e în săptămâna 13.' }, true);
     notify({ app: 'shop', ic: '🛠️', title: 'Reduceri de început de sezon', text: '−10% la piese și teren de antrenament în săptămânile 1–2.' }, true);
-    if (s.offers[0]) notify({ app: 'sponsors', ic: '🤝', title: s.offers[0].brand + ' te caută', text: 'Au o ofertă de sponsorizare pentru echipa ta.' }, true);
+    if (s.offers[0]) notify({ app: 'sponsors', ic: '🤝', title: s.offers[0].brand + ' te caută', text: 'Au o ofertă de sponsorizare pentru echipa ta.', act: { t: 'offer', id: s.offers[0].id, label: 'Acceptă oferta' } }, true);
+    notify({ app: 'shop', ic: '🟩', title: 'Comandă terenul de antrenament', text: 'Fără el nu poți testa autonomul sau face antrenamente. Livrarea durează 1 săptămână.' }, true);
     s.alertNew = true; return s;
   }
   function migrate() {   // saves made before the season structure (meets / regional / national) existed
     if (!S) return;
     if (!Array.isArray(S.cal)) { S.cal = buildCal(); S.event = null; S.pending = null; S.week = 1; S.evCount = S.evCount || 0; }
     if (!Array.isArray(S.mscores)) S.mscores = [];
+    initExtras(S); S.build.forEach((b) => { if (!b.stage) b.stage = 'build'; });
     if (S.event && !S.event.matches) { S.event = null; S.pending = null; }   // event started before the 2v2 schedule existed
   }
   function modsOf(s, withBuffs = true) {
     const m = { speed: 1, accel: 1, turn: 1, intake: 1, reload: 1, spread: 1, assist: 1 };
     for (const c in HW) { const fx = HW[c].tiers[s.hw[c]].fx; for (const k in fx) m[k] *= fx[k]; }
     if (withBuffs) for (const b of s.buffs) m[b.mod] *= b.mul;
+    if (s.crew) { const d = crewLv(s, 'driver'), pr = crewLv(s, 'prog'), b = crewLv(s, 'build'); m.speed *= 1 + .02 * d; m.turn *= 1 + .02 * d; m.assist *= 1 + .04 * pr; m.accel *= 1 + .02 * b; m.intake *= 1 + .02 * b; }
     for (const k in m) m[k] = Math.round(clamp(m[k], CAP[k][0], CAP[k][1]) * 1000) / 1000;
     return m;
   }
@@ -216,7 +219,7 @@
   }
   function finishSponsor(sp, ok) {
     sp.status = ok ? 'done' : 'failed';
-    if (ok) { S.money += sp.pay; S.rep += sp.rep; log(sp.brand + ' e mulțumit: +' + eur(sp.pay) + ', +' + sp.rep + ' reputație.'); }
+    if (ok) { if (S.ss) S.ss.sp++; S.money += sp.pay; S.rep += sp.rep; log(sp.brand + ' e mulțumit: +' + eur(sp.pay) + ', +' + sp.rep + ' reputație.'); }
     else { S.rep = Math.max(0, S.rep - 3); log(sp.brand + ' a anulat contractul (obiectiv ratat): −3 reputație.'); }
     S.sponsorLog.unshift({ brand: sp.brand, text: KINDS[sp.kind].text(sp.target), ok, pay: sp.pay }); S.sponsorLog = S.sponsorLog.slice(0, 10);
     return ok;
@@ -240,19 +243,48 @@
 
   // ---------- hardware ----------
   const pendingFor = (cat) => S.build.find((b) => b.cat === cat);
-  function buy(cat, express) {
+  const shipWk = (t) => Math.ceil(t.wk / 2);                                        // delivery of the parts
+  const asmWk = (t) => Math.max(1, t.wk - (crewLv(S, 'build') >= 3 ? 1 : 0));        // assembly in the workshop (a level 3 builder saves a week)
+  const STAGE_NAMES = ['Comandat', 'Livrare', 'Piese sosite', 'Montaj', 'Gata'];
+  function buy(cat, express) {   // buys the PARTS: they ship (or arrive at once with express), then you still have to build the upgrade
     const cur = S.hw[cat], t = HW[cat].tiers[cur + 1]; if (!t || pendingFor(cat)) return;
     const cost = priceOf(t, express);
     if (S.rep < t.rep) return toast('Ai nevoie de ' + t.rep + ' reputație.');
     if (S.money < cost) return toast('Nu ai destui bani (' + eur(cost) + ').');
     S.money -= cost;
-    if (express) { S.hw[cat] = cur + 1; log(HW[cat].name + ': ' + t.n + ' montat imediat (express, −' + eur(cost) + ').'); }
-    else { S.build.push({ cat, tier: cur + 1, ready: S.week + t.wk }); log('Comandat: ' + t.n + ' (−' + eur(cost) + '). Gata în ' + t.wk + ' săpt.'); }
+    S.build.push({ cat, tier: cur + 1, stage: express ? 'stock' : 'ship', ready: S.week + shipWk(t) });
+    log(express ? 'Comandat express: ' + t.n + ' (−' + eur(cost) + '). Piesele au sosit, montează-le în atelier.' : 'Comandat: ' + t.n + ' (−' + eur(cost) + '). Piesele ajung în ' + shipWk(t) + ' săpt., apoi montajul durează ' + asmWk(t) + '.');
     save(); render();
   }
+  function startBuild(b) {
+    if (S.build.some((x) => x.stage === 'build')) return toast('Atelierul e ocupat: termină montajul curent.');
+    const t = HW[b.cat].tiers[b.tier], d = asmWk(t); b.stage = 'build'; b.ready = S.week + d; log('Montaj început: ' + t.n + ' (' + d + ' săpt.).'); gainXp('build', 5); save(); render();
+  }
   function installReady() {
-    for (const b of S.build.slice()) if (b.ready <= S.week) { S.hw[b.cat] = b.tier; S.build = S.build.filter((x) => x !== b); log('Montat: ' + HW[b.cat].tiers[b.tier].n + '. Robotul e mai bun.'); }
+    for (const b of S.build.slice()) {
+      if (!b.stage) b.stage = 'build'; const t = HW[b.cat].tiers[b.tier];
+      if (b.stage === 'ship' && b.ready <= S.week) { b.stage = 'stock'; log('Au sosit piesele: ' + t.n + '.'); notify({ app: 'shop', ic: '📦', title: 'Piesele au sosit', text: t.n + '. Începe montajul în atelier (montajul durează ' + asmWk(t) + ' săpt.).' }); }
+      else if (b.stage === 'build' && b.ready <= S.week) { S.hw[b.cat] = b.tier; S.build = S.build.filter((x) => x !== b); log('Montat: ' + t.n + '. Robotul e mai bun.'); gainXp('build', 15); notify({ app: 'shop', ic: '🔧', title: 'Upgrade montat', text: t.n + ' e pe robot.' }); }
+    }
+    if (S.fieldOrder && S.fieldOrder.ready <= S.week) { S.field = true; S.fieldOrder = null; log('A ajuns terenul de antrenament.'); notify({ app: 'shop', ic: '🟩', title: 'Terenul a ajuns', text: 'Poți testa autonomul și face antrenamente (2 pe săptămână).' }); }
     if (!canTurret()) S.type = 'strafe';
+  }
+  const stageIdx = (b) => (b.stage === 'ship' ? 1 : b.stage === 'stock' ? 2 : 3);
+  function stageLabel(b) { const t = HW[b.cat].tiers[b.tier]; return b.stage === 'ship' ? 'În livrare · sosesc în săpt. ' + b.ready : b.stage === 'stock' ? 'Piese sosite · montajul durează ' + asmWk(t) + ' săpt.' : 'Montaj în curs · gata în săpt. ' + b.ready; }
+  function orderRow(b) {
+    const t = HW[b.cat].tiers[b.tier], idx = stageIdx(b), busy = S.build.some((x) => x.stage === 'build');
+    return el('div', { class: 'order' }, el('div', { class: 'ord-h' }, el('b', { text: HW[b.cat].name + ' · ' + t.n }), el('small', { text: stageLabel(b) })),
+      el('div', { class: 'ord-steps' }, STAGE_NAMES.map((n, i) => el('span', { class: i < idx ? 'done' : i === idx ? 'now' : '', text: n }))),
+      b.stage === 'stock' ? el('button', { class: 'cr-btn sm pri', disabled: busy, text: busy ? 'Atelierul e ocupat' : 'Începe montajul (' + asmWk(t) + ' săpt.)', onclick: () => startBuild(b) }) : null);
+  }
+  function fieldStatus() { return S.field ? ['ok', '✓ Ai teren de antrenament'] : S.fieldOrder ? ['wait', 'Terenul ajunge în săpt. ' + S.fieldOrder.ready] : ['no', 'Nu ai teren de antrenament']; }
+  function workshopCard() {
+    const fs = fieldStatus();
+    return el('div', { class: 'cr-card' }, cardHead('Atelier', S.build.length ? S.build.length + (S.build.length === 1 ? ' comandă în lucru' : ' comenzi în lucru') : 'Nicio comandă în lucru'),
+      el('div', { class: 'fld ' + fs[0] }, el('span', { class: 'fi', text: '🟩' }), el('div', null, el('b', { text: fs[1] }), el('small', { text: S.field ? 'Poți antrena și testa autonomul.' : 'Fără teren nu poți testa autonomul sau face antrenamente.' })),
+        !S.field && !S.fieldOrder ? el('button', { class: 'cr-btn sm pri', text: 'Comandă', onclick: () => openPhone('shop') }) : null),
+      S.build.length ? el('div', { class: 'orders' }, S.build.map(orderRow)) : el('p', { class: 'cr-note', style: 'margin-top:10px', text: 'Caută piese în magazin (tableta → Piese). Livrarea durează, apoi montajul încă o perioadă.' }),
+      el('div', { class: 'cr-row', style: 'margin-top:10px' }, el('button', { class: 'cr-btn sm', text: '🛠️ Magazin de piese', onclick: () => openPhone('shop') }), el('button', { class: 'cr-btn sm', text: 'Upgrade-uri', onclick: () => { tab = 'robot'; render(); } })));
   }
 
   // ---------- calendar / events: sezon #11 FTC România = League Meets → League Tournament (regionala) → Campionat național → Mondiale ----------
@@ -271,7 +303,7 @@
     return out;
   }
   function buildField(it) {
-    const own = regionPool(S.region).filter((t) => !isMe(t)); let opp;
+    const own = regionPool(it.type === 'meet' && it.host ? it.host : S.region).filter((t) => !isMe(t)); let opp;
     if (it.type === 'meet') { const k = irnd(8, 20) - 1; opp = shuffle(fillPool(own, k)).slice(0, k); }
     else if (it.type === 'reg') opp = fillPool(own, 11);
     else if (it.type === 'nat') { const all = (window.CAREER_REGIONS || []).flatMap((r) => r.teams.map(([name, num]) => ({ name, num }))).filter((t) => !isMe(t)); opp = shuffle(fillPool(all, 27)).slice(0, 27); }
@@ -302,15 +334,13 @@
       if (it.type === 'meet') {
         if (it.enrolled && d === 1) notify({ app: 'meets', ic: '📅', title: itemName(it) + ' e săptămâna viitoare', text: 'Confirmă participarea: ' + dateOf(it.week) + '.' });
         else if (it.enrolled && d === 0) notify({ app: 'meets', ic: '🏁', title: 'Azi e ' + itemName(it), text: 'Intră în eveniment din tabul Eveniment.' });
-        else if (!it.enrolled && d === 2) notify({ app: 'meets', ic: '📅', title: itemName(it) + ' și-a deschis înscrierile', text: dateOf(it.week) + ' · ' + regionOf(S.region).name + '. Mai sunt locuri.' });
+        else if (!it.enrolled && d === 2) notify({ app: 'meets', ic: '📅', title: itemName(it) + ' și-a deschis înscrierile', text: dateOf(it.week) + ' · ' + regionOf(S.region).name + '. Mai sunt locuri.', act: { t: 'enroll', id: it.id, label: 'Înscrie-te' } });
       } else if (d === 1 || d === 0) notify({ app: 'meets', ic: '🏆', title: d ? itemName(it) + ' e săptămâna viitoare' : 'Azi: ' + itemName(it), text: dateOf(it.week) });
     });
-    if (Math.random() < 0.3 && S.offers.length && activeSponsors().length < MAX_SPONSORS) { const o = pick(S.offers); notify({ app: 'sponsors', ic: '🤝', title: o.brand + ' te caută', text: 'Ofertă nouă: ' + KINDS[o.kind].text(o.target) + '.' }); }
+    if (Math.random() < 0.5) genMsg();
+    if (Math.random() < 0.3 && S.offers.length && activeSponsors().length < MAX_SPONSORS) { const o = pick(S.offers); notify({ app: 'sponsors', ic: '🤝', title: o.brand + ' te caută', text: 'Ofertă nouă: ' + KINDS[o.kind].text(o.target) + '.', act: { t: 'offer', id: o.id, label: 'Acceptă oferta' } }); }
   }
-  function toggleEnroll(it) {
-    if (S.week >= it.week) return toast('Înscrierile la acest meet s-au închis.');
-    it.enrolled = !it.enrolled; log((it.enrolled ? 'Te-ai înscris la ' : 'Te-ai retras de la ') + itemName(it) + '.'); save(); render();
-  }
+  function toggleEnroll(it) { enrollAt(it, S.region); }
   // un meci = 2 alianțe de câte 2 roboți (2 roșii + 2 albaștri). La începutul evenimentului se generează lista TUTUROR meciurilor; fiecare echipă joacă n meciuri,
   // cu parteneri și culori diferite (poate fi de ex. 4× albastru + 2× roșu).
   function genSchedule(N, n) {
@@ -347,14 +377,15 @@
     let seed = 0;
     if (it.type === 'reg' && S.mscores.length) { const b = meetBoard(), rk = b.findIndex((x) => x.me) + 1, f = rk / b.length; seed = f <= .15 ? 3 : f <= .4 ? 2 : f <= .7 ? 1 : 0; teams[0].rp = seed; }
     timeSchedule(matches);
-    S.event = { id: it.id, type: it.type, name: itemName(it), when: dateOf(it.week), n: def.n, teams, matches, mine, round: 0, hist: [], po: null, seed };
+    if (it.type !== 'meet') notify({ app: 'portfolio', ic: '📓', title: 'Jurizarea începe', text: 'Ai interviu cu juriul. Caietul tehnic acum: ' + pfTotal() + '%.' });
+    S.event = { host: it.type === 'meet' && it.host ? it.host : S.region, id: it.id, judge: it.type !== 'meet' ? { done: false } : null, type: it.type, name: itemName(it), when: dateOf(it.week), n: def.n, teams, matches, mine, round: 0, hist: [], po: null, seed };
     notify({ app: 'ftc', ic: '📋', title: 'Lista meciurilor a fost publicată', text: matches.length + ' meciuri. Primul tău meci: #' + mine[0] + ', ora ' + fmtT(matches.find((m) => m.no === mine[0]).t) + '.' });
     log('Ai intrat la ' + S.event.name + ' (' + teams.length + ' echipe, ' + matches.length + ' meciuri, tu joci ' + def.n + ').' + (seed ? ' Bonus de seed din Top 10 meciuri: +' + seed + ' RP.' : '')); save(); render();
   }
   const simAlliance = (p, q) => { const sa = allScore(p.cap, p.par), sb = allScore(q.cap, q.par); return sa > sb || (sa === sb && (p.cap.rp || 0) >= (q.cap.rp || 0)) ? 0 : 1; };
   const qualSorted = (ev) => ev.teams.slice().sort((a, b) => b.rp - a.rp || b.pts - a.pts);
   const asAI = (t) => ({ name: t.name, skill: t.skill == null ? 0.5 : t.skill, num: t.num });
-  async function launch(kind) {
+  async function launch(kind, msg) {
     const id = Date.now() + '-' + irnd(1000, 9999), ev = S.event;
     let opp, alliance, label, partner = null, opps = null;
     if (kind === 'qual') {
@@ -364,10 +395,11 @@
     } else if (kind === 'playoff') {
       const po = ev.po; alliance = po.al; partner = asAI(po.partner); opps = [asAI(po.opp), asAI(po.oppPartner)]; opp = opps[0];
       label = ev.name + ' · ' + (po.phase === 'sf' ? 'semifinală' : 'finala');
-    } else { opp = { name: pick(TEAM_NAMES) + ' (antrenament)', skill: clamp(rnd(0.25, 0.6) + (S.season - 1) * .05, 0, .95) }; alliance = pick(['red', 'blue']); label = 'Antrenament'; }
-    S.pending = { id, kind }; save();
+    } else if (kind === 'friendly' && msg) { opp = { name: msg.team.name, skill: msg.team.skill, num: msg.team.num }; alliance = pick(['red', 'blue']); label = 'Meci amical vs ' + msg.team.name;
+    } else { if (!S.field) return toast('Ai nevoie de un teren de antrenament.'); opp = { name: pick(TEAM_NAMES) + ' (antrenament)', skill: clamp(rnd(0.25, 0.6) + (S.season - 1) * .05, 0, .95) }; alliance = pick(['red', 'blue']); label = 'Antrenament'; }
+    S.pending = { id, kind, msgId: msg && msg.id }; save();
     ensureAutos(); const AU = S.autos[S.autoSel], auto = AU && AU.pts.length ? { name: AU.name, pts: alliance === 'blue' ? AU.pts.map(mirrorPt) : clonePts(AU.pts) } : null;
-    try { localStorage.setItem(MATCH_KEY, JSON.stringify({ id, type: kind, label, alliance, robot: canTurret() ? S.type : 'strafe', mods: modsOf(S), team: S.team, opp: { name: opp.name, skill: opp.skill, num: opp.num }, partner, opps, auto, ts: Date.now() })); localStorage.removeItem(RESULT_KEY); } catch (e) { return toast('Nu pot salva meciul (stocarea e blocată).'); }
+    try { localStorage.setItem(MATCH_KEY, JSON.stringify({ id, type: kind, label, alliance, robot: canTurret() ? S.type : 'strafe', mods: modsOf(S), team: S.team, opp: { name: opp.name, skill: opp.skill, num: opp.num }, partner, opps, plan: S.plan || 'bal', auto, ts: Date.now() })); localStorage.removeItem(RESULT_KEY); } catch (e) { return toast('Nu pot salva meciul (stocarea e blocată).'); }
     await flushCloud(1800);
     goTop('field-sim-3d.html?career=1');
   }
@@ -377,6 +409,8 @@
     if (p.kind === 'playoff' && ev && ev.po && tie) win = ev.po.mySeed < ev.po.oppSeed;
     let rp = win ? 3 : tie ? 1 : 0; const tags = [];
     if (p.kind !== 'playoff') { if ((res.lp || 0) >= 16) { rp++; tags.push('SWARM'); } if ((res.tips || 0) >= 4) { rp++; tags.push('POLLINATOR 1'); } if ((res.tips || 0) >= 7) { rp++; tags.push('POLLINATOR 2'); } }
+    if (p.kind === 'qual' || p.kind === 'playoff') { if (win) S.ss.w++; gainXp('driver', win ? 12 : 7); } else { gainXp('driver', 5); gainXp('prog', 3); gainXp('build', 3); }
+    S.ss.best = Math.max(S.ss.best, my); S.mlog.push({ s: S.season, my, op, w: win ? 1 : tie ? .5 : 0 }); if (S.mlog.length > 150) S.mlog.shift();
     S.stats.tips += res.tips || 0; if (win) S.stats.w++; else if (tie && p.kind !== 'playoff') S.stats.t++; else S.stats.l++;
     const lm = { kind: p.kind, my, op, win, tie: tie && p.kind !== 'playoff', rp, tags, flowers: res.flowers || 0, tips: res.tips || 0, opp: null, partner: null, money: 0, sponsors: [], eventDone: false, po: null };
     if (p.kind === 'qual' && ev) {
@@ -392,19 +426,19 @@
       const po = ev.po; lm.opp = po.opp.name + ' + ' + po.oppPartner.name; lm.partner = po.partner.name; lm.po = po.phase; lm.rp = 0;
       ev.hist.push({ opp: lm.opp, partner: lm.partner, my, op, po: po.phase });
       log((po.phase === 'sf' ? 'Semifinală' : 'Finală') + ' vs ' + lm.opp + ': ' + my + '–' + op + (win ? ' (câștigată)' : ' (pierdută)') + '.');
-    } else if (p.kind === 'practice') {
-      const gain = 120 + Math.min(my, 40) * 5 + (win ? 100 : 0); S.money += gain; lm.money = gain; if (win) S.rep += 1; S.practiceN = (S.practiceWeek === S.week ? (S.practiceN || 1) : 0) + 1; S.practiceWeek = S.week;
+    } else if (p.kind === 'practice' || p.kind === 'friendly') {
+      const gain = 120 + Math.min(my, 40) * 5 + (win ? 100 : 0); S.money += gain; lm.money = gain; if (win) S.rep += 1; if (p.kind === 'practice') { S.practiceN = (S.practiceWeek === S.week ? (S.practiceN || 1) : 0) + 1; S.practiceWeek = S.week; } else { const fm = (S.msgs || []).find((x) => x.id === p.msgId); if (fm) fm.done = true; }
       log('Antrenament: ' + my + '–' + op + ', +' + eur(gain) + (win ? ', +1 reputație' : '') + '.');
     }
     lm.sponsors = evalSponsors({ kind: 'match', res });
     S.pending = null;
+    if (res.rep) { try { localStorage.setItem('rbCareerReplay', JSON.stringify(Object.assign({}, res.rep, { label: (ev && p.kind !== 'practice' && p.kind !== 'friendly' ? ev.name + ' · ' : '') + (p.kind === 'practice' ? 'antrenament' : p.kind === 'friendly' ? 'meci amical' : p.kind === 'playoff' ? 'playoff' : 'meciul ' + (ev ? ev.round : '')) }))); lm.replay = true; } catch (e) { } }
     if (p.kind === 'qual' && ev && ev.round >= ev.n) {
       simUpTo(ev, Infinity);   // the rest of the schedule is played by the other teams
       const sorted = qualSorted(ev), rank = sorted.findIndex((t) => t.me) + 1;
       if (rank <= 4 && ev.type !== 'meet') {
-        const pairs = [1, 2, 3, 4].map((s) => ({ cap: sorted[s - 1], par: sorted[3 + s] })), os = 5 - rank;   // each top-4 seed picks a partner from the next teams
-        ev.po = { phase: 'sf', mySeed: rank, oppSeed: os, pairs, sorted, partner: pairs[rank - 1].par, opp: pairs[os - 1].cap, oppPartner: pairs[os - 1].par, al: pick(['red', 'blue']) };
-        lm.po = 'start'; log('Calificări încheiate: locul ' + rank + '. Intri în playoff cu ' + ev.po.partner.name + '.');
+        startAlliance(ev, sorted, rank);
+        lm.po = 'start'; log('Calificări încheiate: locul ' + rank + '. Alegi partenerul de playoff.');
       } else { lm.eventDone = true; finishEvent(null); }
     } else if (p.kind === 'playoff' && ev && ev.po) {
       const po = ev.po;
@@ -415,7 +449,7 @@
         } else { lm.eventDone = true; finishEvent(3); }
       } else { lm.eventDone = true; finishEvent(win ? 1 : 2); }
     }
-    S.lastMatch = lm; save(); return true;
+    checkGoals(); S.lastMatch = lm; save(); return true;
   }
   function finishEvent(place) {
     const ev = S.event, it = S.cal.find((x) => x.id === ev.id), def = STAGES[it.type], z = 1 + (S.season - 1) * .25;
@@ -424,18 +458,25 @@
     S.money += prize; S.rep += repGain; if (rank === 1 && it.type !== 'meet') S.stats.titles++;
     const done = evalSponsors({ kind: 'event', rank, wins: me.w });
     S.buffs.forEach((b) => { b.events--; }); S.buffs = S.buffs.filter((b) => b.events > 0);
-    S.evCount++; it.done = true; S.history.unshift({ season: S.season, name: ev.name, rank, rp: me.rp, w: me.w, l: me.l, t: me.t, prize });
+    const others = ev.teams.filter((t) => !t.me && t.played), regAvg = others.length ? Math.round(others.reduce((a, t) => a + t.pts / t.played, 0) / others.length * 10) / 10 : 0;
+    S.evCount++; it.done = true; S.history.unshift({ season: S.season, name: ev.name, rank, rp: me.rp, w: me.w, l: me.l, t: me.t, prize, avg: regAvg, myAvg: me.played ? Math.round(me.pts / me.played * 10) / 10 : 0 });
     for (const sp of activeSponsors()) if (sp.expires <= S.evCount) finishSponsor(sp, false);
+    let aw = [];
+    if (it.type !== 'meet') {
+      aw = computeAwards(ev, rank, ev.teams.length); if (it.type === 'reg') S.ss.regRank = rank;
+      aw.forEach((a) => { const m = (a.id === 'inspire' ? 1500 : 500) * (1 + STAGES[it.type].lvl * .5); S.money += Math.round(m); S.rep += a.id === 'inspire' ? 10 : 4; S.awards.push({ season: S.season, event: ev.name, award: a.name }); S.ss.awards++; });
+      if (aw.length) notify({ app: 'ftc', ic: '🏆', title: 'Premiu: ' + aw.map((a) => a.name).join(' + '), text: ev.name + ' · ceremonia de premiere.' });
+    }
     let qualified = null;
-    if (def.qual && rank <= def.qual) { const nx = S.cal.find((x) => x.type === (it.type === 'reg' ? 'nat' : 'wld')); if (nx) { nx.off = false; qualified = itemName(nx); } }
+    if (def.qual && (rank <= def.qual || aw.some((a) => a.id === 'inspire' || a.id === 'think'))) { const nx = S.cal.find((x) => x.type === (it.type === 'reg' ? 'nat' : 'wld')); if (nx) { nx.off = false; qualified = itemName(nx); } }
     let board = null; if (it.type === 'meet') { const b = meetBoard(); board = { rank: b.findIndex((x) => x.me) + 1, of: b.length, sum: topTen() }; }
-    S.summary = { name: ev.name, rank, qrank, sorted: sorted.map((t) => ({ name: t.name, rp: t.rp, pts: t.pts, w: t.w, l: t.l, t: t.t, me: !!t.me })), prize, rep: repGain, sponsors: done, seasonEnd: false, qualified, needQual: def.qual || 0, board, playoffs: !!place };
+    S.summary = { name: ev.name, rank, qrank, sorted: sorted.map((t) => ({ name: t.name, rp: t.rp, pts: t.pts, w: t.w, l: t.l, t: t.t, me: !!t.me })), prize, rep: repGain, sponsors: done, seasonEnd: false, qualified, needQual: def.qual || 0, board, playoffs: !!place, awards: aw };
     log(ev.name + ': locul ' + rank + ' (+' + eur(prize) + ', +' + repGain + ' reputație).' + (qualified ? ' Te-ai calificat la ' + qualified + '!' : ''));
     notify({ app: 'ftc', ic: '📊', title: 'Rezultate publicate: ' + ev.name, text: 'Ai terminat pe locul ' + rank + '.' + (qualified ? ' Calificat la ' + qualified + '!' : '') });
     S.week = it.week + 1; S.lastEv = ev; S.event = null;
-    if (!nextEvent()) { S.summary.seasonEnd = true; S.season++; S.cal = buildCal(); S.mscores = []; S.week = 1; S.money += 500; log('Sezonul s-a încheiat. Buget nou de sezon: +' + eur(500) + '. Adversarii devin mai puternici.'); }
-    S.offers = genOffers(); installReady();
-    if (S.offers[0]) notify({ app: 'sponsors', ic: '🤝', title: S.offers[0].brand + ' te caută', text: 'Sponsori noi au apărut după eveniment.' });
+    if (!nextEvent()) { S.summary.seasonEnd = true; S.season++; S.cal = buildCal(); S.mscores = []; S.week = 1; S.ss = { w: 0, best: 0, sp: 0, regRank: 0, awards: 0 }; S.goals = shuffle(GOAL_POOL).slice(0, 4).map((g) => ({ id: g.id, got: false })); S.money += 500; log('Sezonul s-a încheiat. Buget nou de sezon: +' + eur(500) + '. Adversarii devin mai puternici.'); }
+    S.offers = genOffers(); installReady(); checkGoals();
+    if (S.offers[0]) notify({ app: 'sponsors', ic: '🤝', title: S.offers[0].brand + ' te caută', text: 'Sponsori noi au apărut după eveniment.', act: { t: 'offer', id: S.offers[0].id, label: 'Acceptă oferta' } });
   }
   function forfeit() {
     const p = S.pending; if (!p) return;
@@ -451,31 +492,137 @@
   function bars(m) {
     return el('div', { class: 'cr-bars' }, BARS.map(([k, label]) => el('div', { class: 'cr-bar' }, el('span', { text: label }), el('div', { class: 'track' }, el('i', { style: 'width:' + clamp(barPct(k, m[k]), 0, 100) + '%' })), el('b', { text: barTxt(k, m[k]) }))));
   }
-  const tabs = [['hub', 'Acasă'], ['robot', 'Robot și hardware'], ['auto', 'Autonom'], ['sponsors', 'Sponsori'], ['event', 'Eveniment'], ['history', 'Istoric']];
-
   // ---------- views ----------
-  function header() {
-    const chips = [el('div', { class: 'cr-chip money' }, el('small', { text: 'Buget' }), el('b', { text: eur(S.money) })),
-      el('div', { class: 'cr-chip rep' }, el('small', { text: 'Reputație' }), el('b', { text: Math.round(S.rep) })),
-      el('div', { class: 'cr-chip' }, el('small', { text: 'Sezon ' + S.season }), el('b', { text: 'Săpt. ' + S.week })), cloudChip()];
-    if (FRAMED) return el('header', { class: 'cr-page' },
-      el('button', { class: 'cr-back', onclick: backToMenu }, '← Înapoi'),
-      el('div', { class: 'cr-kicker', text: 'BIOBUZZ · CARIERĂ' }), el('h1', { class: 'cr-pt', text: 'Mod carieră' }),
-      el('div', { class: 'cr-team2', text: S.team.name + ' · #' + S.team.num + ' · ' + regionOf(S.region).name + ' · ' + repLevel(S.rep) }), el('div', { class: 'cr-stats' }, chips));
-    return el('header', { class: 'cr-top' },
-      el('a', { class: 'cr-brand', href: 'index.html', target: FRAMED ? '_top' : null }, 'ro', el('span', { text: 'LER' }), 'bot'),
-      el('div', { class: 'cr-team' }, el('b', { text: S.team.name }), el('small', { text: '#' + S.team.num + ' · ' + regionOf(S.region).name + ' · ' + repLevel(S.rep) })),
-      el('div', { class: 'cr-stats' }, chips),
-      el('div', { class: 'cr-links' }, menuLink(), FRAMED ? null : el('a', { class: 'cr-link', href: 'index.html' }, '← Site')));
+  // ---------- shell: bara laterală (navigare), bara de sus (resurse + acțiunea principală) ----------
+  const NAV = [['hub', 'Acasă', '🏠'], ['event', 'Sezon', '🏆'], ['robot', 'Robot', '🤖'], ['auto', 'Autonom', '🧭'], ['team', 'Echipă', '👥'], ['sponsors', 'Sponsori', '🤝'], ['history', 'Statistici', '📊']];
+  const go = (id) => { tab = id; render(); window.scrollTo(0, 0); };
+  const cardHead = (eyebrow, title, action) => el('div', { class: 'ch-head' }, el('div', null, el('div', { class: 'cr-eyebrow', text: eyebrow }), el('h2', { text: title })), action || null);
+  const withCls = (node, c) => { if (node) node.classList.add(...c.split(' ')); return node; };
+  const pill = (ic, k, v, c) => el('div', { class: 'pill ' + (c || '') }, el('span', { class: 'pi', text: ic }), el('div', null, el('small', { text: k }), el('b', { text: v })));
+  const initials = () => (S.team.name.replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/).map((w) => w[0]).join('').slice(0, 2) || 'RB').toUpperCase();
+  function navDot(id) {
+    const nx = nextEvent();
+    if (id === 'event') return !!S.event || (!!nx && S.week >= nx.week);
+    if (id === 'sponsors') return S.offers.length > 0 && activeSponsors().length < MAX_SPONSORS;
+    if (id === 'robot') return S.build.some((b) => b.stage === 'stock');
+    if (id === 'team') return S.pfWeek !== S.week && pfTotal() < 60;
+    return false;
   }
-  function nav() {
-    const dot = (id) => (id === 'sponsors' && S.offers.length && activeSponsors().length < MAX_SPONSORS) || (id === 'event' && nextEvent() && S.week >= nextEvent().week) ? el('span', { class: 'dot' }) : null;
-    return el('nav', { class: 'cr-nav' }, tabs.map(([id, label]) => el('button', { class: tab === id ? 'on' : '', onclick: () => { tab = id; render(); } }, label, dot(id))));
+  function sidebar() {
+    return el('aside', { class: 'cr-side' },
+      el('div', { class: 'sd-top' }, FRAMED ? el('button', { class: 'sd-back', onclick: backToMenu }, '← Meniu joc') : el('a', { class: 'cr-brand', href: 'index.html' }, 'ro', el('span', { text: 'LER' }), 'bot'), el('span', { class: 'sd-kick', text: 'Carieră · BIOBUZZ' })),
+      el('div', { class: 'sd-team' }, el('div', { class: 'sd-av', text: initials() }), el('div', null, el('b', { text: S.team.name }), el('small', { text: '#' + S.team.num + ' · ' + regionOf(S.region).name }), el('em', { text: repLevel(S.rep) }))),
+      el('nav', { class: 'sd-nav' }, NAV.map(([id, label, ic]) => el('button', { class: 'sd-it' + (tab === id ? ' on' : ''), onclick: () => go(id) }, el('span', { class: 'ic', text: ic }), el('span', { class: 'lb', text: label }), navDot(id) ? el('i', { class: 'dot' }) : null))),
+      el('div', { class: 'sd-foot' }, el('button', { class: 'sd-tab', onclick: () => openPhone(null) }, el('span', { text: '📱 Tableta echipei' }), unread() ? el('i', { class: 'ph-badge', text: unread() }) : null), cloudChip(),
+        FRAMED ? null : el('div', { class: 'sd-links' }, menuLink(), el('a', { class: 'cr-link', href: 'index.html' }, '← Site'))));
   }
+  function primaryAction() {
+    const nx = nextEvent(), left = nx ? nx.week - S.week : 0;
+    if (S.pending) return null;
+    if (S.event) return el('button', { class: 'cr-btn pri cta', onclick: () => go('event') }, el('span', { text: '🏁 Continuă evenimentul' }), el('small', { text: S.event.name }));
+    if (nx && left <= 0) return el('button', { class: 'cr-btn pri cta', onclick: () => { startEvent(); go('event'); } }, el('span', { text: '🏁 Intră în eveniment' }), el('small', { text: itemName(nx) }));
+    if (nx) return el('button', { class: 'cr-btn pri cta', onclick: advanceWeek }, el('span', { text: '⏭ Săptămâna următoare' }), el('small', { text: '−' + WEEK_COST + ' € cheltuieli' }));
+    return null;
+  }
+  const shortName = (it) => (it.type === 'meet' ? 'Meet #' + it.no : it.type === 'reg' ? 'Regionala' : it.type === 'nat' ? 'Naționala' : 'Mondiale');
+  function topbar() {
+    const nx = nextEvent(), left = nx ? nx.week - S.week : 0, label = (NAV.find((n) => n[0] === tab) || NAV[0])[1];
+    return el('header', { class: 'cr-tb' }, el('div', { class: 'tb-title' }, el('h1', { text: label }), el('small', { text: 'Sezonul ' + S.season + ' · săptămâna ' + S.week + ' · ' + dateOf(S.week) })),
+      el('div', { class: 'tb-res' }, pill('💶', 'Buget', eur(S.money), 'ok'), pill('⭐', 'Reputație', String(Math.round(S.rep)), 'gold'),
+        pill('🗓️', 'Următorul', nx ? shortName(nx) + (left > 0 ? ' · ' + left + ' săpt.' : ' · azi') : '—')),
+      primaryAction());
+  }
+  function practiceBtn() {
+    const practiced = (S.practiceWeek === S.week ? (S.practiceN || 1) : 0) >= (S.field ? 2 : 1);
+    return el('button', { class: 'cr-btn', disabled: practiced || !!S.pending || !S.field, title: S.field ? 'Meci 1v1 pentru bani și experiență' : 'Comandă terenul din magazinul de piese', text: !S.field ? '🔒 Antrenament (fără teren)' : practiced ? '✓ Antrenamente făcute' : '🎯 Antrenament', onclick: () => launch('practice') });
+  }
+
+  // ---------- Acasă ----------
+  function heroCard() {
+    const ev = nextEvent(), left = ev ? ev.week - S.week : 0, played = S.cal.filter((x) => x.type === 'meet' && x.done).length, enr = S.cal.filter((x) => x.type === 'meet' && x.enrolled && !x.done).length;
+    const status = S.event ? 'Ești în mijlocul evenimentului. Joacă meciul următor din pagina Sezon.' : !ev ? 'Sezonul s-a încheiat.' : left > 0 ? 'Pregătește robotul până atunci: piese noi, antrenamente și autonom.' : 'E ziua competiției! Intră în eveniment.';
+    return el('div', { class: 'cr-card s8 hero' },
+      el('div', { class: 'cr-eyebrow', text: S.event ? 'Eveniment în desfășurare' : 'Următorul eveniment' }),
+      el('div', { class: 'hero-top' }, ev ? dateBlock(ev.week) : null, el('div', null, el('h2', { text: S.event ? S.event.name : ev ? itemName(ev) : 'Sezon încheiat' }),
+        el('div', { class: 'hero-meta' }, ev ? el('span', { class: 'hc' + (left <= 0 || S.event ? ' now' : ''), text: S.event ? 'în desfășurare' : left > 0 ? 'peste ' + left + (left === 1 ? ' săptămână' : ' săptămâni') : 'azi' }) : null,
+          el('span', { text: '📍 ' + regionOf((ev && ev.host) || S.region).name }), el('span', { text: '🏁 ' + played + ' meet-uri jucate · ' + enr + ' înscrise' })))),
+      el('p', { class: 'cr-sub', style: 'margin:14px 0 0', text: status }),
+      el('div', { class: 'hero-act' }, primaryAction(), el('button', { class: 'cr-btn', onclick: () => go('event') }, '🗓 Calendar'), practiceBtn(), hasReplay() ? el('button', { class: 'cr-btn', text: '▶ Replay', onclick: openReplay }) : null),
+      el('div', { class: 'setup' }, el('label', { class: 'ap-f', style: 'margin:0' }, el('span', { text: 'Autonom la meciuri' }), autoSelect()), el('label', { class: 'ap-f', style: 'margin:0' }, el('span', { text: 'Strategie cu partenerul AI' }), planSelect())),
+      S.buffs.length ? el('div', { class: 'buffs' }, S.buffs.map((b) => el('span', { text: '⚡ ' + b.label + ' (' + (b.mul < 1 ? (b.mod === 'spread' || b.mod === 'reload' ? '+' : '−') : '+') + Math.round(Math.abs(1 - b.mul) * 100) + '% ' + b.mod + ')' }))) : null);
+  }
+  function robotSnap() {
+    const fs = fieldStatus(), stock = S.build.filter((b) => b.stage === 'stock').length;
+    return el('div', { class: 'cr-card s4' }, cardHead('Robotul tău', 'Performanță', el('button', { class: 'cr-btn sm', onclick: () => go('robot') }, 'Robot →')), bars(modsOf(S)),
+      el('div', { class: 'fld mini ' + fs[0] }, el('span', { class: 'fi', text: '🟩' }), el('div', null, el('b', { text: fs[1] }), el('small', { text: S.build.length ? S.build.length + ' comenzi în atelier' + (stock ? ' · ' + stock + ' de montat' : '') : 'Nicio comandă în atelier' }))));
+  }
+  function sponsorSnap() {
+    const sp = activeSponsors();
+    return el('div', { class: 'cr-card s4' }, cardHead('Sponsori', sp.length + '/' + MAX_SPONSORS + ' contracte', el('button', { class: 'cr-btn sm', onclick: () => go('sponsors') }, 'Oferte →')),
+      sp.length ? el('div', { class: 'mini-list' }, sp.map((x) => el('div', { class: 'mini' }, el('img', { src: 'assets/img/portfolio/' + x.logo, alt: x.brand }), el('div', null, el('b', { text: x.brand }), el('small', { text: KINDS[x.kind].text(x.target) })), el('em', { text: eur(x.pay) }))))
+        : el('p', { class: 'cr-sub', text: S.offers.length ? S.offers.length + ' sponsori îți oferă contracte. Alege unul ca să primești bani când îndeplinești obiectivul.' : 'Apar oferte noi după fiecare eveniment.' }));
+  }
+  function logSnap() {
+    return el('div', { class: 'cr-card s4' }, cardHead('Jurnal', 'Ce s-a întâmplat'), el('div', { class: 'log' }, S.log.slice(0, 7).map((l) => el('div', { text: l }))));
+  }
+  function hubView() {
+    return el('div', { class: 'cr-grid' }, heroCard(), robotSnap(), seasonStrip(), withCls(goalsCard(), 's4'), sponsorSnap(), logSnap());
+  }
+
+  // ---------- Robot ----------
+  function robotView() {
+    const m = modsOf(S);
+    const cards = Object.keys(HW).map((cat) => {
+      const H = HW[cat], cur = S.hw[cat], pend = pendingFor(cat);
+      return el('div', { class: 'hw' }, el('div', { class: 'hw-head' }, el('h3', { text: H.name }), el('span', { class: 'hw-cur', text: 'Montat: ' + H.tiers[cur].n })),
+        el('div', { class: 'tiers' }, H.tiers.map((t, i) => {
+          const installed = i <= cur, building = pend && pend.tier === i, next = i === cur + 1 && !pend, locked = !installed && !building && !next;
+          const fx = Object.keys(t.fx).map((k) => { const lab = { speed: 'viteză', accel: 'accel.', turn: 'rotire', intake: 'intake', reload: 'cadență', spread: 'precizie', assist: 'țintire' }[k], v = t.fx[k]; return lab + ' ' + (v < 1 ? '−' : '+') + Math.round(Math.abs(1 - v) * 100) + '%'; }).join(' · ');
+          const rep = S.rep >= t.rep;
+          return el('div', { class: 'tier ' + (installed ? 'installed' : building ? 'building' : locked ? 'locked' : 'next') },
+            el('span', { class: 'tag ' + (installed ? '' : building ? 'gold' : 'dim'), text: installed ? (i === cur ? '✓ Montat' : 'Depășit') : building ? stageLabel(pend) : 'Treapta ' + (i + 1) }),
+            el('b', { text: t.n }), el('p', { text: t.d }), fx ? el('div', { class: 'fx', text: fx }) : null,
+            next ? el('button', { class: 'cr-btn sm pri', disabled: !rep, text: rep ? 'Caută piesele · de la ' + eur(priceOf(t)) : '🔒 ' + t.rep + ' reputație', onclick: () => openPhone('shop') }) : null,
+            building && pend.stage === 'stock' ? el('button', { class: 'cr-btn sm pri', disabled: S.build.some((x) => x.stage === 'build'), text: 'Începe montajul', onclick: () => startBuild(pend) }) : null,
+            !installed && !building && !next && i > cur + 1 ? el('div', { class: 'cr-note', text: 'Mai întâi treapta anterioară' }) : null);
+        })));
+    });
+    return el('div', { class: 'cr-grid' },
+      el('div', { class: 'cr-card s4' }, cardHead('Statistici', 'Robotul acum'), bars(m),
+        el('div', { class: 'cfg' }, el('div', { class: 'cr-eyebrow', text: 'Configurație' }),
+          el('div', { class: 'seg2' }, ['strafe', 'turret'].map((t) => el('button', { class: S.type === t ? 'on' : '', disabled: t === 'turret' && !canTurret(), text: t === 'strafe' ? 'Full strafe' : 'Turelă independentă', onclick: () => { S.type = t; save(); render(); } }))),
+          !canTurret() ? el('p', { class: 'cr-note', style: 'margin-top:8px', text: 'Turela se deblochează cu lansatorul „Flywheel cu PID” (treapta 3).' }) : null)),
+      withCls(workshopCard(), 's8'),
+      el('div', { class: 'cr-card' }, cardHead('Upgrade-uri', 'Arborele de hardware', el('button', { class: 'cr-btn sm pri', onclick: () => openPhone('shop') }, '🛠️ Magazin de piese')),
+        el('p', { class: 'cr-sub', text: 'Întâi cauți piesele în magazin și le comanzi (livrarea durează). Când ajung, le montezi în atelier. Express: piesele ajung imediat, cu 40% mai mult. Treptele de sus cer reputație.' }),
+        el('div', { class: 'hw-grid' }, cards)));
+  }
+
+  // ---------- Echipă: membrii, caietul tehnic, obiectivele ----------
+  function crewCards() {
+    return S.crew.map((m) => { const d = CREW_DEF.find((x) => x.id === m.id), lv = crewXpLv(m.xp), nxt = lv >= 5 ? 1 : (m.xp - lv * lv * 25) / (((lv + 1) * (lv + 1) - lv * lv) * 25);
+      return el('div', { class: 'shop-card crew' }, el('div', { class: 'cw-top' }, el('span', { class: 'big', text: d.ic }), el('div', null, el('b', { text: m.name }), el('small', { class: 'cat', text: d.role + ' · nivel ' + lv + '/5' }))), el('div', { class: 'prog' }, el('i', { style: 'width:' + clamp(nxt * 100, 0, 100) + '%' })), el('p', { text: d.desc + ' ' + d.bonus + '.' }),
+        el('button', { class: 'cr-btn sm', disabled: lv >= 5 || S.money < 100, text: lv >= 5 ? 'Nivel maxim' : 'Antrenează · 100 €', onclick: () => { if (S.money < 100) return; S.money -= 100; gainXp(m.id, 25); log('Antrenament intens pentru ' + m.name + '.'); save(); checkGoals(); render(); } })); });
+  }
+  function pfCards() {
+    const left = 2 - (S.pfWeek === S.week ? S.pfN || 0 : 0);
+    return PF_SECS.map(([id, name, ic]) => { const v = pfSec(id), man = (S.pf[id] || 0);
+      return el('div', { class: 'shop-card' }, el('div', { class: 'cw-top' }, el('span', { class: 'big', text: ic }), el('div', null, el('b', { text: name }), el('small', { class: 'cat', text: v + '% · scris de tine ' + man + '/50' }))), el('div', { class: 'prog' }, el('i', { style: 'width:' + v + '%' })),
+        el('button', { class: 'cr-btn sm pri', disabled: left <= 0 || man >= 50, text: man >= 50 ? 'Complet' : 'Scrie · +15%', onclick: () => workPortfolio(id) })); });
+  }
+  function teamView() {
+    const tot = pfTotal(), left = Math.max(0, 2 - (S.pfWeek === S.week ? S.pfN || 0 : 0));
+    return el('div', { class: 'cr-grid' },
+      el('div', { class: 'cr-card s8' }, cardHead('Echipa ta', 'Membrii echipei'), el('p', { class: 'cr-sub', text: 'Cresc cu meciurile, antrenamentele și caietul tehnic. Fiecare nivel îți îmbunătățește robotul.' }), el('div', { class: 'crew-grid' }, crewCards())),
+      withCls(goalsCard(), 's4'),
+      el('div', { class: 'cr-card' }, cardHead('Caiet tehnic', tot + '% completat', el('div', { class: 'ring', style: '--v:' + tot }, el('b', { text: tot + '%' }))),
+        el('p', { class: 'cr-sub', text: 'Contează la jurizare (regională, național, mondiale). Poți scrie de 2 ori pe săptămână (' + left + ' rămase). Restul crește singur din upgrade-uri, meciuri, sponsori și echipă.' }), el('div', { class: 'pf-grid' }, pfCards())));
+  }
+
   function pendingBanner() {
     if (!S.pending) return null;
     return el('div', { class: 'banner' }, el('span', { text: 'Ai un meci început și nefinalizat. Îl poți relua sau îl poți abandona (se numără ca înfrângere).' }),
-      el('div', { class: 'cr-row' }, el('button', { class: 'cr-btn pri sm', text: 'Reia meciul', onclick: () => { const p = S.pending; S.pending = null; launch(p.kind); } }), el('button', { class: 'cr-btn sm', text: 'Abandonează', onclick: forfeit })));
+      el('div', { class: 'cr-row' }, el('button', { class: 'cr-btn pri sm', text: 'Reia meciul', onclick: () => { const p = S.pending; S.pending = null; launch(p.kind, (S.msgs || []).find((x) => x.id === p.msgId)); } }), el('button', { class: 'cr-btn sm', text: 'Abandonează', onclick: forfeit })));
   }
   function calList() {
     return el('div', { class: 'cal' }, S.cal.map((it) => {
@@ -495,55 +642,14 @@
         el('tbody', null, rows.map((t) => el('tr', { class: t.me ? 'me' : '' }, el('td', { class: 'n', text: b.indexOf(t) + 1 }), el('td', { text: t.name }), el('td', { text: t.sum })))))));
   }
   const RULES = 'Un meci se joacă 2 contra 2 (2 roboți roșii, 2 albaștri). La începutul fiecărui eveniment primești lista tuturor meciurilor; fiecare echipă joacă 6, cu parteneri și culori diferite (poate fi de ex. 4 albastre și 2 roșii). Meet: 6 meciuri, 8–20 echipe, în orice regiune; recomandat 2–5 meet-uri, câte unul pe săptămână. Pentru regională contează cele mai bune 10 meciuri din toate meet-urile (în joc: bonus de seed). Regionala: 6 meciuri de calificare și playoff pentru primele 4 locuri; primele 3 merg la Național, iar primele 2 de la Național la Mondiale.';
-  function hubView() {
-    const ev = nextEvent(), left = ev ? ev.week - S.week : 0, m = modsOf(S), practiced = (S.practiceWeek === S.week ? (S.practiceN || 1) : 0) >= (S.field ? 2 : 1), reg = regionOf(S.region);
-    const played = S.cal.filter((x) => x.type === 'meet' && x.done).length, enr = S.cal.filter((x) => x.type === 'meet' && x.enrolled && !x.done).length;
-    const nextCard = el('div', { class: 'cr-card s7' }, el('div', { class: 'cr-eyebrow', text: 'Sezonul ' + S.season + ' · regiunea ' + reg.name }),
-      el('h2', { text: ev ? itemName(ev) : 'Sezon încheiat' }),
-      el('p', { class: 'cr-sub', text: S.event ? 'Ești în mijlocul evenimentului. Continuă din tabul Eveniment.' : left > 0 ? 'Mai sunt ' + left + ' săptămâni. Înscrie-te la meet-uri în tabul Eveniment, cumpără upgrade-uri și antrenează-te.' : 'E ziua competiției! Poți intra în eveniment.' }),
-      el('div', { class: 'cr-row' },
-        S.event ? el('button', { class: 'cr-btn pri', text: 'Mergi la eveniment', onclick: () => { tab = 'event'; render(); } })
-          : left > 0 ? el('button', { class: 'cr-btn pri', text: 'Avansează o săptămână (−' + WEEK_COST + ' €)', onclick: advanceWeek })
-            : el('button', { class: 'cr-btn pri', text: 'Intră în eveniment', onclick: () => { startEvent(); tab = 'event'; render(); } }),
-        el('button', { class: 'cr-btn', disabled: practiced || !!S.pending, text: practiced ? 'Antrenamente făcute săptămâna asta' : 'Meci de antrenament (+bani)', onclick: () => launch('practice') })),
-      el('p', { class: 'cr-note', style: 'margin-top:10px', text: 'Meet-uri jucate: ' + played + ' · înscrise: ' + enr + ' (recomandat 2–5).' }),
-      el('label', { class: 'ap-f', style: 'margin-top:14px' }, el('span', { text: 'Autonom la meciuri' }), autoSelect()),
-      S.buffs.length ? el('p', { class: 'cr-note', style: 'margin-top:12px' }, 'Efecte active: ', S.buffs.map((b) => b.label + ' (' + (b.mul < 1 ? (b.mod === 'spread' || b.mod === 'reload' ? '+' : '−') : '+') + Math.round(Math.abs(1 - b.mul) * 100) + '% ' + b.mod + ')').join(' · ')) : null);
-    const robotCard = el('div', { class: 'cr-card s5' }, el('div', { class: 'cr-eyebrow', text: 'Robotul tău' }), el('h2', { text: 'Performanță' }), bars(m),
-      el('div', { class: 'cr-row', style: 'margin-top:14px' }, el('button', { class: 'cr-btn sm', text: 'Upgrade-uri', onclick: () => { tab = 'robot'; render(); } })));
-    const calCard = el('div', { class: 'cr-card s6' }, el('div', { class: 'cr-eyebrow', text: 'Calendar' }), el('h2', { text: 'Sezonul ' + S.season }), calList(), el('div', { class: 'cr-row', style: 'margin-top:10px' }, el('button', { class: 'cr-btn sm', text: 'Detalii', onclick: () => { tab = 'event'; render(); } })));
-    const sp = activeSponsors();
-    const spCard = el('div', { class: 'cr-card s6' }, el('div', { class: 'cr-eyebrow', text: 'Sponsori' }), el('h2', { text: sp.length ? 'Contracte active (' + sp.length + '/' + MAX_SPONSORS + ')' : 'Niciun contract activ' }),
-      sp.length ? el('div', { class: 'sp-list' }, sp.map((x) => el('div', { class: 'sp' }, el('img', { src: 'assets/img/portfolio/' + x.logo, alt: x.brand }), el('div', null, el('h4', { text: x.brand }), el('p', { text: KINDS[x.kind].text(x.target) })), el('div', { class: 'meta', text: eur(x.pay) })))) : el('p', { class: 'cr-sub', text: 'Sponsorii îți dau bani dacă îndeplinești obiectivele din contract.' }),
-      el('div', { class: 'cr-row', style: 'margin-top:12px' }, el('button', { class: 'cr-btn sm', text: 'Vezi oferte', onclick: () => { tab = 'sponsors'; render(); } })));
-    const logCard = el('div', { class: 'cr-card s6' }, el('div', { class: 'cr-eyebrow', text: 'Jurnal' }), el('h2', { text: 'Ce s-a întâmplat' }), el('div', { class: 'log' }, S.log.slice(0, 8).map((l) => el('div', { text: l }))));
-    return el('div', { class: 'cr-grid' }, nextCard, robotCard, calCard, spCard, logCard);
-  }
-  function robotView() {
-    const m = modsOf(S);
-    const cards = Object.keys(HW).map((cat) => {
-      const H = HW[cat], cur = S.hw[cat], pend = pendingFor(cat);
-      return el('div', { class: 'hw' }, el('div', { class: 'hw-head' }, el('h3', { text: H.name }), el('span', { class: 'hw-cur', text: 'Montat: ' + H.tiers[cur].n })),
-        el('div', { class: 'tiers' }, H.tiers.map((t, i) => {
-          const installed = i <= cur, building = pend && pend.tier === i, next = i === cur + 1 && !pend, locked = !installed && !building && !next;
-          const fx = Object.keys(t.fx).map((k) => { const lab = { speed: 'viteză', accel: 'accel.', turn: 'rotire', intake: 'intake', reload: 'cadență', spread: 'precizie', assist: 'țintire' }[k], v = t.fx[k]; return lab + ' ' + (v < 1 ? '−' : '+') + Math.round(Math.abs(1 - v) * 100) + '%'; }).join(' · ');
-          const rep = S.rep >= t.rep;
-          return el('div', { class: 'tier ' + (installed ? 'installed' : building ? 'building' : locked ? 'locked' : '') },
-            el('span', { class: 'tag ' + (installed ? '' : building ? 'gold' : 'dim'), text: installed ? (i === cur ? 'Montat' : 'Depășit') : building ? 'Se construiește · săpt. ' + pend.ready : 'Treapta ' + (i + 1) }),
-            el('b', { text: t.n }), el('p', { text: t.d }), fx ? el('div', { class: 'fx', text: fx }) : null,
-            next ? el('div', { class: 'cr-row' }, el('button', { class: 'cr-btn sm pri', disabled: !rep || S.money < priceOf(t), text: eur(priceOf(t)) + ' · ' + t.wk + ' săpt.', onclick: () => buy(cat, false) }), el('button', { class: 'cr-btn sm', disabled: !rep || S.money < priceOf(t, true), title: 'Livrare imediată, +40%', text: 'Express', onclick: () => buy(cat, true) })) : null,
-            next && !rep ? el('div', { class: 'cr-note', text: 'Necesită ' + t.rep + ' reputație' }) : null,
-            !installed && !building && !next && i > cur + 1 ? el('div', { class: 'cr-note', text: 'Mai întâi treapta anterioară' }) : null);
-        })));
-    });
-    return el('div', { class: 'cr-grid' },
-      el('div', { class: 'cr-card s5' }, el('div', { class: 'cr-eyebrow', text: 'Statistici' }), el('h2', { text: 'Robotul acum' }), bars(m),
-        el('div', { style: 'margin-top:16px' }, el('div', { class: 'cr-eyebrow', text: 'Configurație' }),
-          el('div', { class: 'cr-row' }, ['strafe', 'turret'].map((t) => el('button', { class: 'cr-btn sm' + (S.type === t ? ' pri' : ''), disabled: t === 'turret' && !canTurret(), text: t === 'strafe' ? 'Full strafe' : 'Turelă independentă', onclick: () => { S.type = t; save(); render(); } }))),
-          !canTurret() ? el('p', { class: 'cr-note', style: 'margin-top:8px', text: 'Turela se deblochează cu lansatorul „Flywheel cu PID” (treapta 3).' }) : null)),
-      el('div', { class: 'cr-card s7' }, el('div', { class: 'cr-eyebrow', text: 'Atelier' }), el('h2', { text: 'Upgrade-uri de hardware' }), el('p', { class: 'cr-sub', text: 'Piesele noi durează câteva săptămâni până sunt gata (sau plătești express cu 40% mai mult). Treptele de sus cer reputație.' }),
-        S.build.length ? el('p', { class: 'cr-note', text: 'În lucru: ' + S.build.map((b) => HW[b.cat].tiers[b.tier].n + ' (săpt. ' + b.ready + ')').join(', ') }) : null),
-      el('div', { class: 'cr-card' }, el('div', { class: 'hw-grid' }, cards)));
+  function seasonStrip() {
+    const meets = S.cal.filter((x) => x.type === 'meet'), played = meets.filter((x) => x.done).length, enr = meets.filter((x) => x.enrolled && !x.done).length, nx = nextEvent();
+    const st = (it) => (it.done ? 'done' : it.off ? 'lock' : nx && nx.id === it.id ? 'now' : 'todo');
+    const reg = S.cal.find((x) => x.id === 'reg'), nat = S.cal.find((x) => x.id === 'nat'), wld = S.cal.find((x) => x.id === 'wld');
+    const meetState = nx && nx.type === 'meet' ? 'now' : played && (!nx || nx.type !== 'meet') ? 'done' : 'todo';
+    const step = (ic, title, sub, state) => el('div', { class: 'step ' + state }, el('span', { class: 'ic', text: state === 'done' ? '✓' : state === 'lock' ? '🔒' : ic }), el('div', null, el('b', { text: title }), el('small', { text: sub })));
+    return el('div', { class: 'cr-card strip' }, el('div', { class: 'cr-eyebrow', text: 'Sezonul ' + S.season + ' · drumul spre mondiale' }),
+      el('div', { class: 'steps' }, step('1', 'League Meet-uri', played + ' jucate · ' + enr + ' înscrise', meetState), step('2', 'Regionala', 'Săpt. ' + reg.week, st(reg)), step('3', 'Națională', nat.off ? 'top 3 de la regională' : 'Săpt. ' + nat.week, st(nat)), step('4', 'Mondiale', wld.off ? 'top 2 de la național' : 'Săpt. ' + wld.week, st(wld))));
   }
   function sponsorsView() {
     const act = activeSponsors();
@@ -551,12 +657,13 @@
       el('div', null, el('h4', { text: x.brand }), el('p', { text: KINDS[x.kind].text(x.target) }),
         el('div', { class: 'meta', text: (kind === 'offer' ? 'Semnare ' + eur(x.signing) + ' · la final ' : 'La final ') + eur(x.pay) + ' · +' + x.rep + ' reputație · valabil ' + Math.max(1, x.expires - S.evCount) + ' evenimente' }),
         kind === 'active' && x.kind === 'tips' ? el('div', { class: 'prog' }, el('i', { style: 'width:' + clamp(x.progress / x.target * 100, 0, 100) + '%' })) : null),
-      kind === 'offer' ? el('button', { class: 'cr-btn pri sm', disabled: act.length >= MAX_SPONSORS, text: 'Acceptă', onclick: () => acceptOffer(x) }) : el('span', { class: 'cr-note', text: kind === 'active' ? 'Activ' : '' }));
+      kind === 'offer' ? el('button', { class: 'cr-btn pri sm', disabled: act.length >= MAX_SPONSORS, text: act.length >= MAX_SPONSORS ? 'Locuri pline' : 'Acceptă', onclick: () => acceptOffer(x) }) : el('em', { class: 'sp-on', text: 'Activ' }));
+    const slots = []; for (let i = 0; i < MAX_SPONSORS; i++) slots.push(act[i] ? row(act[i], 'active') : el('div', { class: 'sp-empty' }, el('b', { text: 'Loc liber' }), el('small', { text: 'Acceptă o ofertă ca să-l ocupi.' })));
     return el('div', { class: 'cr-grid' },
-      el('div', { class: 'cr-card s6' }, el('div', { class: 'cr-eyebrow', text: 'Contracte' }), el('h2', { text: 'Active (' + act.length + '/' + MAX_SPONSORS + ')' }), act.length ? el('div', { class: 'sp-list' }, act.map((x) => row(x, 'active'))) : el('p', { class: 'cr-sub', text: 'Alege o ofertă din dreapta.' })),
-      el('div', { class: 'cr-card s6' }, el('div', { class: 'cr-eyebrow', text: 'Oferte' }), el('h2', { text: 'Sponsori interesați' }), S.offers.length ? el('div', { class: 'sp-list' }, S.offers.map((x) => row(x, 'offer'))) : el('p', { class: 'cr-sub', text: 'Apar oferte noi după fiecare eveniment.' })),
-      S.sponsorLog.length ? el('div', { class: 'cr-card' }, el('h3', { text: 'Contracte încheiate' }), el('div', { class: 'log' }, S.sponsorLog.map((x) => el('div', { text: x.brand + ': ' + x.text + ' → ' + (x.ok ? 'îndeplinit (+' + eur(x.pay) + ')' : 'ratat') })))) : null,
-      el('div', { class: 'cr-card' }, el('p', { class: 'cr-note', text: 'Sponsorii sunt partenerii reali ai echipei roLERbot, dar contractele, sumele și obiectivele din joc sunt fictive și există doar în simulare.' })));
+      el('div', { class: 'cr-card s5' }, cardHead('Contracte', 'Active ' + act.length + '/' + MAX_SPONSORS), el('div', { class: 'sp-list' }, slots)),
+      el('div', { class: 'cr-card s7' }, cardHead('Oferte', S.offers.length ? S.offers.length + ' sponsori interesați' : 'Nicio ofertă acum'), S.offers.length ? el('div', { class: 'sp-list' }, S.offers.map((x) => row(x, 'offer'))) : el('p', { class: 'cr-sub', text: 'Apar oferte noi după fiecare eveniment.' })),
+      S.sponsorLog.length ? el('div', { class: 'cr-card' }, cardHead('Istoric', 'Contracte încheiate'), el('div', { class: 'log' }, S.sponsorLog.map((x) => el('div', { text: x.brand + ': ' + x.text + ' → ' + (x.ok ? 'îndeplinit (+' + eur(x.pay) + ')' : 'ratat') })))) : null,
+      el('p', { class: 'cr-note foot-note', text: 'Sponsorii sunt partenerii reali ai echipei roLERbot, dar contractele, sumele și obiectivele din joc sunt fictive și există doar în simulare.' }));
   }
   function standings(teams) {
     const sorted = teams.slice().sort((a, b) => b.rp - a.rp || b.pts - a.pts);
@@ -571,17 +678,17 @@
   function eventView() {
     const ev = S.event, nx = nextEvent();
     if (!ev) {
-      const left = nx ? nx.week - S.week : 0;
+      const left = nx ? nx.week - S.week : 0, few = nx && nx.type === 'reg' && S.cal.filter((x) => x.type === 'meet' && x.done).length < 2;
+      const prize = nx ? el('div', { class: 'cr-card' }, cardHead('Premii', itemName(nx)), el('div', { class: 'prize' }, ['Locul 1', 'Locul 2', 'Locurile 3–4', 'Restul'].map((l, i) => el('div', null, el('span', { text: l }), el('b', { text: eur(STAGES[nx.type].pay[i] * (1 + (S.season - 1) * .25)) }), el('em', { text: '+' + STAGES[nx.type].rep[i] + ' rep.' }))))) : null;
       return el('div', { class: 'cr-grid' },
-        el('div', { class: 'cr-card s7' }, el('div', { class: 'cr-eyebrow', text: 'Calendar sezon ' + S.season + ' · ' + regionOf(S.region).name }), el('h2', { text: nx ? 'Urmează: ' + itemName(nx) : 'Sezon încheiat' }),
-          el('p', { class: 'cr-sub', text: nx ? (left > 0 ? 'Începe în săptămâna ' + nx.week + ' (peste ' + left + ' săptămâni).' : 'Ziua competiției a venit.') : '' }),
+        el('div', { class: 'cr-card s8' }, cardHead('Calendarul sezonului ' + S.season, nx ? 'Urmează: ' + itemName(nx) : 'Sezon încheiat', nx && left <= 0 ? el('button', { class: 'cr-btn pri', onclick: () => startEvent() }, '🏁 Intră în eveniment') : el('button', { class: 'cr-btn sm', onclick: () => openPhone('map') }, '🗺️ Meet-uri pe hartă')),
+          el('p', { class: 'cr-sub', text: nx ? (left > 0 ? dateOf(nx.week) + ' · peste ' + left + (left === 1 ? ' săptămână' : ' săptămâni') + '. Înscrie-te la meet-uri aici sau pe hartă, la alte regiuni.' : 'Ziua competiției a venit.') : '' }),
           calList(),
-          el('div', { class: 'cr-row', style: 'margin-top:14px' }, nx ? (left > 0 ? el('button', { class: 'cr-btn pri', text: 'Avansează o săptămână (−' + WEEK_COST + ' €)', onclick: advanceWeek }) : el('button', { class: 'cr-btn pri', text: 'Intră în ' + itemName(nx), onclick: () => { startEvent(); } })) : null),
-          nx && nx.type === 'reg' && S.cal.filter((x) => x.type === 'meet' && x.done).length < 2 ? el('p', { class: 'cr-note', style: 'color:var(--gold);margin-top:10px', text: 'Ai jucat sub 2 meet-uri (recomandat 2–5): fără scoruri bune din meet-uri nu primești bonus de seed la regională.' }) : null,
-          el('p', { class: 'cr-note', style: 'margin-top:12px', text: RULES })),
-        boardCard(),
-        el('div', { class: 'cr-card s5' }, el('div', { class: 'cr-eyebrow', text: 'Premii' }), el('h3', { text: nx ? itemName(nx) : '' }), nx ? el('div', { class: 'log' }, ['Locul 1', 'Locul 2', 'Locurile 3–4', 'Restul'].map((l, i) => el('div', { text: l + ': ' + eur(STAGES[nx.type].pay[i] * (1 + (S.season - 1) * .25)) + ' · +' + STAGES[nx.type].rep[i] + ' reputație' }))) : null));
+          few ? el('p', { class: 'warn', text: 'Ai jucat sub 2 meet-uri (recomandat 2–5): fără scoruri bune din meet-uri nu primești bonus de seed la regională.' }) : null,
+          el('details', { class: 'rules' }, el('summary', { text: 'Regulile sezonului' }), el('p', { text: RULES }))),
+        el('div', { class: 'cr-col c4' }, boardCard(), prize));
     }
+    if (ev.po && ev.po.phase === 'pick') return pickView(ev);
     const r = ev.round, po = ev.po, inQual = r < ev.n, m = inQual ? myMatch(ev) : null, T = (i) => ev.teams[i].name;
     let me2, op2, al, meta;
     if (inQual) { al = myColor(m); const oc = al === 'red' ? 'blue' : 'red'; me2 = [S.team.name, T(m[al].find((i) => i !== 0))]; op2 = m[oc].map(T); meta = 'Meci #' + m.no + ' din ' + ev.matches.length; }
@@ -591,25 +698,27 @@
     return el('div', { class: 'cr-grid' },
       el('div', { class: 'cr-card s7' }, el('div', { class: 'cr-eyebrow', text: ev.name + (inQual ? ' · calificări' : ' · playoff') }), el('h2', { text: title }),
         me2 ? el('div', { class: 'vs2' }, el('div', { class: 'side' }, el('small', { text: 'Alianța ' + (al === 'red' ? 'roșie' : 'albastră') + ' · ' + meta }), me2.map((n, i) => el('b', { class: 'al-' + al, text: (i ? '+ ' : '') + n }))), el('div', { class: 'mid', text: 'VS' }), el('div', { class: 'side r' }, el('small', { text: 'Alianța ' + (al === 'red' ? 'albastră' : 'roșie') }), op2.map((n, i) => el('b', { class: 'al-' + (al === 'red' ? 'blue' : 'red'), text: (i ? '+ ' : '') + n })))) : null,
-        me2 ? el('label', { class: 'ap-f', style: 'margin-bottom:12px' }, el('span', { text: 'Autonom la acest meci' }), autoSelect()) : null,
+        me2 ? el('label', { class: 'ap-f', style: 'margin-bottom:12px' }, el('span', { text: 'Autonom la acest meci' }), autoSelect()) : null, me2 ? planLabel() : null,
         me2 ? el('div', { class: 'cr-row' }, el('button', { class: 'cr-btn pri', disabled: !!S.pending, text: inQual ? 'Joacă meciul ' + (r + 1) : po.phase === 'sf' ? 'Joacă semifinala' : 'Joacă finala', onclick: () => launch(inQual ? 'qual' : 'playoff') }), el('span', { class: 'cr-note', text: 'Se deschide jocul 3D, 2 contra 2. La final apeși „Continuă cariera”.' })) : null,
+        judgeBlock(ev),
         el('div', { style: 'margin-top:16px' }, el('div', { class: 'cr-eyebrow', text: 'Programul tău' }), el('div', { class: 'hist' }, prog)),
         ev.hist.length ? el('div', { style: 'margin-top:12px' }, el('div', { class: 'cr-eyebrow', text: 'Playoff' }), el('div', { class: 'hist' }, ev.hist.map((h) => el('div', { class: 'h' }, el('div', null, 'cu ' + h.partner, el('small', { text: (h.po === 'sf' ? 'Semifinală' : 'Finala') + ' vs ' + h.opp })), el('b', { text: h.my + '–' + h.op }))))) : null),
       el('div', { class: 'cr-card s5' }, el('h3', { text: 'Clasament' }), standings(ev.teams)),
       scheduleCard(ev));
   }
   function historyView() {
-    const st = S.stats;
+    const st = S.stats, kv = [['Victorii', st.w], ['Egaluri', st.t], ['Înfrângeri', st.l], ['Stupi răsturnați', st.tips], ['Titluri', st.titles], ['Reputație', Math.round(S.rep) + ' · ' + repLevel(S.rep)]];
     return el('div', { class: 'cr-grid' },
-      el('div', { class: 'cr-card s5' }, el('div', { class: 'cr-eyebrow', text: 'Statistici' }), el('h2', { text: 'Cariera ta' }),
-        el('div', { class: 'log' }, [['Victorii', st.w], ['Egaluri', st.t], ['Înfrângeri', st.l], ['Stupi răsturnați', st.tips], ['Titluri', st.titles], ['Reputație', Math.round(S.rep) + ' (' + repLevel(S.rep) + ')']].map(([a, b]) => el('div', { text: a + ': ' + b })))),
-      el('div', { class: 'cr-card s7' }, el('div', { class: 'cr-eyebrow', text: 'Evenimente' }), el('h2', { text: 'Istoric' }),
+      el('div', { class: 'cr-card' }, cardHead('Statistici pe sezon', 'Grafice'), statsView()),
+      el('div', { class: 'cr-card s7' }, cardHead('Evenimente', 'Istoric'),
         S.history.length ? el('div', { class: 'hist' }, S.history.map((h) => el('div', { class: 'h' }, el('div', null, h.name, el('small', { text: 'Sezonul ' + h.season + ' · ' + h.w + '-' + h.t + '-' + h.l + ' · ' + h.rp + ' RP' })), el('b', { text: 'Locul ' + h.rank + ' · +' + eur(h.prize) })))) : el('p', { class: 'cr-sub', text: 'Încă niciun eveniment jucat.' })),
-      el('div', { class: 'cr-card' }, el('h3', { text: 'Salvare' }), el('p', { class: 'cr-note cloud-hint', text: cloudHint() || 'Progresul e salvat în acest browser.' }),
-        el('div', { class: 'cr-row', style: 'margin-top:10px' },
+      el('div', { class: 'cr-card s5' }, cardHead('Cariera ta', 'Totaluri'), el('div', { class: 'kv-grid' }, kv.map(([k, v]) => el('div', null, el('small', { text: k }), el('b', { text: v }))))),
+      el('div', { class: 'cr-card' }, cardHead('Salvare', 'Progresul tău'), el('p', { class: 'cr-note cloud-hint', text: cloudHint() || 'Progresul e salvat în acest browser.' }),
+        el('div', { class: 'cr-row', style: 'margin-top:12px' },
           SBX && CLOUD.status === 'guest' ? el('button', { class: 'cr-btn pri sm', text: 'Conectează-te', onclick: connectAccount }) : null,
           SBX && CLOUD.user ? el('button', { class: 'cr-btn sm', text: 'Salvează acum', onclick: cloudClick }) : null,
-          el('button', { class: 'cr-btn sm', text: 'Resetează cariera', onclick: resetAll }))));
+          el('button', { class: 'cr-btn sm', text: 'Exportă în fișier', onclick: exportCareer }), el('button', { class: 'cr-btn sm', text: 'Importă din fișier', onclick: importCareer }),
+          el('button', { class: 'cr-btn sm danger', text: 'Resetează cariera', onclick: resetAll }))));
   }
   // ---------- alegerea echipei: regiune → echipă din listă (sau introdusă manual) ----------
   const PK = { reg: 'b1', q: '', sel: null, manual: false, mname: '', mnum: '' };
@@ -647,7 +756,25 @@
       teamPicker(),
       el('div', { class: 'cr-row', style: 'margin-top:14px' }, el('button', { class: 'cr-btn pri', text: 'Începe cariera', onclick: go }), FRAMED ? null : menuLink(), FRAMED ? null : el('a', { class: 'cr-link', href: 'index.html' }, '← Site')),
       SBX ? el('p', { class: 'cr-note cloud-hint', style: 'margin-top:14px', text: cloudHint() }) : null,
-      SBX && CLOUD.status === 'guest' ? el('button', { class: 'cr-btn sm', style: 'margin-top:8px', text: 'Conectează-te ca să-ți încarci progresul', onclick: connectAccount }) : null));
+      SBX && CLOUD.status === 'guest' ? el('button', { class: 'cr-btn sm', style: 'margin-top:8px', text: 'Conectează-te ca să-ți încarci progresul', onclick: connectAccount }) : null,
+      el('button', { class: 'cr-btn sm', style: 'margin:8px 0 0 8px', text: 'Importă o carieră din fișier', onclick: importCareer })));
+  }
+  function exportCareer() {
+    if (!S) return; saveLocal();
+    const blob = new Blob([JSON.stringify(S)], { type: 'application/json' }), a = el('a', { href: URL.createObjectURL(blob), download: 'rolerbot-cariera-' + S.team.name.replace(/\W+/g, '-') + '.json' });
+    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); toast('Cariera a fost exportată.');
+  }
+  function importCareer() {
+    const inp = el('input', { type: 'file', accept: 'application/json,.json', style: 'display:none' });
+    inp.addEventListener('change', async () => {
+      const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+      try {
+        const j = JSON.parse(await f.text()); if (!j || j.v !== 1 || !j.team || !j.hw) throw new Error('format');
+        if (S && !confirm('Înlocuiești cariera curentă cu cea din fișier?')) return;
+        S = j; migrate(); saveLocal(); cloudSoon(); render(); toast('Cariera a fost importată.');
+      } catch (e) { toast('Fișier invalid: nu e o carieră roLERbot.'); }
+    });
+    document.body.append(inp); inp.click();
   }
   async function resetAll() {
     if (!confirm('Ștergi toată cariera și o iei de la capăt?')) return;
@@ -659,11 +786,11 @@
   const fmtT = (m) => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
   const dateOf = (week) => { const d = new Date(2026, 9, 3 + (week - 1) * 7); return ['Dum', 'Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm'][d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth() + 1); };
   function timeSchedule(matches) { let t = 10 * 60 + 30; const half = Math.floor(matches.length / 2); matches.forEach((m, i) => { m.t = t; t += 13 + (m.no % 3 === 0 ? 2 : 0); if (i + 1 === half) t += 70; }); }
-  function ftcMatches(ev) {
+  function ftcMatches(ev, mineOnly) {
     const T = (i, m, win) => { const t = ev.teams[i]; return el('td', { class: 'tm ' + (win ? 'win' : '') + (t.me ? ' me' : '') }, el('b', { text: t.num }), el('span', { text: t.name + (m.sur.includes(i) ? ' (sur.)' : '') })); };
     const cur = ev.round < ev.n ? ev.mine[ev.round] : -1;
     return el('div', { class: 'ftc-scroll' }, el('table', { class: 'ftc-tbl' }, el('thead', null, el('tr', null, el('th', { text: 'Meci #' }), el('th', { class: 'r', colspan: 2, text: 'Roșu' }), el('th', { class: 'b', colspan: 2, text: 'Albastru' }), el('th', { text: 'Scor' }))),
-      el('tbody', null, ev.matches.map((m) => {
+      el('tbody', null, ev.matches.filter((m) => !mineOnly || (m.red.concat(m.blue).includes(0) && !m.sur.includes(0))).map((m) => {
         const mine = m.red.concat(m.blue).includes(0) && !m.sur.includes(0), rw = m.done && m.sr > m.sb, bw = m.done && m.sb > m.sr;
         return el('tr', { class: (mine ? 'mine ' : '') + (m.no === cur ? 'cur' : '') },
           el('td', { class: 'mn' }, el('a', { text: 'Calificare ' + m.no }), el('small', { text: (ev.when || '') + ' · ' + (m.t != null ? fmtT(m.t) : '') })),
@@ -675,7 +802,7 @@
     const sorted = ev.teams.slice().sort((a, b) => Number(a.num) - Number(b.num));
     return el('div', { class: 'ftc-panel' }, el('div', { class: 'ftc-ph' }, 'Participanți ', el('em', { text: ev.teams.length })),
       el('div', { class: 'ftc-scroll sm' }, el('table', { class: 'ftc-tbl plain' }, el('thead', null, el('tr', null, ['Număr', 'Nume', 'Regiune', 'Țară'].map((h) => el('th', { text: h })))),
-        el('tbody', null, sorted.map((t) => el('tr', { class: t.me ? 'mine' : '' }, el('td', { class: 'num' }, el('a', { text: t.num })), el('td', { class: 'nm', text: t.name }), el('td', { text: regionOf(S.region).name }), el('td', { text: 'România' })))))));
+        el('tbody', null, sorted.map((t) => el('tr', { class: t.me ? 'mine' : '' }, el('td', { class: 'num' }, el('a', { text: t.num })), el('td', { class: 'nm', text: t.name }), el('td', { text: regionOf(ev.host || S.region).name }), el('td', { text: 'România' })))))));
   }
   function ftcRanks(ev) {
     const sorted = ev.teams.slice().sort((a, b) => b.rp - a.rp || b.pts - a.pts);
@@ -688,25 +815,68 @@
     { id: 'meets', name: 'Meet-uri', ic: '📅', url: () => 'natie.ro/meets · simulare', light: true },
     { id: 'teams', name: 'Echipe', ic: '👥', url: () => 'natie.ro/teams · simulare', light: true },
     { id: 'sponsors', name: 'Sponsori', ic: '🤝', url: () => 'portal de sponsori · contracte fictive', light: false },
-    { id: 'shop', name: 'Piese', ic: '🛠️', url: () => 'magazin de piese · fictiv', light: false }
+    { id: 'shop', name: 'Piese', ic: '🛠️', url: () => 'magazin de piese · fictiv', light: false },
+    { id: 'portfolio', name: 'Caiet', ic: '📓', url: () => 'caiet tehnic · intern', light: false },
+    { id: 'crew', name: 'Echipa', ic: '🧑‍🔧', url: () => 'echipa ta · intern', light: false },
+    { id: 'msgs', name: 'Mesaje', ic: '💬', url: () => 'mesaje · intern', light: false },
+    { id: 'map', name: 'Hartă', ic: '🗺️', url: () => 'hartă · regiuni și meet-uri', light: false },
+    { id: 'calendar', name: 'Calendar', ic: '🗓️', url: () => 'calendar · sezonul tău', light: false },
+    { id: 'stats', name: 'Statistici', ic: '📈', url: () => 'statistici · intern', light: false }
   ];
   let tabletApp = null, tabletTeamReg = null, tabletTeamQ = '';
+  const dateParts = (week) => { const d = new Date(2026, 9, 3 + (week - 1) * 7); return { dow: ['DUM', 'LUN', 'MAR', 'MIE', 'JOI', 'VIN', 'SÂM'][d.getDay()], day: d.getDate(), mon: ['IAN', 'FEB', 'MAR', 'APR', 'MAI', 'IUN', 'IUL', 'AUG', 'SEP', 'OCT', 'NOI', 'DEC'][d.getMonth()] }; };
+  const dateBlock = (week) => { const d = dateParts(week); return el('div', { class: 'dblk' }, el('small', { text: d.dow }), el('b', { text: d.day }), el('small', { text: d.mon })); };
+  let ftcTab = 'matches', ftcMine = false;
+  function ftcRegion() {
+    const b = meetBoard(), me = b.findIndex((x) => x.me) + 1;
+    return el('div', { class: 'ftc-panel' }, el('div', { class: 'ftc-ph' }, 'Regiunea ' + regionOf(S.region).name + ' · Top 10 meciuri ', el('em', { text: b.length })),
+      el('p', { class: 'cr-note', style: 'color:#444;margin:10px 14px', text: S.mscores.length ? 'Suma celor mai bune 10 scoruri din toate meet-urile. Locul tău: ' + me + ' din ' + b.length + '.' : 'Joacă un meet ca să apari în clasament. Ceilalți au deja scoruri simulate.' }),
+      el('div', { class: 'ftc-scroll sm' }, el('table', { class: 'ftc-tbl plain' }, el('thead', null, el('tr', null, ['#', 'Echipă', 'Top 10'].map((h) => el('th', { text: h })))),
+        el('tbody', null, b.map((t, i) => el('tr', { class: t.me ? 'mine' : '' }, el('td', { text: i + 1 }), el('td', { class: 'nm', text: t.name }), el('td', { text: t.sum })))))));
+  }
   function tFtc() {
     const ev = S.event || S.lastEv;
-    if (!ev) return el('div', { class: 'ftc-empty' }, el('h2', { text: 'FTC Events · Sezon #11' }), el('p', { text: 'Niciun eveniment jucat încă. După ce intri la un meet sau la regională, aici apar participanții, lista meciurilor și clasamentul.' }), calList());
-    return el('div', { class: 'ftc' }, el('div', { class: 'ftc-head' }, el('h2', { text: ev.name }), el('p', { text: (ev.when || '') + ' · ' + regionOf(S.region).name + ' · ' + (S.event ? 'în desfășurare' : 'încheiat') })),
-      ftcParticipants(ev), ftcRanks(ev), el('div', { class: 'ftc-panel' }, el('div', { class: 'ftc-ph' }, 'Meciuri de calificare ', el('em', { text: ev.matches.length })), ftcMatches(ev)));
+    if (!ev) return el('div', { class: 'ftc' }, el('div', { class: 'ftc-head' }, el('h2', { text: 'FTC Events · Sezon #11' }), el('p', { text: 'România · ' + regionOf(S.region).name })),
+      el('div', { class: 'ftc-empty' }, el('p', { text: 'Niciun eveniment jucat încă. După ce intri la un meet sau la regională, aici apar participanții, lista meciurilor și clasamentul.' }), el('div', { class: 'dim-cal' }, calList())), ftcRegion());
+    const me = ev.teams[0], sorted = ev.teams.slice().sort((a, b) => b.rp - a.rp || b.pts - a.pts), rank = sorted.findIndex((t) => t.me) + 1;
+    const tabsEl = el('div', { class: 'ftc-tabs' }, [['matches', 'Meciuri'], ['teams', 'Participanți'], ['rank', 'Clasament'], ['region', 'Regiune']].map(([id, t]) => el('button', { class: ftcTab === id ? 'on' : '', onclick: () => { ftcTab = id; paintPhone(); } }, t)));
+    let bodyEl;
+    if (ftcTab === 'region') bodyEl = ftcRegion();
+    else if (ftcTab === 'teams') bodyEl = ftcParticipants(ev);
+    else if (ftcTab === 'rank') bodyEl = ftcRanks(ev);
+    else bodyEl = el('div', { class: 'ftc-panel' }, el('div', { class: 'ftc-ph' }, 'Meciuri de calificare ', el('em', { text: ev.matches.length }), el('label', { class: 'ftc-chk' }, el('input', { type: 'checkbox', checked: ftcMine, onchange: (e) => { ftcMine = e.target.checked; paintPhone(); } }), ' doar ale mele')), ftcMatches(ev, ftcMine));
+    return el('div', { class: 'ftc' }, el('div', { class: 'ftc-head' }, el('div', null, el('h2', { text: ev.name }), el('p', { text: (ev.when || '') + ' · ' + regionOf(ev.host || S.region).name + ' · ' + (S.event ? 'în desfășurare' : 'încheiat') })),
+      el('div', { class: 'ftc-chips' }, el('span', null, el('b', { text: ev.teams.length }), 'echipe'), el('span', null, el('b', { text: ev.matches.length }), 'meciuri'), el('span', null, el('b', { text: me.w + '-' + me.t + '-' + me.l }), 'V-E-Î'), el('span', null, el('b', { text: '#' + rank }), 'locul tău'))),
+      tabsEl, bodyEl);
   }
   function tMeets() {
-    const cap = (it) => 8 + Math.floor(hash(it.no * 17 + S.season * 5) * 13);
-    return el('div', { class: 'ftc' }, el('div', { class: 'ftc-head' }, el('h2', { text: 'Meet-uri · Sezon #11' }), el('p', { text: 'Recomandat 2–5 meet-uri, câte unul pe săptămână, 6 meciuri la fiecare. Retragere cu cel puțin 7 zile înainte. Pentru regională contează cele mai bune 10 meciuri.' })),
-      el('div', { class: 'ftc-panel' }, el('div', { class: 'ftc-ph' }, 'Calendar'),
-        el('div', { class: 'mt-list' }, S.cal.map((it) => {
-          const past = S.week > it.week && !it.done, canEnroll = it.type === 'meet' && !it.done && S.week < it.week;
-          const st = it.done ? 'Jucat' : it.off ? 'Prin calificare' : it.type === 'meet' ? (it.enrolled ? 'Înscris' : past ? 'Sărit' : 'Înscrieri deschise') : 'Obligatoriu';
-          return el('div', { class: 'mt-row' + (it.enrolled ? ' on' : '') + (it.done ? ' done' : '') }, el('div', null, el('b', { text: itemName(it) }), el('small', { text: dateOf(it.week) + ' (săpt. ' + it.week + ') · ' + regionOf(S.region).name + (it.type === 'meet' ? ' · ' + (it.enrolled ? cap(it) + 1 : cap(it)) + '/20 echipe' : '') })),
-            el('em', { text: st }), canEnroll ? el('button', { class: 'cr-btn sm' + (it.enrolled ? '' : ' pri'), text: it.enrolled ? 'Retrage-te' : 'Înscrie-te', onclick: () => toggleEnroll(it) }) : null);
-        }))));
+    const cap = (it) => 8 + Math.floor(hash(it.no * 17 + S.season * 5) * 13), R = window.CAREER_REGIONS || [];
+    const meetCard = (it) => {
+      const past = S.week > it.week && !it.done, canEnroll = it.type === 'meet' && !it.done && S.week < it.week, n = it.type === 'meet' ? Math.min(20, cap(it) + (it.enrolled ? 1 : 0)) : null;
+      const st = it.done ? ['Jucat', 'ok'] : it.off ? ['Prin calificare', 'dim'] : it.type === 'meet' ? (it.enrolled ? ['Înscris', 'on'] : past ? ['Sărit', 'dim'] : n >= 20 ? ['Listă de așteptare', 'warn'] : ['Înscrieri deschise', 'open']) : ['Obligatoriu', 'on'];
+      return el('div', { class: 'mt-card' + (it.enrolled ? ' on' : '') + (it.done || past ? ' done' : '') }, dateBlock(it.week),
+        el('div', { class: 'mt-info' }, el('b', { text: itemName(it) }), el('small', { text: regionOf(it.host || S.region).name + ' · săpt. ' + it.week + (it.type === 'meet' ? ' · 6 meciuri' : ' · 6 meciuri + playoff') }),
+          n != null ? el('div', { class: 'mt-cap' }, el('i', { style: 'width:' + (n / 20 * 100) + '%' }), el('span', { text: n + '/20 echipe' })) : null),
+        el('div', { class: 'mt-side' }, el('em', { class: st[1], text: st[0] }), canEnroll ? el('button', { class: 'cr-btn sm' + (it.enrolled ? '' : ' pri'), text: it.enrolled ? 'Retrage-te' : 'Înscrie-te', onclick: () => toggleEnroll(it) }) : null));
+    };
+    return el('div', { class: 'ftc natie' }, el('div', { class: 'nt-head' }, el('div', { class: 'nt-brand' }, el('i'), 'natie.ro'), el('nav', null, el('b', { text: 'Meet-uri' }), el('button', { onclick: () => { tabletApp = 'teams'; paintPhone(); } }, 'Echipe'))),
+      el('div', { class: 'nt-hero' }, el('h2', { text: 'Meet-uri și regionale · Sezon #11' }), el('p', { text: 'Recomandat 2–5 meet-uri, 6 meciuri la fiecare, 8–20 echipe, în orice regiune. Unul pe săptămână. Retragere cu minim 7 zile înainte. Pentru regională contează cele mai bune 10 meciuri.' })),
+      el('div', { class: 'nt-body' }, el('div', { class: 'nt-sec', text: 'Calendarul tău' }), el('div', { class: 'mt-grid' }, S.cal.map(meetCard)),
+        el('div', { class: 'nt-sec', text: 'Orașele gazdă ale regionalelor' }),
+        el('div', { class: 'nt-cities' }, R.map((r) => el('span', { class: r.id === S.region ? 'me' : '' }, r.name, r.id === S.region ? el('em', { text: 'regiunea ta' }) : null))),
+        el('p', { class: 'cr-note', style: 'color:#555;margin-top:10px', text: 'Primele 3 locuri de la regională merg la Campionatul național, iar primele 2 de la național la Mondiale.' })));
+  }
+  function tSponsors() {
+    const act = activeSponsors(), full = act.length >= MAX_SPONSORS;
+    const card = (x, kind) => el('div', { class: 'sp-card ' + (x.status || '') }, el('img', { src: 'assets/img/portfolio/' + x.logo, alt: x.brand }),
+      el('div', { class: 'sp-in' }, el('b', { text: x.brand }), el('p', { text: KINDS[x.kind].text(x.target) }),
+        el('small', { text: (kind === 'offer' ? 'Semnare ' + eur(x.signing) + ' · ' : '') + 'La final ' + eur(x.pay) + ' · +' + x.rep + ' reputație · valabil ' + Math.max(1, x.expires - S.evCount) + ' evenimente' }),
+        kind === 'active' && x.kind === 'tips' ? el('div', { class: 'prog' }, el('i', { style: 'width:' + clamp(x.progress / x.target * 100, 0, 100) + '%' })) : null),
+      kind === 'offer' ? el('button', { class: 'cr-btn pri sm', disabled: full, text: full ? 'Plin' : 'Acceptă', onclick: () => acceptOffer(x) }) : el('em', { text: 'Activ' }));
+    return el('div', { class: 'ftc spw' }, el('div', { class: 'sp-head' }, el('div', null, el('h2', { text: '🤝 Portal parteneri' }), el('p', { text: 'Contracte fictive cu partenerii reali ai echipei roLERbot.' })), el('div', { class: 'sp-slots' }, el('b', { text: act.length + '/' + MAX_SPONSORS }), 'contracte active')),
+      el('div', { class: 'sp-body' }, el('div', { class: 'nt-sec dark', text: 'Contracte active' }), act.length ? el('div', { class: 'sp-grid' }, act.map((x) => card(x, 'active'))) : el('p', { class: 'cr-note', text: 'Niciun contract activ. Alege o ofertă mai jos.' }),
+        el('div', { class: 'nt-sec dark', text: 'Oferte noi' }), S.offers.length ? el('div', { class: 'sp-grid' }, S.offers.map((x) => card(x, 'offer'))) : el('p', { class: 'cr-note', text: 'Apar oferte noi după fiecare eveniment.' }),
+        S.sponsorLog.length ? [el('div', { class: 'nt-sec dark', text: 'Istoric' }), el('div', { class: 'log' }, S.sponsorLog.slice(0, 6).map((x) => el('div', { text: x.brand + ': ' + x.text + ' → ' + (x.ok ? 'îndeplinit (+' + eur(x.pay) + ')' : 'ratat') })))] : null));
   }
   function tTeams() {
     const R = window.CAREER_REGIONS || []; if (!tabletTeamReg) tabletTeamReg = S.region;
@@ -722,29 +892,31 @@
   let phoneMode = 'dock', peekTimer = null;
   const isMuted = () => { try { return localStorage.getItem('rbPhoneMute') === '1'; } catch (e) { return false; } };
   const setMuted = (v) => { try { localStorage.setItem('rbPhoneMute', v ? '1' : '0'); } catch (e) { } };
-  function buzz() {   // short "bzzt-bzzt-bzzt" like a phone on a table + real vibration on phones
-    try { if (navigator.vibrate) navigator.vibrate([220, 90, 220, 90, 300]); } catch (e) { }
+  const TONES = { sponsors: [[0, .14, 180], [.22, .14, 180]], meets: [[0, .18, 128], [.28, .18, 128], [.56, .18, 128]], msgs: [[0, .1, 330], [.14, .1, 330]], crew: [[0, .12, 200], [.16, .12, 250]], portfolio: [[0, .2, 150], [.3, .2, 150]], teams: [[0, .3, 170]], ftc: [[0, .55, 110]], shop: [[0, .1, 230], [.16, .1, 230], [.32, .1, 260]], def: [[0, .22, 128], [.3, .22, 128], [.6, .22, 128]] };
+  function buzz(kind) {   // "bzzt" like a phone on a table (a different rhythm per app) + real vibration on phones
+    const pat = TONES[kind] || TONES.def;
+    try { if (navigator.vibrate) navigator.vibrate(pat.flatMap((x, i) => (i ? [Math.round((x[0] - pat[i - 1][0] - pat[i - 1][1]) * 1000), Math.round(x[1] * 1000)] : [Math.round(x[1] * 1000)]))); } catch (e) { }
     if (isMuted()) return;
     try {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; const a = buzz.ctx || (buzz.ctx = new AC()); if (a.state === 'suspended') a.resume();
       const t0 = a.currentTime + 0.02;
-      [0, 0.3, 0.6].forEach((off) => {
+      pat.forEach(([off, dur, hz]) => {
         const o = a.createOscillator(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain(), f = a.createBiquadFilter();
-        o.type = 'sawtooth'; o.frequency.value = 128; lfo.frequency.value = 52; lg.gain.value = 0.07; f.type = 'lowpass'; f.frequency.value = 900;
-        lfo.connect(lg); lg.connect(g.gain); g.gain.setValueAtTime(0.0001, t0 + off); g.gain.linearRampToValueAtTime(0.14, t0 + off + 0.02); g.gain.setValueAtTime(0.14, t0 + off + 0.19); g.gain.linearRampToValueAtTime(0.0001, t0 + off + 0.23);
-        o.connect(f); f.connect(g); g.connect(a.destination); o.start(t0 + off); lfo.start(t0 + off); o.stop(t0 + off + 0.25); lfo.stop(t0 + off + 0.25);
+        o.type = 'sawtooth'; o.frequency.value = hz; lfo.frequency.value = 52; lg.gain.value = 0.07; f.type = 'lowpass'; f.frequency.value = 900;
+        lfo.connect(lg); lg.connect(g.gain); g.gain.setValueAtTime(0.0001, t0 + off); g.gain.linearRampToValueAtTime(0.14, t0 + off + 0.02); g.gain.setValueAtTime(0.14, t0 + off + dur - 0.03); g.gain.linearRampToValueAtTime(0.0001, t0 + off + dur + 0.01);
+        o.connect(f); f.connect(g); g.connect(a.destination); o.start(t0 + off); lfo.start(t0 + off); o.stop(t0 + off + dur + 0.03); lfo.stop(t0 + off + dur + 0.03);
       });
     } catch (e) { }
   }
   const unread = () => ((S && S.notifs) || []).filter((n) => !n.read).length;
   function notify(n, silent) {
     if (!S) return; S.notifs = S.notifs || [];
-    S.notifs.unshift({ id: Date.now() + '-' + irnd(10, 99), app: n.app || null, ic: n.ic || '🔔', title: n.title, text: n.text || '', wk: S.week, read: false }); S.notifs = S.notifs.slice(0, 30);
-    if (!silent) alertPhone();
+    S.notifs.unshift({ id: Date.now() + '-' + irnd(10, 99), app: n.app || null, ic: n.ic || '🔔', title: n.title, text: n.text || '', wk: S.week, read: false, act: n.act || null }); S.notifs = S.notifs.slice(0, 30);
+    if (!silent) alertPhone(n.app);
   }
-  function alertPhone() {
+  function alertPhone(kind) {
     const p = document.getElementById('phone'); if (!p) { if (S) S.alertNew = true; return; }
-    buzz(); paintPhone();
+    buzz(kind); paintPhone();
     if (phoneMode === 'dock') { p.classList.add('peek', 'ring'); clearTimeout(peekTimer); setTimeout(() => p.classList.remove('ring'), 1100); peekTimer = setTimeout(() => p.classList.remove('peek'), 6500); }
   }
   function ensurePhone() {
@@ -760,11 +932,22 @@
   function closePhone() { phoneMode = 'dock'; const p = document.getElementById('phone'); if (!p) return; p.className = 'phone dock'; document.getElementById('phoneBd').classList.remove('on'); paintPhone(); }
   const openTablet = openPhone, closeTablet = closePhone;
   function readNotif(n) { n.read = true; save(); if (n.app) { tabletApp = n.app; } openPhone(n.app || null); }
-  function notifCard(n, mini) {
-    return el('button', { class: 'ph-n' + (n.read ? '' : ' new') + (mini ? ' mini' : ''), onclick: (e) => { e.stopPropagation(); readNotif(n); } }, el('span', { class: 'ic', text: n.ic }), el('div', null, el('b', { text: n.title }), el('small', { text: n.text })), el('em', { text: 'săpt. ' + n.wk }));
+  function doAct(n) {
+    const a = n.act; if (!a || n.done) return;
+    if (a.t === 'enroll') { const it = S.cal.find((x) => x.id === a.id); if (!it || it.enrolled || S.week >= it.week) toast('Înscrierile s-au închis.'); else { it.enrolled = true; it.host = S.region; log('Te-ai înscris la ' + itemName(it) + '.'); toast('Te-ai înscris la ' + itemName(it) + '.'); } }
+    else if (a.t === 'offer') { const o = S.offers.find((x) => x.id === a.id); if (!o) toast('Oferta a expirat.'); else acceptOffer(o); }
+    n.done = true; n.read = true; save(); render();
   }
+  function notifCard(n, mini) {
+    return el('div', { class: 'ph-n' + (n.read ? '' : ' new') + (mini ? ' mini' : ''), role: 'button', tabindex: 0, onclick: (e) => { e.stopPropagation(); readNotif(n); } }, el('span', { class: 'ic', text: n.ic }),
+      el('div', null, el('b', { text: n.title }), el('small', { text: n.text }), n.act && !n.done && !mini ? el('button', { class: 'cr-btn sm pri', style: 'margin-top:8px', text: n.act.label, onclick: (e) => { e.stopPropagation(); doAct(n); } }) : null), el('em', { text: n.done ? 'făcut' : 'săpt. ' + n.wk }));
+  }
+  const PH_THEMES = ['#f9056c', '#3d8bff', '#19b6a4', '#ffc933', '#9a6bff'];
+  const phTheme = () => { try { return clamp(parseInt(localStorage.getItem('rbPhoneTheme') || '0', 10) || 0, 0, PH_THEMES.length - 1); } catch (e) { return 0; } };
+  const cycleTheme = () => { try { localStorage.setItem('rbPhoneTheme', String((phTheme() + 1) % PH_THEMES.length)); } catch (e) { } paintPhone(); };
+  const APP_COL = { ftc: '#2f7bff', meets: '#19b6a4', teams: '#9a6bff', sponsors: '#ffc933', shop: '#ff7a3d', portfolio: '#f2c14e', crew: '#4fd1c5', msgs: '#ff5d8f', map: '#58c26a', calendar: '#ff8a5c', stats: '#7aa7ff' };
   function paintPhone() {
-    if (!S || !S.region) return; const p = ensurePhone();
+    if (!S || !S.region) return; const p = ensurePhone(); p.style.setProperty('--ph', (() => { try { const v = localStorage.getItem('rbPhoneTheme'); if (v != null) return PH_THEMES[phTheme()]; } catch (e) { } return SEASON_THEMES[(S.season - 1) % SEASON_THEMES.length][0]; })());
     const now = new Date(), clock = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'), un = unread(), list = S.notifs || [];
     if (phoneMode === 'dock') {
       p.replaceChildren(el('div', { class: 'ph-handle' }, el('span', { class: 'ph-ic', text: '📱' }), el('b', { text: clock }), el('span', { class: 'ph-txt', text: un ? un + ' notificări noi' : 'Tableta echipei' }), un ? el('i', { class: 'ph-badge', text: un }) : null),
@@ -773,19 +956,49 @@
       return;
     }
     const app = TAPPS.find((a) => a.id === tabletApp);
-    const status = el('div', { class: 'tb-status' }, el('span', { text: clock }), el('b', { text: S.team.name + ' · tabletă' }), el('span', { class: 'tb-sys' }, el('button', { class: 'tb-mute', title: isMuted() ? 'Sunet oprit' : 'Sunet pornit', onclick: () => { setMuted(!isMuted()); paintPhone(); } }, isMuted() ? '🔕' : '🔔'), '▂▄▆ 🔋'));
-    const bar = el('div', { class: 'tb-bar' }, el('button', { class: 'tb-btn', title: 'Acasă', onclick: () => { tabletApp = null; paintPhone(); } }, '⌂'), app ? el('div', { class: 'tb-url' }, '🔒 ' + app.url()) : el('div', { class: 'tb-url dim', text: 'Ecran principal' }), el('button', { class: 'tb-btn', title: 'Coboară tableta (Esc)', onclick: (e) => { e.stopPropagation(); closePhone(); } }, '▾'));
+    const status = el('div', { class: 'tb-status' }, el('span', { text: clock }), el('b', { text: S.team.name + ' · tabletă' }), el('span', { class: 'tb-sys' }, el('button', { class: 'tb-mute', title: 'Schimbă culoarea tabletei', onclick: cycleTheme }, '🎨'), el('button', { class: 'tb-mute', title: isMuted() ? 'Sunet oprit' : 'Sunet pornit', onclick: () => { setMuted(!isMuted()); paintPhone(); } }, isMuted() ? '🔕' : '🔔'), '▂▄▆ 🔋'));
+    const bar = el('div', { class: 'tb-bar' }, el('button', { class: 'tb-btn', title: 'Acasă', onclick: () => { tabletApp = null; paintPhone(); } }, '⌂'), app ? el('div', { class: 'tb-url' }, '🔒 ' + app.url()) : el('div', { class: 'tb-url dim', text: 'Ecran principal' }), app ? el('button', { class: 'tb-btn', title: 'Reîncarcă', onclick: () => paintPhone() }, '↻') : null, el('button', { class: 'tb-btn', title: 'Coboară tableta (Esc)', onclick: (e) => { e.stopPropagation(); closePhone(); } }, '▾'));
+    const dotFor = (id) => (id === 'sponsors' && S.offers.length && activeSponsors().length < MAX_SPONSORS) || (id === 'meets' && nextEvent() && nextEvent().type === 'meet' && !nextEvent().enrolled) || (id === 'shop' && S.week <= 2) || (id === 'msgs' && (S.msgs || []).some((m) => m.kind === 'challenge' && !m.done)) ? el('i', { class: 'dot' }) : null;
     let body;
     if (!app) {
-      const dotFor = (id) => (id === 'sponsors' && S.offers.length && activeSponsors().length < MAX_SPONSORS) || (id === 'meets' && nextEvent() && nextEvent().type === 'meet' && !nextEvent().enrolled) || (id === 'shop' && S.week <= 2) ? el('i', { class: 'dot' }) : null;
-      body = el('div', { class: 'tb-home' }, el('div', { class: 'tb-hello' }, el('b', { text: S.team.name }), el('small', { text: '#' + S.team.num + ' · ' + regionOf(S.region).name + ' · sezonul ' + S.season + ', săpt. ' + S.week })),
-        el('div', { class: 'tb-apps' }, TAPPS.map((a) => el('button', { class: 'tb-app', onclick: () => { tabletApp = a.id; paintPhone(); } }, el('span', { class: 'ic', text: a.ic }), a.name, dotFor(a.id)))),
-        el('div', { class: 'cr-eyebrow', style: 'margin:22px 0 8px', text: 'Notificări' }),
-        list.length ? el('div', { class: 'ph-list' }, list.slice(0, 12).map((n) => notifCard(n, false))) : el('p', { class: 'cr-note', text: 'Nicio notificare încă. Meet-urile, sponsorii și meciurile îți scriu aici.' }),
-        list.some((n) => !n.read) ? el('button', { class: 'cr-btn sm', style: 'margin-top:10px', text: 'Marchează ca citite', onclick: () => { list.forEach((n) => { n.read = true; }); save(); paintPhone(); } }) : null);
-    } else body = el('div', { class: 'tb-body' + (app.light ? ' light' : '') }, { ftc: tFtc, meets: tMeets, teams: tTeams, sponsors: sponsorsView, shop: tShop }[app.id]());
-    p.replaceChildren(status, bar, body);
+      const nx = nextEvent(), left = nx ? nx.week - S.week : 0, lv = repLevel(S.rep);
+      const widgets = el('div', { class: 'tb-wid' },
+        el('div', { class: 'w clock' }, el('b', { text: clock }), el('small', { text: 'Sezonul ' + S.season + ' · săptămâna ' + S.week + ' · ' + dateOf(S.week) })),
+        el('div', { class: 'w team' }, el('small', { text: 'Echipa ta' }), el('b', { text: S.team.name }), el('span', { text: '#' + S.team.num + ' · ' + regionOf(S.region).name }),
+          el('div', { class: 'kv' }, el('div', null, el('small', { text: 'Buget' }), el('b', { class: 'ok', text: eur(S.money) })), el('div', null, el('small', { text: 'Reputație' }), el('b', { class: 'gold', text: Math.round(S.rep) })), el('div', null, el('small', { text: 'Nivel' }), el('b', { text: lv })))),
+        el('div', { class: 'w next' }, el('small', { text: 'Următorul eveniment' }), el('b', { text: nx ? itemName(nx) : 'Sezon încheiat' }), nx ? el('span', { text: left > 0 ? dateOf(nx.week) + ' · peste ' + left + ' săpt.' : 'Azi! Intră din tabul Eveniment.' }) : null,
+          nx && left > 0 ? el('button', { class: 'cr-btn sm pri', style: 'margin-top:10px', text: 'Avansează o săptămână (−' + WEEK_COST + ' €)', onclick: advanceWeek }) : null));
+      body = el('div', { class: 'tb-home' }, widgets, el('div', { class: 'tb-main' }, searchBox(),
+        el('div', { class: 'tb-apps' }, TAPPS.map((a) => el('button', { class: 'tb-app', style: '--c:' + APP_COL[a.id], onclick: () => setApp(a.id) }, el('span', { class: 'ic', text: a.ic }), a.name, dotFor(a.id)))),
+        el('div', { class: 'tb-nh' }, el('span', { class: 'cr-eyebrow', text: 'Notificări' }), list.some((n) => !n.read) ? el('button', { class: 'cr-btn sm', text: 'Marchează ca citite', onclick: () => { list.forEach((n) => { n.read = true; }); save(); paintPhone(); } }) : null),
+        list.length ? el('div', { class: 'ph-list' }, list.slice(0, 12).map((n) => notifCard(n, false))) : el('p', { class: 'cr-note', text: 'Nicio notificare încă. Meet-urile, sponsorii și meciurile îți scriu aici.' })));
+    } else body = el('div', { class: 'tb-body' + (app.light ? ' light' : '') }, { ftc: tFtc, meets: tMeets, teams: tTeams, sponsors: tSponsors, shop: tShop, portfolio: tPortfolio, crew: tCrew, msgs: tMsgs, map: tMap, calendar: tCalendar, stats: tStats }[app.id]());
+    const dock = el('div', { class: 'tb-dock' }, el('button', { class: 'dk' + (!app ? ' on' : ''), title: 'Acasă', onclick: () => { tabletApp = null; paintPhone(); } }, el('span', { text: '⌂' })),
+      TAPPS.map((a) => el('button', { class: 'dk' + (tabletApp === a.id ? ' on' : ''), style: '--c:' + APP_COL[a.id], title: a.name, onclick: () => setApp(a.id) }, el('span', { text: a.ic }), dotFor(a.id))));
+    p.replaceChildren(status, bar, body, dock);
   }
+
+  let shopTab = 'hw';
+  function tShop() {
+    const hw = Object.keys(HW).map((cat) => {
+      const H = HW[cat], cur = S.hw[cat], t = H.tiers[cur + 1], pend = pendingFor(cat);
+      if (!t) return el('div', { class: 'shop-card done' }, el('small', { class: 'cat', text: H.name }), el('b', { text: H.tiers[cur].n }), el('em', { class: 'st', text: 'Treapta maximă' }));
+      const rep = S.rep >= t.rep;
+      return el('div', { class: 'shop-card' }, el('small', { class: 'cat', text: H.name + ' · treapta ' + (cur + 2) }), el('b', { text: t.n }), el('p', { text: t.d }),
+        pend ? orderRow(pend) : !rep ? el('em', { class: 'st', text: 'Necesită ' + t.rep + ' reputație' }) : el('div', { class: 'cr-row' },
+          el('button', { class: 'cr-btn sm pri', disabled: S.money < priceOf(t), text: eur(priceOf(t)) + ' · livrare ' + shipWk(t) + ' săpt.', onclick: () => buy(cat, false) }),
+          el('button', { class: 'cr-btn sm', disabled: S.money < priceOf(t, true), title: 'Piesele ajung imediat, +40%', text: 'Express ' + eur(priceOf(t, true)), onclick: () => buy(cat, true) })), !pend && rep ? el('small', { class: 'cat', text: 'Apoi montaj ' + asmWk(t) + ' săpt.' }) : null);
+    });
+    const cons = SHOP_ITEMS.map((it) => el('div', { class: 'shop-card' }, el('span', { class: 'big', text: it.ic }), el('b', { text: it.name }), el('p', { text: it.d }), el('button', { class: 'cr-btn sm pri', disabled: S.money < Math.round(it.cost * saleF()), text: eur(Math.round(it.cost * saleF())), onclick: () => buyItem(it) })));
+    const fcost = Math.round(FIELD_COST * saleF()), field = [el('div', { class: 'shop-card' + (S.field ? ' done' : '') }, el('span', { class: 'big', text: '🟩' }), el('b', { text: 'Teren oficial 12×12 ft (kit elemente de joc)' }), el('p', { text: 'Fără teren nu poți testa autonomul și nu poți face antrenamente. Cu el: 2 antrenamente pe săptămână. Livrare 1 săptămână.' }),
+      S.field ? el('em', { class: 'st', text: 'Ai terenul în atelier' }) : S.fieldOrder ? el('em', { class: 'st', text: 'În livrare · ajunge în săpt. ' + S.fieldOrder.ready }) : el('div', { class: 'cr-row' }, el('button', { class: 'cr-btn sm pri', disabled: S.money < fcost, text: eur(fcost) + ' · 1 săpt.', onclick: () => buyField(false) }), el('button', { class: 'cr-btn sm', disabled: S.money < Math.round(fcost * 1.4), title: 'Livrare imediată, +40%', text: 'Express ' + eur(Math.round(fcost * 1.4)), onclick: () => buyField(true) })))];
+    const tabsEl = el('div', { class: 'shop-tabs' }, [['hw', 'Piese robot', hw.length], ['cons', 'Consumabile', cons.length], ['field', 'Teren de antrenament', 1]].map(([id, t, n]) => el('button', { class: shopTab === id ? 'on' : '', onclick: () => { shopTab = id; paintPhone(); } }, t, el('em', { text: n }))));
+    const pending = S.build.length ? el('div', { class: 'orders', style: 'margin:12px 16px 0' }, S.build.map(orderRow)) : null;
+    return el('div', { class: 'ftc shopw' }, el('div', { class: 'shop-head' }, el('div', null, el('h2', { text: '🛠️ Magazin de piese' }), el('p', { text: 'Magazin fictiv de robotică · livrare standard sau express' })), el('div', { class: 'shop-bud' }, el('small', { text: 'Buget' }), el('b', { text: eur(S.money) }))),
+      saleF() < 1 ? el('div', { class: 'sale-bar', text: '🔥 Reduceri de început de sezon: −10% la tot, doar în săptămânile 1–2' }) : null, tabsEl, pending,
+      el('div', { class: 'shop-grid' }, shopTab === 'hw' ? hw : shopTab === 'cons' ? cons : field));
+  }
+
   const paintTablet = paintPhone;
 
   // ---------- magazinul de piese (fictiv, inspirat de magazinele de robotică): upgrade-uri, consumabile și terenul de antrenament ----------
@@ -803,26 +1016,328 @@
     if (S.money < cost) return toast('Nu ai destui bani (' + eur(cost) + ').');
     S.money -= cost; it.fn(S); log('Magazin: ' + it.name + ' (−' + eur(cost) + ').'); save(); render();
   }
-  function buyField() {
-    const cost = Math.round(FIELD_COST * saleF()); if (S.field) return; if (S.money < cost) return toast('Nu ai destui bani (' + eur(cost) + ').');
-    S.money -= cost; S.field = true; log('Ai cumpărat un teren de antrenament (−' + eur(cost) + '): 2 antrenamente pe săptămână.'); notify({ app: 'shop', ic: '📦', title: 'Comandă livrată', text: 'Terenul de antrenament a ajuns în atelier.' }); save(); render();
+  function buyField(express) {
+    if (S.field || S.fieldOrder) return; const cost = Math.round(FIELD_COST * saleF() * (express ? 1.4 : 1)); if (S.money < cost) return toast('Nu ai destui bani (' + eur(cost) + ').');
+    S.money -= cost;
+    if (express) { S.field = true; log('Ai cumpărat un teren de antrenament express (−' + eur(cost) + ').'); notify({ app: 'shop', ic: '🟩', title: 'Terenul a ajuns', text: 'Poți testa autonomul și face antrenamente (2 pe săptămână).' }); }
+    else { S.fieldOrder = { ready: S.week + 1 }; log('Ai comandat terenul de antrenament (−' + eur(cost) + '). Ajunge în 1 săptămână.'); }
+    save(); render();
   }
-  function tShop() {
-    const hw = Object.keys(HW).map((cat) => {
-      const H = HW[cat], cur = S.hw[cat], t = H.tiers[cur + 1], pend = pendingFor(cat);
-      if (!t) return el('div', { class: 'shop-card done' }, el('b', { text: H.name }), el('small', { text: 'Ai deja treapta maximă: ' + H.tiers[cur].n }));
-      const rep = S.rep >= t.rep;
-      return el('div', { class: 'shop-card' }, el('small', { class: 'cat', text: H.name }), el('b', { text: t.n }), el('p', { text: t.d }),
-        pend ? el('em', { class: 'st', text: 'Comandat · gata în săpt. ' + pend.ready }) : !rep ? el('em', { class: 'st', text: 'Necesită ' + t.rep + ' reputație' }) : el('div', { class: 'cr-row' },
-          el('button', { class: 'cr-btn sm pri', disabled: S.money < priceOf(t), text: eur(priceOf(t)) + ' · ' + t.wk + ' săpt.', onclick: () => buy(cat, false) }),
-          el('button', { class: 'cr-btn sm', disabled: S.money < priceOf(t, true), title: 'Livrare imediată, +40%', text: 'Express ' + eur(priceOf(t, true)), onclick: () => buy(cat, true) })));
+
+  // ---------- echipa (crew), caiet tehnic, jurizare și premii, obiective de sezon, mesaje, alegerea alianței ----------
+  const CREW_DEF = [
+    { id: 'driver', role: 'Șofer', ic: '🎮', desc: 'Conduce robotul în meci.', bonus: '+2% viteză și rotire pe nivel' },
+    { id: 'prog', role: 'Programator', ic: '💻', desc: 'Autonom și țintire.', bonus: '+4% ajutor la țintire pe nivel' },
+    { id: 'build', role: 'Constructor', ic: '🔧', desc: 'Montează și repară robotul.', bonus: '+2% accelerație și intake pe nivel' }];
+  const CREW_NAMES = ['Andrei', 'Maria', 'Matei', 'Ioana', 'Luca', 'Elena', 'David', 'Sofia', 'Radu', 'Ana', 'Tudor', 'Bianca', 'Vlad', 'Daria', 'Alex', 'Teodora'];
+  const crewXpLv = (xp) => Math.min(5, Math.floor(Math.sqrt((xp || 0) / 25)));
+  const crewLv = (s, id) => { const m = (s.crew || []).find((c) => c.id === id); return m ? crewXpLv(m.xp) : 0; };
+  function gainXp(id, n) {
+    const m = (S.crew || []).find((c) => c.id === id); if (!m) return; const before = crewXpLv(m.xp); m.xp = (m.xp || 0) + n; const after = crewXpLv(m.xp);
+    if (after > before) { const d = CREW_DEF.find((x) => x.id === id); log(m.name + ' (' + d.role + ') a ajuns la nivelul ' + after + '.'); notify({ app: 'crew', ic: d.ic, title: m.name + ' a avansat', text: d.role + ': nivel ' + after + '. ' + d.bonus + '.' }); }
+  }
+  function initExtras(s) {
+    if (!Array.isArray(s.crew)) { const nm = shuffle(CREW_NAMES); s.crew = CREW_DEF.map((d, i) => ({ id: d.id, name: nm[i], xp: 0 })); }
+    if (!Array.isArray(s.mlog)) s.mlog = [];
+    if (!s.pf) s.pf = {}; if (!Array.isArray(s.awards)) s.awards = []; if (!Array.isArray(s.msgs)) s.msgs = []; if (!s.ss) s.ss = { w: 0, best: 0, sp: 0, regRank: 0, awards: 0 };
+    if (!Array.isArray(s.goals)) s.goals = shuffle(GOAL_POOL).slice(0, 4).map((g) => ({ id: g.id, got: false }));
+  }
+
+  // ---- caiet tehnic (engineering portfolio): crește singur cu ce faci, plus ce scrii tu; contează la jurizare ----
+  const PF_SECS = [['design', 'Design robot', '🛠️'], ['code', 'Software și autonom', '💻'], ['strategy', 'Strategie de joc', '🧠'], ['outreach', 'Outreach și comunitate', '🌍'], ['team', 'Echipă și management', '👥'], ['fin', 'Finanțe și sponsori', '💶']];
+  function pfSec(id) {
+    const hwSum = Object.values(S.hw).reduce((a, b) => a + b, 0), st = S.stats, played = st.w + st.t + st.l, manual = (S.pf && S.pf[id]) || 0, doneSp = S.sponsorLog.filter((x) => x.ok).length, crewSum = (S.crew || []).reduce((a, c) => a + crewXpLv(c.xp), 0);
+    const auto = { design: hwSum * 8, code: S.hw.software * 14 + ((S.autos || []).some((a) => a.pts.length) ? 20 : 0), strategy: Math.min(60, played * 3), outreach: doneSp * 8 + (S.outreach || 0) * 15, team: crewSum * 7, fin: Math.min(60, S.rep * 0.8) + doneSp * 5 }[id];
+    return clamp(Math.round(auto + manual), 0, 100);
+  }
+  const pfTotal = () => Math.round(PF_SECS.reduce((a, x) => a + pfSec(x[0]), 0) / PF_SECS.length);
+  function workPortfolio(id) {
+    if (S.pfWeek === S.week && (S.pfN || 0) >= 2) return toast('Ai lucrat deja de 2 ori la caiet săptămâna asta.');
+    if ((S.pf[id] || 0) >= 50) return toast('Ai scris deja tot ce se poate acum aici. Crești restul prin upgrade-uri, meciuri și sponsori.');
+    S.pf[id] = (S.pf[id] || 0) + 15; S.pfN = (S.pfWeek === S.week ? S.pfN || 0 : 0) + 1; S.pfWeek = S.week;
+    gainXp(id === 'code' ? 'prog' : id === 'design' ? 'build' : 'driver', 6); log('Ai lucrat la caiet: ' + PF_SECS.find((x) => x[0] === id)[1] + '.'); save(); checkGoals(); render();
+  }
+  function tPortfolio() {
+    const tot = pfTotal(), left = 2 - (S.pfWeek === S.week ? S.pfN || 0 : 0);
+    return el('div', { class: 'ftc shopw' }, el('div', { class: 'shop-head' }, el('div', null, el('h2', { text: '📓 Caiet tehnic' }), el('p', { text: 'Contează la jurizare la regională, național și mondiale.' })), el('div', { class: 'shop-bud' }, el('small', { text: 'Completat' }), el('b', { text: tot + '%' }))),
+      el('div', { class: 'shop-grid' }, pfCards()),
+      el('p', { class: 'cr-note', style: 'margin:0 16px 16px', text: 'Poți lucra de 2 ori pe săptămână (' + Math.max(0, left) + ' rămase). Restul crește singur: upgrade-uri montate, meciuri, sponsori îndeplinite, echipa și reputația.' }));
+  }
+
+  // ---- jurizare: interviu cu 3 întrebări ----
+  const QPOOL = [
+    { q: 'Cum ați ales designul robotului?', a: [['Am construit și testat mai multe prototipuri, apoi am ales după date.', 3], ['Am adaptat ideea unei echipe mai bune.', 1], ['Primul care a mers a rămas.', 0]] },
+    { q: 'Ce ați învățat dintr-un meci pierdut?', a: [['Am analizat înregistrarea, am găsit cauza și am schimbat strategia.', 3], ['Am încercat mai tare data viitoare.', 1], ['Nu prea am învățat nimic.', 0]] },
+    { q: 'Cum lucrați ca echipă?', a: [['Fiecare are un rol, ținem ședințe și notăm deciziile în caiet.', 3], ['Lucrăm împreună când avem timp.', 1], ['Unul dintre noi face aproape tot.', 0]] },
+    { q: 'Ce ați făcut pentru comunitate?', a: [['Ateliere în școli și o demonstrație publică, cu feedback notat.', 3], ['Am povestit colegilor despre robotică.', 1], ['Încă nu am apucat.', 0]] },
+    { q: 'Cum folosiți autonomul?', a: [['Îl testăm pe teren, măsurăm precizia și îl îmbunătățim după fiecare meci.', 3], ['Avem unul simplu care merge uneori.', 1], ['Nu folosim autonom.', 0]] },
+    { q: 'Cum v-ați gestionat bugetul?', a: [['Am prioritizat piesele cu cel mai mare impact și am căutat sponsori.', 3], ['Am cumpărat ce ne-a plăcut.', 1], ['N-am ținut evidența.', 0]] },
+    { q: 'Cum ați făcut robotul fiabil?', a: [['Cablaj ordonat, piese de rezervă și verificări înainte de fiecare meci.', 3], ['Reparăm când se strică.', 1], ['Ne rugăm să meargă.', 0]] },
+    { q: 'Ce plan aveți pentru anul viitor?', a: [['Un plan clar de mentorat, mai mulți membri noi și un robot mai simplu.', 3], ['Vedem noi.', 1], ['Nu ne-am gândit.', 0]] }];
+  function runInterview() {
+    const ev = S.event; if (!ev || !ev.judge || ev.judge.done) return; const qs = shuffle(QPOOL).slice(0, 3); let i = 0, pts = 0; const box = el('div'), mm = modal(box, true);
+    const show = () => {
+      if (i >= qs.length) { ev.judge = { done: true, iv: pts, pf: pfTotal() }; log('Interviu de jurizare: ' + pts + '/9, caiet ' + pfTotal() + '%.'); gainXp('prog', 6); save(); box.replaceChildren(el('div', { class: 'cr-eyebrow', text: 'Jurizare' }), el('h2', { text: pts >= 7 ? 'Interviu foarte bun' : pts >= 4 ? 'Interviu decent' : 'Interviu slab' }), el('p', { class: 'cr-sub', text: 'Juriul a notat ' + pts + ' din 9 la interviu. Împreună cu caietul tehnic (' + pfTotal() + '%), asta contează la premii.' }), el('button', { class: 'cr-btn pri', text: 'Continuă', onclick: () => { mm.close(); render(); } })); return; }
+      const Q = qs[i]; box.replaceChildren(el('div', { class: 'cr-eyebrow', text: 'Interviu de jurizare · ' + (i + 1) + '/3' }), el('h2', { text: Q.q }), el('div', { class: 'choices' }, shuffle(Q.a).map((a) => el('button', { class: 'cr-btn', text: a[0], onclick: () => { pts += a[1]; i++; show(); } }))));
+    };
+    show();
+  }
+  const judgeScore = (ev) => { const j = ev.judge || {}, iv = j.done ? j.iv : 0, pf = j.done ? j.pf : pfTotal(); return Math.round(clamp(pf * 0.5 + iv / 9 * 40 + Math.min(10, S.rep / 10), 0, 100)); };
+  const AWARDS = [['inspire', 'Inspire', '🏆'], ['think', 'Think', '💡'], ['control', 'Control', '🎛️'], ['connect', 'Connect', '🤝'], ['design', 'Design', '📐'], ['innovate', 'Innovate', '🚀'], ['motivate', 'Motivate', '🔥']];
+  function computeAwards(ev, rank, n) {
+    const J = judgeScore(ev), perf = Math.round(100 * (1 - (rank - 1) / Math.max(1, n - 1))), hwSum = Object.values(S.hw).reduce((a, b) => a + b, 0), iv = ev.judge && ev.judge.done ? ev.judge.iv : 0, doneSp = S.sponsorLog.filter((x) => x.ok).length;
+    const sc = { inspire: J * 0.55 + perf * 0.3 + pfSec('outreach') * 0.15, think: (pfSec('design') + pfSec('code') + pfSec('strategy')) / 3, control: S.hw.software * 18 + (S.autoSel >= 0 ? 25 : 0) + crewLv(S, 'prog') * 8 + 10, connect: pfSec('outreach') * 0.7 + doneSp * 10, design: pfSec('design') * 0.6 + hwSum * 3, innovate: iv / 9 * 50 + hwSum * 3 + 10, motivate: pfSec('team') * 0.6 + S.rep * 0.4 };
+    const lvl = STAGES[ev.type].lvl, won = [];
+    AWARDS.forEach(([id, name, ic]) => { const best = rnd(36, 62) + lvl * 10 + (id === 'inspire' ? 6 : 0); if (sc[id] > best) won.push({ id, name, ic, score: Math.round(sc[id]) }); });
+    return won.slice(0, 2);
+  }
+
+  // ---- obiective de sezon ----
+  const GOAL_POOL = [
+    { id: 'w3', t: 'Câștigă 3 meciuri în sezon', prog: (s) => Math.min(3, s.ss.w) + '/3', done: (s) => s.ss.w >= 3, reward: [500, 3] },
+    { id: 'sc40', t: 'Marchează 40+ puncte într-un meci', prog: (s) => Math.min(40, s.ss.best) + '/40', done: (s) => s.ss.best >= 40, reward: [400, 3] },
+    { id: 'm3', t: 'Joacă 3 League Meet-uri', prog: (s) => Math.min(3, s.cal.filter((x) => x.type === 'meet' && x.done).length) + '/3', done: (s) => s.cal.filter((x) => x.type === 'meet' && x.done).length >= 3, reward: [600, 4] },
+    { id: 'sp2', t: 'Îndeplinește 2 contracte cu sponsori', prog: (s) => Math.min(2, s.ss.sp) + '/2', done: (s) => s.ss.sp >= 2, reward: [700, 4] },
+    { id: 'reg5', t: 'Termină în top 5 la regională', prog: (s) => (s.ss.regRank ? 'locul ' + s.ss.regRank : '—'), done: (s) => s.ss.regRank > 0 && s.ss.regRank <= 5, reward: [900, 6] },
+    { id: 'pf60', t: 'Adu caietul tehnic la 60%', prog: () => Math.min(60, pfTotal()) + '/60%', done: () => pfTotal() >= 60, reward: [500, 3] },
+    { id: 'crew3', t: 'Adu un membru al echipei la nivelul 3', prog: (s) => 'max ' + Math.min(3, Math.max(...s.crew.map((c) => crewXpLv(c.xp)))) + '/3', done: (s) => s.crew.some((c) => crewXpLv(c.xp) >= 3), reward: [500, 3] },
+    { id: 'award', t: 'Câștigă un premiu la o competiție mare', prog: (s) => Math.min(1, s.ss.awards) + '/1', done: (s) => s.ss.awards >= 1, reward: [1200, 8] }];
+  function checkGoals() {
+    (S.goals || []).forEach((g) => {
+      if (g.got) return; const d = GOAL_POOL.find((x) => x.id === g.id);
+      if (d && d.done(S)) { g.got = true; S.money += d.reward[0]; S.rep += d.reward[1]; log('Obiectiv atins: ' + d.t + ' (+' + eur(d.reward[0]) + ', +' + d.reward[1] + ' reputație).'); notify({ app: null, ic: '🎯', title: 'Obiectiv atins', text: d.t + ' · +' + eur(d.reward[0]) }); }
     });
-    return el('div', { class: 'ftc shopw' }, el('div', { class: 'shop-head' }, el('h2', { text: '🛠️ Magazin de piese' }), el('p', { text: 'Magazin fictiv de robotică. Buget: ' + eur(S.money) }), saleF() < 1 ? el('div', { class: 'sale', text: 'Reduceri de început de sezon: −10% la tot, doar în săptămânile 1–2' }) : null),
-      el('div', { class: 'ftc-panel' }, el('div', { class: 'ftc-ph', text: 'Piese pentru robot' }), el('div', { class: 'shop-grid' }, hw)),
-      el('div', { class: 'ftc-panel' }, el('div', { class: 'ftc-ph', text: 'Consumabile (valabile la următorul eveniment)' }), el('div', { class: 'shop-grid' }, SHOP_ITEMS.map((it) => el('div', { class: 'shop-card' }, el('span', { class: 'big', text: it.ic }), el('b', { text: it.name }), el('p', { text: it.d }), el('button', { class: 'cr-btn sm pri', disabled: S.money < Math.round(it.cost * saleF()), text: eur(Math.round(it.cost * saleF())), onclick: () => buyItem(it) }))))),
-      el('div', { class: 'ftc-panel' }, el('div', { class: 'ftc-ph', text: 'Teren de antrenament' }), el('div', { class: 'shop-grid' }, el('div', { class: 'shop-card' + (S.field ? ' done' : '') }, el('span', { class: 'big', text: '🟩' }), el('b', { text: 'Teren oficial 12×12 ft (kit elemente de joc)' }), el('p', { text: 'Cu terenul propriu poți face 2 antrenamente pe săptămână, nu unul.' }),
-        S.field ? el('em', { class: 'st', text: 'Ai terenul în atelier' }) : el('button', { class: 'cr-btn sm pri', disabled: S.money < Math.round(FIELD_COST * saleF()), text: eur(Math.round(FIELD_COST * saleF())), onclick: buyField })))));
   }
+  function goalsCard() {
+    return el('div', { class: 'cr-card' }, el('div', { class: 'cr-eyebrow', text: 'Obiective de sezon' }), el('h2', { text: (S.goals || []).filter((g) => g.got).length + '/' + (S.goals || []).length + ' atinse' }),
+      el('div', { class: 'goals' }, (S.goals || []).map((g) => { const d = GOAL_POOL.find((x) => x.id === g.id); return el('div', { class: 'goal' + (g.got ? ' got' : '') }, el('span', { class: 'ck', text: g.got ? '✓' : '○' }), el('div', null, el('b', { text: d.t }), el('small', { text: (g.got ? 'Atins' : d.prog(S)) + ' · +' + eur(d.reward[0]) + ' · +' + d.reward[1] + ' rep.' }))); })));
+  }
+
+  // ---- mesaje: provocări la meci amical, sfaturi de la antrenor ----
+  function addMsg(m) { S.msgs = S.msgs || []; S.msgs.unshift(Object.assign({ id: Date.now() + '-' + irnd(10, 99), wk: S.week, done: false }, m)); S.msgs = S.msgs.slice(0, 25); notify({ app: 'msgs', ic: m.ic || '💬', title: m.from, text: m.text.slice(0, 80) }); }
+  function genMsg() {
+    const r = Math.random(), pool = regionPool(S.region).filter((t) => !isMe(t));
+    if (r < 0.4 && pool.length && !S.msgs.some((x) => x.kind === 'challenge' && !x.done)) { const t = pick(pool); addMsg({ from: t.name, ic: '🤖', kind: 'challenge', text: 'Salut! Vrem un meci amical înainte de următorul eveniment. Accepți?', team: { name: t.name, num: t.num, skill: clamp(skillFor(t.num, 'meet', false) + rnd(-.05, .05), 0, .95) } }); return; }
+    const enr = S.cal.filter((x) => x.type === 'meet' && x.enrolled && !x.done).length, tips = [];
+    if (enr < 2 && S.cal.some((x) => x.type === 'meet' && !x.done && S.week < x.week)) tips.push('Ești înscris la prea puține meet-uri. Recomandat 2–5: cele mai bune 10 meciuri te ajută la regională.');
+    if (pfTotal() < 40) tips.push('Caietul tehnic e sub 40%. Lucrează la el înainte de regională, contează mult la jurizare.');
+    if (S.hw.software < 1) tips.push('Un IMU cu PID ți-ar ușura mult tragerea. Verifică magazinul de piese.');
+    if (!S.field && !S.fieldOrder) tips.push('Nu ai teren de antrenament. Comandă-l din magazinul de piese ca să poți testa autonomul și să te antrenezi.');
+    if (S.build.some((b) => b.stage === 'stock')) tips.push('Ai piese sosite care așteaptă în atelier. Începe montajul ca să le ai pe robot.');
+    if (!(S.autos || []).some((a) => a.pts.length)) tips.push('Nu ai niciun autonom desenat. Chiar și unul simplu aduce puncte de la început.');
+    tips.push('Odihnește-te înaintea unui meet: un cablaj verificat valorează cât un upgrade.', 'Notează ce a mers prost după fiecare meci. Juriul adoră asta.');
+    addMsg({ from: 'Antrenorul', ic: '🧑‍🏫', kind: 'coach', text: pick(tips) });
+  }
+  function tMsgs() {
+    const list = S.msgs || [];
+    return el('div', { class: 'ftc shopw' }, el('div', { class: 'shop-head' }, el('div', null, el('h2', { text: '💬 Mesaje' }), el('p', { text: 'Provocări la meciuri amicale și sfaturi de la antrenor.' }))),
+      el('div', { class: 'msgs' }, list.length ? list.map((m) => el('div', { class: 'msg ' + m.kind }, el('span', { class: 'av', text: m.ic }), el('div', { class: 'bub' }, el('b', { text: m.from + ' · săpt. ' + m.wk }), el('p', { text: m.text }),
+        m.kind === 'challenge' && !m.done ? el('div', { class: 'cr-row' }, el('button', { class: 'cr-btn sm pri', disabled: !!S.pending || !!S.event, title: S.event ? 'Termină evenimentul întâi' : '', text: 'Acceptă meciul amical', onclick: () => launch('friendly', m) }), el('button', { class: 'cr-btn sm', text: 'Refuză', onclick: () => { m.done = true; save(); render(); } })) : m.kind === 'challenge' ? el('em', { text: 'Rezolvat' }) : null))) : el('p', { class: 'cr-note', style: 'padding:16px', text: 'Niciun mesaj încă. Apar în fiecare săptămână.' })));
+  }
+  function tCrew() {
+    return el('div', { class: 'ftc shopw' }, el('div', { class: 'shop-head' }, el('div', null, el('h2', { text: '🧑‍🔧 Echipa mea' }), el('p', { text: 'Fiecare membru crește cu meciurile și antrenamentele și îți îmbunătățește robotul.' })), el('div', { class: 'shop-bud' }, el('small', { text: 'Buget' }), el('b', { text: eur(S.money) }))),
+      el('div', { class: 'shop-grid' }, crewCards()));
+  }
+  // ---- alegerea alianței la playoff: seed-urile mai bune aleg primele, tu alegi când îți vine rândul ----
+  const bestOf = (arr) => { arr.sort((a, b) => (b.skill || 0) + rnd(-.06, .06) - (a.skill || 0)); return arr.shift(); };
+  function startAlliance(ev, sorted, rank) {
+    const avail = sorted.slice(4).map((t) => Object.assign({}, t)), picks = {};
+    for (let s = 1; s < rank; s++) picks[s] = bestOf(avail);
+    ev.po = { phase: 'pick', mySeed: rank, sorted, avail, picks, al: pick(['red', 'blue']) };
+  }
+  function finishAlliance(ev, mate) {
+    const po = ev.po; po.picks[po.mySeed] = mate; po.avail = po.avail.filter((t) => t.name !== mate.name);
+    for (let s = po.mySeed + 1; s <= 4; s++) po.picks[s] = bestOf(po.avail);
+    po.pairs = [1, 2, 3, 4].map((s) => ({ cap: po.sorted[s - 1], par: po.picks[s] }));
+    const os = 5 - po.mySeed; po.oppSeed = os; po.partner = po.picks[po.mySeed]; po.opp = po.pairs[os - 1].cap; po.oppPartner = po.pairs[os - 1].par; po.phase = 'sf';
+    log('Alianță pentru playoff: ' + mate.name + '.'); save(); render();
+  }
+  function pickView(ev) {
+    const po = ev.po, took = Object.keys(po.picks).map((s) => 'seed ' + s + ' → ' + po.picks[s].name).join(' · ');
+    return el('div', { class: 'cr-grid' }, el('div', { class: 'cr-card' }, el('div', { class: 'cr-eyebrow', text: ev.name + ' · alegerea alianței' }), el('h2', { text: 'Ești seed ' + po.mySeed + '. Alege-ți partenerul' }),
+      el('p', { class: 'cr-sub', text: 'Primele 4 echipe din calificări își aleg câte un partener pentru playoff. ' + (took ? 'Au ales deja: ' + took + '.' : 'Tu alegi primul.') + ' Un partener mai puternic îți dă șanse mai mari.' }),
+      el('div', { class: 'pick-grid' }, po.avail.slice().sort((a, b) => b.rp - a.rp || b.pts - a.pts).map((t, i) => el('button', { class: 'pick-card', onclick: () => finishAlliance(ev, t) }, el('b', { text: t.name }), el('small', { text: '#' + t.num + ' · RP ' + t.rp + ' · ' + t.pts + ' puncte'  }), el('em', { text: 'Nivel: ' + oppLevel(t.skill || 0.5) }))))));
+  }
+  function judgeBlock(ev) {
+    if (!ev.judge) return null; const j = ev.judge;
+    return el('div', { class: 'judge' }, el('div', { class: 'cr-eyebrow', text: 'Jurizare' }), j.done ? el('p', { class: 'cr-sub', style: 'margin:0', text: 'Interviu: ' + j.iv + '/9 · caiet tehnic: ' + j.pf + '% · scor jurizare: ' + judgeScore(ev) + '/100.' }) : [
+      el('p', { class: 'cr-sub', style: 'margin:0 0 10px', text: 'Juriul te așteaptă la interviu. Caietul tehnic acum: ' + pfTotal() + '%. Fără interviu pierzi punctele de jurizare.' }), el('button', { class: 'cr-btn sm pri', text: 'Mergi la interviul de jurizare', onclick: runInterview })]);
+  }
+
+  // ---------- strategie cu partenerul AI + replay-ul ultimului meci ----------
+  function planSelect() {
+    return el('select', { class: 'cr-in cr-sel', onchange: (e) => { S.plan = e.target.value; save(); toast('Strategie: ' + e.target.selectedOptions[0].text); } },
+      [['bal', 'Echilibrat (implicit)'], ['shoot', 'Partenerul trage imediat ce are o minge'], ['collect', 'Partenerul adună 4 mingi, apoi trage în rafală']].map(([v, t]) => el('option', { value: v, text: t, selected: (S.plan || 'bal') === v })));
+  }
+  const planLabel = () => el('label', { class: 'ap-f', style: 'margin-top:10px' }, el('span', { text: 'Strategie cu partenerul AI' }), planSelect());
+  const hasReplay = () => { try { return !!localStorage.getItem('rbCareerReplay'); } catch (e) { return false; } };
+  function openReplay() {
+    let R = null; try { R = JSON.parse(localStorage.getItem('rbCareerReplay') || 'null'); } catch (e) { }
+    if (!R || !R.s || !R.s.length) return toast('Nu există replay pentru ultimul meci.');
+    const N = R.s.length, W = 720, k = W / FLD.IN, X = (v) => v * k, cv = el('canvas', { class: 'rp-cv', width: W, height: W }), ctx = cv.getContext('2d');
+    let pos = 0, playing = true, speed = 1, last = performance.now();
+    const ov = el('div', { class: 'cr-modal keep rp-ov', onclick: (e) => { if (e.target === ov) ov.remove(); } });
+    const lab = el('div', { class: 'rp-lab' }), scrub = el('input', { type: 'range', min: 0, max: N - 1, step: 0.01, value: 0, oninput: (e) => { pos = +e.target.value; playing = false; pb.textContent = '▶'; paintR(); } });
+    const pb = el('button', { class: 'ap-tool', title: 'Play / pauză', onclick: () => { if (pos >= N - 1) pos = 0; playing = !playing; last = performance.now(); pb.textContent = playing ? '❚❚' : '▶'; } }, '❚❚');
+    const spd = [1, 2, 4].map((v) => el('button', { class: 'ap-tool' + (v === 1 ? ' on' : ''), onclick: (e) => { speed = v; spd.forEach((b) => b.classList.remove('on')); e.target.classList.add('on'); } }, v + '×'));
+    const lerp = (a, b, f) => a + (b - a) * f;
+    function paintR() {
+      const i = Math.min(N - 1, Math.floor(pos)), j = Math.min(N - 1, i + 1), f = pos - i, tt = pos * 0.5;
+      ctx.clearRect(0, 0, W, W); const bg = ctx.createLinearGradient(0, 0, W, W); bg.addColorStop(0, '#2b3039'); bg.addColorStop(1, '#222630'); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, W);
+      ctx.strokeStyle = 'rgba(210,214,225,.28)'; ctx.lineWidth = 1.5; for (let g = 1; g < 6; g++) { ctx.beginPath(); ctx.moveTo(X(g * 24), 0); ctx.lineTo(X(g * 24), W); ctx.moveTo(0, X(g * 24)); ctx.lineTo(W, X(g * 24)); ctx.stroke(); }
+      [['red', '#ff4d5e'], ['blue', '#3d8bff']].forEach(([al, c]) => { const z = FLD.LZ[al]; ctx.fillStyle = c + '30'; ctx.fillRect(X(z.x), X(z.y), X(z.w), X(z.h)); ctx.strokeStyle = c; ctx.lineWidth = 4; ctx.strokeRect(X(z.x), X(z.y), X(z.w), X(z.h)); });
+      const f0 = FLD.FRAME; ctx.strokeStyle = 'rgba(200,200,210,.55)'; ctx.lineWidth = 3; ctx.strokeRect(X(f0.x0), X(f0.y0), X(f0.x1 - f0.x0), X(f0.y1 - f0.y0));
+      ['blue', 'red'].forEach((al) => FLD.CELLS[al].forEach((c) => { ctx.fillStyle = (al === 'red' ? '#ff4d5e' : '#3d8bff') + '33'; ctx.strokeStyle = al === 'red' ? '#ff4d5e' : '#3d8bff'; ctx.lineWidth = 3; ctx.fillRect(X(c.x - 8), X(c.y - 10), X(16), X(20)); ctx.strokeRect(X(c.x - 8), X(c.y - 10), X(16), X(20)); }));
+      FLD.FLOWERS.forEach(([fx, fy]) => { ctx.fillStyle = '#d9b43c'; ctx.beginPath(); for (let q = 0; q < 6; q++) { const a = Math.PI / 3 * q + Math.PI / 6; ctx[q ? 'lineTo' : 'moveTo'](X(fx) + Math.cos(a) * X(4.1), X(fy) + Math.sin(a) * X(4.1)); } ctx.closePath(); ctx.fill(); });
+      const s0 = R.s[i], s1 = R.s[j]; const sz = X(18);
+      s0.forEach((r0, n) => {
+        const r1 = s1[n], x = lerp(r0[0], r1[0], f), y = lerp(r0[1], r1[1], f); let da = r1[2] - r0[2]; da = Math.atan2(Math.sin(da), Math.cos(da)); const a = r0[2] + da * f, col = R.als && R.als[n] === 'blue' ? '#3d8bff' : '#ff4d5e';
+        ctx.save(); ctx.translate(X(x), X(y)); ctx.rotate(a + Math.PI / 2); ctx.fillStyle = col + '55'; ctx.strokeStyle = col; ctx.lineWidth = n === 0 ? 4 : 2.5; ctx.fillRect(-sz / 2, -sz / 2, sz, sz); ctx.strokeRect(-sz / 2, -sz / 2, sz, sz); ctx.fillStyle = col; ctx.fillRect(-sz / 2, -sz / 2, sz, sz * 0.16); ctx.restore();
+        ctx.fillStyle = '#fff'; ctx.font = '700 12px "JetBrains Mono",monospace'; ctx.textAlign = 'center'; ctx.fillText(n === 0 ? 'TU' : String((R.names && R.names[n]) || '').slice(0, 10), X(x), X(y) - sz * 0.62);
+        if (n === 0) { ctx.strokeStyle = '#fff'; ctx.setLineDash([4, 5]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(x), X(y), sz * 0.78, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); }
+      });
+      const sc = R.sc[i] || [0, 0], tip = (R.ev || []).find((e) => Math.abs(e[0] - tt) < 1.3);
+      if (tip) { ctx.fillStyle = tip[2] === 'blue' ? '#3d8bff' : '#ff4d5e'; ctx.font = '800 34px "Bricolage Grotesque",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('HIVE TIP!', W / 2, 60); }
+      const ph = tt < 30 ? 'AUTONOM' : tt < 38 ? 'PAUZĂ' : tt >= 158 - 60 ? 'FLORI DESCHISE' : 'TELEOP';
+      lab.replaceChildren(el('b', { class: 'al-red', text: 'ROȘU ' + sc[0] }), el('span', { text: ph + ' · ' + Math.floor(tt / 60) + ':' + String(Math.floor(tt % 60)).padStart(2, '0') }), el('b', { class: 'al-blue', text: sc[1] + ' ALBASTRU' }));
+      scrub.value = String(pos);
+    }
+    function tick(now) { if (!ov.isConnected) return; if (playing) { pos += (now - last) / 500 * speed; last = now; if (pos >= N - 1) { pos = N - 1; playing = false; pb.textContent = '▶'; } paintR(); } else last = now; requestAnimationFrame(tick); }
+    ov.append(el('div', { class: 'box rp-box' }, el('div', { class: 'cr-eyebrow', text: 'Replay · ' + (R.label || 'ultimul meci') }), lab, cv, el('div', { class: 'ap-tlrow' }, pb, scrub, ...spd), el('div', { class: 'cr-row', style: 'margin-top:10px' }, el('span', { class: 'cr-note', text: 'Cercul alb punctat ești tu. Culorile: roșu și albastru ca la meci.' }), el('button', { class: 'cr-btn sm', text: 'Închide', onclick: () => ov.remove() }))));
+    document.body.append(ov); paintR(); requestAnimationFrame(tick);
+  }
+
+  // ---------- hartă, calendar, căutare, teme pe sezon, sunete pe aplicații, statistici ----------
+  function sv(tag, attrs, ...kids) {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const k in (attrs || {})) { const v = attrs[k]; if (v == null || v === false) continue; if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v); else e.setAttribute(k, v); }
+    kids.flat().forEach((c) => { if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(String(c))); }); return e;
+  }
+  const weekDate = (week) => new Date(2026, 9, 3 + (week - 1) * 7);
+  const RO_BORDER = [[20.27, 46.13], [20.8, 46.35], [21.45, 46.3], [21.8, 47.0], [22.35, 47.5], [22.9, 47.95], [23.9, 47.97], [24.9, 47.75], [25.9, 47.99], [26.7, 48.25], [27.4, 47.6], [27.7, 47.3], [28.2, 46.65], [28.1, 45.5], [28.7, 45.25], [29.7, 45.2], [29.6, 44.8], [29.0, 44.0], [28.6, 43.75], [27.9, 43.95], [27.0, 44.15], [26.1, 43.95], [25.3, 43.65], [24.4, 43.7], [23.4, 43.85], [22.7, 44.2], [22.5, 44.45], [21.6, 44.75], [21.4, 45.0], [21.1, 45.3], [20.8, 45.75]];
+  const CITY = { b1: [44.43, 26.10, 'București'], b2: [44.43, 26.10, 'București'], pl: [44.94, 26.03, 'Ploiești'], md: [46.16, 24.35, 'Mediaș'], br: [45.27, 27.97, 'Brăila'], cj: [46.77, 23.59, 'Cluj-Napoca'], pn: [46.93, 26.37, 'Piatra Neamț'] };
+  const mapXY = (lon, lat) => [(lon - 20) * 77, (48.5 - lat) * 111];
+  const kmBetween = (a, b) => { const A = CITY[a], B = CITY[b]; if (!A || !B) return 0; const r = (x) => x * Math.PI / 180, dl = r(B[0] - A[0]), dg = r(B[1] - A[1]), h = Math.sin(dl / 2) ** 2 + Math.cos(r(A[0])) * Math.cos(r(B[0])) * Math.sin(dg / 2) ** 2; return Math.round(12742 * Math.asin(Math.sqrt(h))); };
+  const travelCost = (from, to) => { const km = kmBetween(from, to); return km < 30 ? 0 : Math.round(40 + km * 0.35); };
+  const hKey = (id) => [...id].reduce((a, c) => a * 31 + c.charCodeAt(0), 7);
+  function meetHosts(it) {   // every meet is held in a few regions; you can go to any of them (travel costs money)
+    const ids = (window.CAREER_REGIONS || []).map((r) => r.id).filter((id) => CITY[id] && CITY[id][2] !== CITY[S.region][2]);
+    ids.sort((a, b) => hash(hKey(a) + it.no * 7 + S.season) - hash(hKey(b) + it.no * 7 + S.season));
+    return [S.region].concat(ids.slice(0, 2));
+  }
+  function enrollAt(it, host) {
+    if (S.week >= it.week) return toast('Înscrierile la acest meet s-au închis.');
+    if (it.enrolled) { S.money += it.paid || 0; it.enrolled = false; it.paid = 0; it.host = null; log('Te-ai retras de la ' + itemName(it) + '.'); }
+    else { const c = travelCost(S.region, host); if (S.money < c) return toast('Nu ai destui bani pentru deplasare (' + eur(c) + ').'); S.money -= c; it.paid = c; it.enrolled = true; it.host = host; log('Te-ai înscris la ' + itemName(it) + ' în ' + regionOf(host).name + (c ? ' (deplasare −' + eur(c) + ')' : '') + '.'); }
+    save(); render();
+  }
+  let mapSel = null;
+  function tMap() {
+    const R = window.CAREER_REGIONS || [], sel = mapSel || S.region, selR = regionOf(sel), pts = RO_BORDER.map(([lo, la]) => mapXY(lo, la).map((v) => v.toFixed(1)).join(',')).join(' ');
+    const dots = {}; R.forEach((r) => { const c = CITY[r.id]; (dots[c[2]] = dots[c[2]] || { c, regs: [] }).regs.push(r); });
+    const svg = sv('svg', { viewBox: '0 0 780 560', class: 'rmap' }, sv('polygon', { points: pts, class: 'ro' }), sv('text', { x: 14, y: 540, class: 'rcap' }, 'Hartă schematică, nu la scară'),
+      Object.values(dots).map((d) => { const [x, y] = mapXY(d.c[1], d.c[0]), isSel = d.regs.some((r) => r.id === sel), mine = d.regs.some((r) => r.id === S.region), nt = d.regs.reduce((a, r) => a + r.teams.length, 0);
+        return sv('g', { class: 'city' + (isSel ? ' sel' : '') + (mine ? ' mine' : ''), transform: 'translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ')', onclick: () => { mapSel = d.regs.find((r) => r.id === sel) ? sel : d.regs[0].id; paintPhone(); } },
+          sv('circle', { r: isSel ? 15 : 11, class: 'dot' }), sv('text', { y: 4, class: 'n' }, d.regs.length > 1 ? '1·2' : d.regs[0].name[0]), sv('text', { y: -20, class: 'lbl' }, d.c[2]), sv('text', { y: 30, class: 'sub' }, nt ? nt + ' echipe' : 'în curând')); }));
+    const meets = S.cal.filter((it) => it.type === 'meet' && !it.done && S.week < it.week && meetHosts(it).includes(sel));
+    const cost = travelCost(S.region, sel);
+    const info = el('div', { class: 'map-info' }, el('div', { class: 'tp-regs' }, R.map((r) => el('button', { class: 'tp-reg' + (sel === r.id ? ' on' : ''), onclick: () => { mapSel = r.id; paintPhone(); } }, r.name, el('small', { text: CITY[r.id][2] })))),
+      el('h3', { text: selR.name + ' · ' + CITY[sel][2] }), el('p', { class: 'cr-note', text: (selR.teams.length ? selR.teams.length + ' echipe înscrise' : 'Lista echipelor nu e publicată') + (sel === S.region ? ' · regiunea ta' : ' · ' + kmBetween(S.region, sel) + ' km de tine · deplasare ' + (cost ? eur(cost) : 'gratis')) }),
+      sel === S.region ? el('p', { class: 'map-reg', text: '🏆 Regionala ta: ' + CITY[sel][2] + ', ' + dateOf(S.cal.find((x) => x.id === 'reg').week) }) : el('p', { class: 'map-reg dim', text: 'Regionala acestei regiuni se joacă la ' + CITY[sel][2] + '. La regională concurezi doar în regiunea ta.' }),
+      el('div', { class: 'cr-eyebrow', style: 'margin:12px 0 6px', text: 'Meet-uri găzduite aici' }),
+      meets.length ? el('div', { class: 'map-meets' }, meets.map((it) => { const on = it.enrolled && (it.host || S.region) === sel, elsewhere = it.enrolled && !on;
+        return el('div', { class: 'map-meet' + (on ? ' on' : '') }, dateBlock(it.week), el('div', null, el('b', { text: itemName(it) }), el('small', { text: elsewhere ? 'Înscris în ' + regionOf(it.host || S.region).name : (cost ? 'Deplasare ' + eur(cost) : 'Fără deplasare') })),
+          elsewhere ? el('em', { text: 'altă regiune' }) : el('button', { class: 'cr-btn sm' + (on ? '' : ' pri'), text: on ? 'Retrage-te' : 'Înscrie-te aici', onclick: () => enrollAt(it, sel) })); })) : el('p', { class: 'cr-note', text: 'Niciun meet liber aici. Meet-urile deja jucate sau pe care nu le mai poți prinde nu apar.' }));
+    return el('div', { class: 'ftc shopw' }, el('div', { class: 'shop-head' }, el('div', null, el('h2', { text: '🗺️ Hartă · Sezon #11' }), el('p', { text: 'Regiunile, orașele gazdă și meet-urile din fiecare. Poți merge la un meet în orice regiune.' }))), el('div', { class: 'map-wrap' }, el('div', { class: 'map-box' }, svg), info));
+  }
+
+  // ---- calendar pe lună + export .ics ----
+  let calM = null;
+  const MONTHS = ['Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie', 'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie'];
+  function downloadIcs(items) {
+    const pad = (n) => String(n).padStart(2, '0'), ds = (d) => d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()), stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//roLERbot//Cariera//RO', 'CALSCALE:GREGORIAN'];
+    items.forEach((it) => { const d = weekDate(it.week), e = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1); lines.push('BEGIN:VEVENT', 'UID:' + it.id + '-s' + S.season + '@rolerbot', 'DTSTAMP:' + stamp, 'DTSTART;VALUE=DATE:' + ds(d), 'DTEND;VALUE=DATE:' + ds(e), 'SUMMARY:' + itemName(it) + ' (carieră roLERbot)', 'DESCRIPTION:Eveniment simulat din cariera roLERbot · ' + regionOf(it.host || S.region).name, 'END:VEVENT'); });
+    lines.push('END:VCALENDAR'); const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar' }), a = el('a', { href: URL.createObjectURL(blob), download: items.length === 1 ? 'rolerbot-' + items[0].id + '.ics' : 'rolerbot-evenimente.ics' });
+    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); toast('Fișier de calendar descărcat (' + items.length + (items.length === 1 ? ' eveniment' : ' evenimente') + ').');
+  }
+  function tCalendar() {
+    const cur = weekDate(S.week), curM = (cur.getFullYear() - 2026) * 12 + cur.getMonth() - 9; if (calM == null) calM = curM; calM = clamp(calM, 0, 8);
+    const y = 2026 + Math.floor((9 + calM) / 12), mo = (9 + calM) % 12, first = new Date(y, mo, 1), pad0 = (first.getDay() + 6) % 7, days = new Date(y, mo + 1, 0).getDate();
+    const byDay = {}; S.cal.forEach((it) => { const d = weekDate(it.week); if (d.getFullYear() === y && d.getMonth() === mo) (byDay[d.getDate()] = byDay[d.getDate()] || []).push(it); });
+    const short = (it) => (it.type === 'meet' ? 'Meet ' + it.no : it.type === 'reg' ? 'Regională' : it.type === 'nat' ? 'Național' : 'Mondiale'), cls = (it) => (it.done ? 'done' : it.off ? 'off' : it.type === 'meet' ? (it.enrolled ? 'on' : 'free') : 'main');
+    const cells = []; for (let i = 0; i < pad0; i++) cells.push(el('div', { class: 'cd empty' })); for (let d = 1; d <= days; d++) { const isToday = cur.getFullYear() === y && cur.getMonth() === mo && cur.getDate() === d;
+      cells.push(el('div', { class: 'cd' + (isToday ? ' today' : '') }, el('span', { text: d }), (byDay[d] || []).map((it) => el('b', { class: 'ev ' + cls(it), title: itemName(it), text: short(it) })))); }
+    const month = S.cal.filter((it) => { const d = weekDate(it.week); return d.getFullYear() === y && d.getMonth() === mo; }), mine = S.cal.filter((it) => !it.done && !it.off && (it.type !== 'meet' || it.enrolled));
+    return el('div', { class: 'ftc shopw' }, el('div', { class: 'shop-head' }, el('div', null, el('h2', { text: '🗓️ Calendar' }), el('p', { text: 'Datele sezonului din carieră. Evenimentele se țin sâmbăta.' })), el('button', { class: 'cr-btn sm', disabled: !mine.length, text: '📅 Adaugă toate în calendarul meu', onclick: () => downloadIcs(mine) })),
+      el('div', { class: 'cal-nav' }, el('button', { class: 'cr-btn sm', disabled: calM <= 0, text: '‹', onclick: () => { calM--; paintPhone(); } }), el('b', { text: MONTHS[mo] + ' ' + y }), el('button', { class: 'cr-btn sm', disabled: calM >= 8, text: '›', onclick: () => { calM++; paintPhone(); } })),
+      el('div', { class: 'cgrid' }, ['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm', 'Dum'].map((d) => el('div', { class: 'ch', text: d })), cells),
+      el('div', { class: 'cal-list' }, month.length ? month.map((it) => el('div', { class: 'cl-row' }, dateBlock(it.week), el('div', null, el('b', { text: itemName(it) }), el('small', { text: dateOf(it.week) + ' · ' + regionOf(it.host || S.region).name + ' · ' + (it.done ? 'jucat' : it.off ? 'prin calificare' : it.type === 'meet' ? (it.enrolled ? 'înscris' : 'liber') : 'obligatoriu') })),
+        el('button', { class: 'cr-btn sm', text: '📅 Adaugă în calendar', onclick: () => downloadIcs([it]) }))) : el('p', { class: 'cr-note', style: 'padding:12px 16px', text: 'Niciun eveniment în luna asta.' })));
+  }
+
+  // ---- căutare globală: echipe, sponsori, evenimente, aplicații ----
+  function searchHits(q) {
+    q = q.trim().toLowerCase(); if (q.length < 2) return []; const out = [], has = (s) => String(s).toLowerCase().includes(q);
+    TAPPS.forEach((a) => { if (has(a.name)) out.push({ ic: a.ic, t: a.name, sub: 'Aplicație', go: () => setApp(a.id) }); });
+    S.cal.forEach((it) => { if (has(itemName(it)) || has(dateOf(it.week))) out.push({ ic: '📅', t: itemName(it), sub: dateOf(it.week) + ' · săpt. ' + it.week, go: () => setApp('calendar') }); });
+    BRANDS.forEach(([name]) => { if (has(name)) out.push({ ic: '🤝', t: name, sub: 'Sponsor', go: () => setApp('sponsors') }); });
+    (window.CAREER_REGIONS || []).forEach((r) => { if (has(r.name)) out.push({ ic: '📍', t: r.name, sub: 'Regiune · ' + CITY[r.id][2], go: () => { mapSel = r.id; setApp('map'); } }); r.teams.forEach(([n, num]) => { if (has(n) || String(num).includes(q)) out.push({ ic: '👥', t: n, sub: '#' + num + ' · ' + r.name, go: () => { tabletTeamReg = r.id; tabletTeamQ = n; setApp('teams'); } }); }); });
+    return out.slice(0, 14);
+  }
+  function searchBox() {
+    const res = el('div', { class: 'srch-res' }), inp = el('input', { class: 'cr-in srch', placeholder: '🔎 Caută echipă, sponsor, eveniment, aplicație…' });
+    inp.addEventListener('input', () => { const hits = searchHits(inp.value); res.replaceChildren(...(inp.value.trim().length < 2 ? [] : hits.length ? hits.map((h) => el('button', { class: 'srch-hit', onclick: h.go }, el('span', { class: 'ic', text: h.ic }), el('div', null, el('b', { text: h.t }), el('small', { text: h.sub })))) : [el('p', { class: 'cr-note', text: 'Niciun rezultat.' })])); });
+    return el('div', { class: 'srch-box' }, inp, res);
+  }
+
+  // ---- teme de culoare pe sezon + sunet la deschiderea aplicațiilor ----
+  const SEASON_THEMES = [['#f9056c', '#ff3d8f'], ['#3d8bff', '#6aa5ff'], ['#19b6a4', '#4fd1c5'], ['#ffc933', '#ffd966'], ['#9a6bff', '#b592ff']];
+  const SEASON_THEME_NAMES = ['roz', 'albastru', 'turcoaz', 'auriu', 'violet'];
+  function applySeasonTheme() { if (!S) return; const t = SEASON_THEMES[(S.season - 1) % SEASON_THEMES.length], r = document.documentElement.style; r.setProperty('--pink', t[0]); r.setProperty('--pink-hi', t[1]); }
+  const BLIP = { ftc: 660, meets: 520, teams: 440, sponsors: 760, shop: 600, portfolio: 360, crew: 480, msgs: 880, map: 560, calendar: 700, stats: 420 };
+  function blip(id) {
+    if (isMuted()) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; const a = buzz.ctx || (buzz.ctx = new AC()); if (a.state === 'suspended') a.resume();
+      const o = a.createOscillator(), g = a.createGain(), t = a.currentTime, f = BLIP[id] || 500; o.type = 'triangle'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 1.5, t + 0.09);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.06, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14); o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.16);
+    } catch (e) { }
+  }
+  function setApp(id) { tabletApp = id; if (id) blip(id); paintPhone(); }
+
+  // ---- statistici: grafice pe sezon, comparație cu media regiunii ----
+  function statsView() {
+    const H = S.history.slice().reverse().filter((h) => h.avg != null), M = S.mlog || [], st = S.stats, played = st.w + st.t + st.l;
+    const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0), myAvg = avg(H.map((h) => h.myAvg)), regAvg = avg(H.map((h) => h.avg)), best = M.length ? Math.max(...M.map((m) => m.my)) : 0;
+    const tile = (k, v, sub) => el('div', { class: 'stile' }, el('small', { text: k }), el('b', { text: v }), sub ? el('em', { class: sub[0], text: sub[1] }) : null);
+    const diff = myAvg - regAvg, tiles = el('div', { class: 'stiles' }, tile('Meciuri', played), tile('Victorii', played ? Math.round(st.w / played * 100) + '%' : '—'), tile('Scor mediu / meci', myAvg ? myAvg.toFixed(1).replace('.', ',') : '—', H.length ? [diff >= 0 ? 'up' : 'down', (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff).toFixed(1).replace('.', ',') + ' vs regiune'] : null),
+      tile('Cel mai bun scor', best || '—'), tile('Titluri', st.titles), tile('Premii', (S.awards || []).length));
+    const lab = (h) => { const m = /Meet #(\d)/.exec(h.name); return m ? 'M' + m[1] : /regional/i.test(h.name) ? 'REG' : /naționa/i.test(h.name) ? 'NAT' : 'MOND'; };
+    const Wc = 560, Hc = 200, pad = { l: 34, r: 10, t: 14, b: 26 }, iw = Wc - pad.l - pad.r, ih = Hc - pad.t - pad.b;
+    function bars() {
+      const d = H.slice(-8), mx = Math.max(10, ...d.map((h) => Math.max(h.myAvg, h.avg))) * 1.1, gw = iw / Math.max(d.length, 1);
+      return sv('svg', { viewBox: '0 0 ' + Wc + ' ' + Hc, class: 'schart' }, [0, .5, 1].map((f) => [sv('line', { x1: pad.l, x2: Wc - pad.r, y1: pad.t + ih * (1 - f), y2: pad.t + ih * (1 - f), class: 'gl' }), sv('text', { x: pad.l - 6, y: pad.t + ih * (1 - f) + 4, class: 'ax', 'text-anchor': 'end' }, Math.round(mx * f))]),
+        d.map((h, i) => { const x = pad.l + gw * i + gw * .15, bw = gw * .3; return [sv('rect', { x, y: pad.t + ih * (1 - h.myAvg / mx), width: bw, height: ih * h.myAvg / mx, style: 'fill:var(--pink)', rx: 3 }), sv('rect', { x: x + bw + 3, y: pad.t + ih * (1 - h.avg / mx), width: bw, height: ih * h.avg / mx, class: 'reg', rx: 3 }), sv('text', { x: pad.l + gw * i + gw / 2, y: Hc - 8, class: 'ax', 'text-anchor': 'middle' }, lab(h))]; }));
+    }
+    function ranks() {
+      const d = H.slice(-8), mx = Math.max(6, ...d.map((h) => h.rank)), gw = iw / Math.max(d.length - 1, 1), py = (r) => pad.t + ih * ((r - 1) / (mx - 1)), pts = d.map((h, i) => [pad.l + (d.length > 1 ? gw * i : iw / 2), py(h.rank)]);
+      return sv('svg', { viewBox: '0 0 ' + Wc + ' ' + Hc, class: 'schart' }, [1, Math.ceil(mx / 2), mx].map((r) => [sv('line', { x1: pad.l, x2: Wc - pad.r, y1: py(r), y2: py(r), class: 'gl' }), sv('text', { x: pad.l - 6, y: py(r) + 4, class: 'ax', 'text-anchor': 'end' }, '#' + r)]),
+        sv('polyline', { points: pts.map((p) => p.join(',')).join(' '), class: 'ln' }), pts.map((p, i) => [sv('circle', { cx: p[0], cy: p[1], r: 5, style: 'fill:var(--pink)' }), sv('text', { x: p[0], y: Hc - 8, class: 'ax', 'text-anchor': 'middle' }, lab(d[i]))]));
+    }
+    function trend() {
+      const d = M.slice(-40), mx = Math.max(20, ...d.map((m) => m.my)) * 1.1, step = iw / Math.max(d.length - 1, 1), py = (v) => pad.t + ih * (1 - v / mx), ma = d.map((_, i) => { const w = d.slice(Math.max(0, i - 4), i + 1); return avg(w.map((m) => m.my)); });
+      return sv('svg', { viewBox: '0 0 ' + Wc + ' ' + Hc, class: 'schart' }, [0, .5, 1].map((f) => [sv('line', { x1: pad.l, x2: Wc - pad.r, y1: pad.t + ih * (1 - f), y2: pad.t + ih * (1 - f), class: 'gl' }), sv('text', { x: pad.l - 6, y: pad.t + ih * (1 - f) + 4, class: 'ax', 'text-anchor': 'end' }, Math.round(mx * f))]),
+        d.map((m, i) => sv('circle', { cx: pad.l + step * i, cy: py(m.my), r: 3.2, class: m.w === 1 ? 'win' : m.w === .5 ? 'tie' : 'loss' })), sv('polyline', { points: ma.map((v, i) => (pad.l + step * i) + ',' + py(v)).join(' '), class: 'ln' }));
+    }
+    const card = (title, sub, chart, legend) => el('div', { class: 'schart-card' }, el('b', { text: title }), el('small', { text: sub }), chart, legend ? el('div', { class: 'slegend' }, legend) : null);
+    return el('div', { class: 'stats' }, tiles,
+      H.length ? [card('Scor mediu pe eveniment', 'Tu față de media celorlalte echipe din eveniment', bars(), [el('span', null, el('i', { style: 'background:var(--pink)' }), 'Tu'), el('span', null, el('i', { class: 'regc' }), 'Media regiunii')]),
+        card('Locul la evenimente', 'Mai sus = mai bine (#1 e primul)', ranks())] : el('p', { class: 'cr-note', text: 'Joacă un eveniment ca să apară graficele pe eveniment.' }),
+      M.length ? card('Scorul pe meciuri', 'Ultimele ' + Math.min(40, M.length) + ' meciuri: verde victorie, roșu înfrângere, linia = media pe 5 meciuri', trend()) : null,
+      S.awards && S.awards.length ? el('div', { class: 'schart-card' }, el('b', { text: 'Premii' }), el('div', { class: 'awd' }, S.awards.map((a) => el('span', { text: '🏆 ' + a.award + ' · sezon ' + a.season })))) : null);
+  }
+  function tStats() { return el('div', { class: 'ftc shopw' }, el('div', { class: 'shop-head' }, el('div', null, el('h2', { text: '📈 Statistici' }), el('p', { text: 'Rezultatele tale pe sezon și comparația cu regiunea.' }))), el('div', { style: 'padding:16px' }, statsView())); }
 
   // ---------- popups ----------
   function showMatchResult() {
@@ -832,13 +1347,14 @@
       el('div', { class: 'vs' }, el('div', { class: 'side' }, el('b', { text: lm.my }), el('small', { text: S.team.name })), el('div', { class: 'mid', text: '–' }), el('div', { class: 'side r' }, el('b', { text: lm.op }), el('small', { text: lm.opp || 'Adversar' }))),
       lm.kind === 'qual' ? el('p', { class: 'cr-sub', text: 'Alianță cu ' + lm.partner + '. +' + lm.rp + ' puncte de clasament' + (lm.tags.length ? ' (' + lm.tags.join(', ') + ')' : '') + '.' + (lm.po === 'start' ? ' Calificările s-au încheiat: intri în playoff!' : '') }) : lm.kind === 'playoff' ? el('p', { class: 'cr-sub', text: lm.eventDone ? (lm.win ? 'Ai câștigat finala!' : 'Playoff încheiat.') : 'Treci în finală!' }) : el('p', { class: 'cr-sub', text: '+' + eur(lm.money) + ' din antrenament.' }),
       lm.sponsors.length ? el('p', { class: 'cr-sub', style: 'color:var(--ok)', text: 'Contract îndeplinit: ' + lm.sponsors.join(', ') + '!' }) : null,
-      el('div', { class: 'cr-row' }, el('button', { class: 'cr-btn pri', text: 'Continuă', onclick: () => { mm.close(); render(); } })));
+      el('div', { class: 'cr-row' }, el('button', { class: 'cr-btn pri', text: 'Continuă', onclick: () => { mm.close(); render(); } }), lm.replay ? el('button', { class: 'cr-btn', text: '▶ Vezi replay-ul', onclick: openReplay }) : null));
     const mm = modal(box);
   }
   function showSummary() {
     const sm = S.summary; if (!sm) return;
     const box = el('div', null, el('div', { class: 'cr-eyebrow', text: sm.name }), el('h2', { text: sm.rank === 1 ? 'Ai câștigat evenimentul!' : 'Ai terminat pe locul ' + sm.rank }),
       el('p', { class: 'cr-sub', text: '+' + eur(sm.prize) + ' premiu și +' + sm.rep + ' reputație.' + (sm.sponsors.length ? ' Contracte îndeplinite: ' + sm.sponsors.join(', ') + '.' : '') }),
+      sm.awards && sm.awards.length ? el('p', { class: 'cr-sub', style: 'color:var(--gold)', text: 'Premii câștigate: ' + sm.awards.map((a) => a.ic + ' ' + a.name).join(' · ') + '.' }) : null,
       sm.board ? el('p', { class: 'cr-sub', text: 'Top 10 meciuri în regiune: locul ' + sm.board.rank + ' din ' + sm.board.of + ' (' + sm.board.sum + ' puncte).' }) : null,
       sm.qualified ? el('p', { class: 'cr-sub', style: 'color:var(--ok)', text: 'Te-ai calificat la: ' + sm.qualified + '!' }) : sm.needQual ? el('p', { class: 'cr-sub', style: 'color:#ff8a96', text: 'Nu te-ai calificat mai departe (trebuia un loc în top ' + sm.needQual + '). Sezonul se termină aici.' }) : null,
       el('p', { class: 'cr-note', text: 'Clasamentul de după calificări:' }), standings(sm.sorted),
@@ -869,7 +1385,7 @@
     if (!Array.isArray(S.autos)) S.autos = [{ name: 'Tragere în stup', pts: clonePts(PRESETS['Tragere în stup']) }, { name: 'Tragere și mingi din grădină', pts: clonePts(PRESETS['Tragere și mingi din grădină']) }, { name: 'Auto 3', pts: [] }];
     if (typeof S.autoSel !== 'number') S.autoSel = -1;
   }
-  let edSlot = 0, edSel = -1, edPlay = null, edCv = null, edMode = 'add', edSnap = false, edUndo = [], edRedo = [], edLast = '', edKeysBound = false, edHover = null, edPick = false;
+  let edGhost = false, edSlot = 0, edSel = -1, edPlay = null, edCv = null, edMode = 'add', edSnap = false, edUndo = [], edRedo = [], edLast = '', edKeysBound = false, edHover = null, edPick = false;
   const ACT_LABEL = { shoot: 'Trage în stup', intake: 'Intake', deposit: 'Depune în floare', take: 'Ia mingi din floare', wait: 'Așteaptă' };
   const ACT_TAG = { shoot: 'T', intake: 'I', deposit: 'D', take: 'L', wait: 'W' };
   const ACT_SHORT = { shoot: 'Trage', intake: 'Intake', deposit: 'Depune', take: 'Ia mingi', wait: 'Așteaptă' };
@@ -1007,6 +1523,10 @@
     ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 4 * k; ctx.strokeRect(2, 2, W - 4, W - 4);
     ctx.save(); ctx.strokeStyle = 'rgba(255,77,94,.7)'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.strokeRect(X(FLD.START.x - R - 1.5), X(FLD.START.y - R - 1.5), X(R * 2 + 3), X(R * 2 + 3)); ctx.restore(); drawBot(FLD.START.x, FLD.START.y, -Math.PI / 2, '#ff4d5e', .9, false);
     ctx.fillStyle = '#ff8a96'; ctx.font = fs(62, 800); ctx.fillText('START', X(FLD.START.x), X(FLD.START.y) + X(R + 4.5));
+    if (edGhost && S.autoSel >= 0 && S.autoSel !== edSlot && S.autos[S.autoSel] && S.autos[S.autoSel].pts.length) {   // the route used in matches, faint, for comparison
+      const gp = S.autos[S.autoSel].pts; ctx.save(); ctx.strokeStyle = 'rgba(154,107,255,.8)'; ctx.setLineDash([7, 6]); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(X(FLD.START.x), X(FLD.START.y)); gp.forEach((q) => ctx.lineTo(X(q.x), X(q.y))); ctx.stroke(); ctx.setLineDash([]);
+      gp.forEach((q) => { ctx.fillStyle = 'rgba(154,107,255,.9)'; ctx.beginPath(); ctx.arc(X(q.x), X(q.y), X(1.9), 0, 6.283); ctx.fill(); }); ctx.restore();
+    }
     // path: glow + line + direction arrows
     let px = FLD.START.x, py = FLD.START.y; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     pts.forEach((p) => {
@@ -1148,6 +1668,21 @@
       });
     }
   }
+  function autoCode() { const A = S.autos[edSlot]; return 'RBA1:' + btoa(unescape(encodeURIComponent(JSON.stringify({ n: A.name, p: A.pts })))); }
+  async function shareAuto() {
+    if (!curPts().length) return toast('Traseul e gol.'); const code = autoCode();
+    try { await navigator.clipboard.writeText(code); toast('Cod copiat. Trimite-l prietenilor.'); } catch (e) { prompt('Copiază codul traseului:', code); }
+  }
+  function importAuto() {
+    const c = prompt('Lipește codul traseului:'); if (!c) return;
+    try {
+      const j = JSON.parse(decodeURIComponent(escape(atob(c.trim().replace(/^RBA1:/, ''))))); if (!Array.isArray(j.p)) throw new Error('format');
+      const num = (v, d) => (Number.isFinite(+v) ? +v : d), pts = j.p.slice(0, 14).map((q) => ({ x: clamp(num(q.x, 72), FLD.R, FLD.IN - FLD.R), y: clamp(num(q.y, 72), FLD.R, FLD.IN - FLD.R), h: ['auto', 'cell', 'flower'].includes(q.h) ? q.h : (Number.isFinite(+q.h) ? ((Math.round(+q.h) % 360) + 360) % 360 : 'auto'),
+        act: (Array.isArray(q.act) ? q.act : []).filter((a) => a && ACT_LABEL[a.t]).slice(0, 6).map((a) => ({ t: a.t, n: clamp(Math.round(num(a.n, 1)), 1, 4), s: clamp(num(a.s, 1), 0.5, 8) })) }));
+      if (!pts.length) throw new Error('empty');
+      S.autos[edSlot] = { name: String(j.n || 'Importat').slice(0, 28), pts }; edSel = -1; stopPlay(); histReset(); save(); render(); toast('Traseu importat în Auto ' + (edSlot + 1) + '.');
+    } catch (e) { toast('Cod invalid.'); }
+  }
   function autoSelect() {
     const sel = el('select', { class: 'cr-in cr-sel', onchange: (e) => { S.autoSel = +e.target.value; save(); toast(S.autoSel < 0 ? 'Autonom oprit: conduci tu de la început.' : 'La meci folosești: ' + S.autos[S.autoSel].name); } },
       el('option', { value: -1, text: 'Manual (conduc eu)', selected: S.autoSel < 0 }), S.autos.map((a, i) => el('option', { value: i, text: a.name + (a.pts.length ? ' · ' + a.pts.length + ' puncte' : ' · gol'), selected: S.autoSel === i })));
@@ -1203,7 +1738,8 @@
         el('div', null, el('small', { text: 'Precizie (după electronică)' }), el('b', { text: '±' + Math.round(tl.err) + ' in' }))),
       tl.bad ? el('p', { class: 'cr-note', style: 'color:var(--gold)', text: tl.bad + ' segment' + (tl.bad > 1 ? 'e trec' : ' trece') + ' prin stup (linie roșie). Robotul le ocolește singur, dar pierde timp.' }) : null,
       over ? el('p', { class: 'cr-note', style: 'color:#ff8a96', text: 'Traseul durează mai mult de 30 s: ultimele puncte nu se vor executa.' }) : null,
-      el('div', { class: 'cr-row', style: 'margin:10px 0 6px' }, el('button', { class: 'cr-btn pri big', disabled: !A.pts.length, text: '▶ Testează pe terenul 3D', onclick: testAuto3d })),
+      el('div', { class: 'cr-row', style: 'margin:10px 0 6px' }, el('button', { class: 'cr-btn pri big', disabled: !A.pts.length || !S.field, text: S.field ? '▶ Testează pe terenul 3D' : '🔒 Testul cere teren de antrenament', onclick: testAuto3d })),
+      !S.field ? el('div', { class: 'fld ' + (S.fieldOrder ? 'wait' : 'no') }, el('span', { class: 'fi', text: '🟩' }), el('div', null, el('b', { text: S.fieldOrder ? 'Terenul ajunge în săpt. ' + S.fieldOrder.ready : 'Nu ai teren de antrenament' }), el('small', { text: 'Poți desena traseul și îl vezi în previzualizare, dar ca să-l testezi pe terenul 3D trebuie să-ți vină terenul.' })), !S.fieldOrder ? el('button', { class: 'cr-btn sm pri', text: 'Comandă terenul', onclick: () => openPhone('shop') }) : null) : null,
       el('div', { class: 'cr-row', style: 'gap:14px' },
         el('div', { class: 'ap-seg' }, ['red', 'blue'].map((al) => el('button', { class: atAl === al ? 'on ' + al : al, onclick: () => { S.atAl = al; save(); renderAutoPanel(); } }, al === 'red' ? 'Alianța roșie' : 'Alianța albastră'))),
         el('label', { class: 'ap-switch', style: 'margin:0' }, el('input', { type: 'checkbox', checked: !!S.atOpp, onchange: (e) => { S.atOpp = e.target.checked; save(); } }), el('span', { text: 'Cu adversar AI' }))),
@@ -1211,6 +1747,7 @@
     ].filter(Boolean));
   }
   function testAuto3d() {
+    if (!S.field) return toast('Ai nevoie de teren de antrenament ca să testezi autonomul.');
     const A = S.autos[edSlot]; if (!A.pts.length) return toast('Adaugă mai întâi puncte pe teren.');
     const alliance = S.atAl === 'blue' ? 'blue' : 'red';
     const payload = { id: 'autotest-' + Date.now(), type: 'autotest', label: 'Test autonom · ' + A.name, alliance, robot: canTurret() ? S.type : 'strafe', mods: modsOf(S), team: S.team, opp: { name: 'Adversar', skill: 0.4, passive: !S.atOpp }, auto: { name: A.name, pts: alliance === 'blue' ? A.pts.map(mirrorPt) : clonePts(A.pts) }, ts: Date.now() };
@@ -1224,9 +1761,11 @@
     const tb = el('div', { class: 'ap-toolbar' },
       el('div', { class: 'ap-seg' }, [['add', '➕ Adaugă puncte'], ['move', '✋ Doar mută']].map(([m, t]) => el('button', { class: edMode === m ? 'on pink' : '', onclick: (e) => { edMode = m; [...e.target.parentNode.children].forEach((b) => b.classList.remove('on', 'pink')); e.target.classList.add('on', 'pink'); }, title: m === 'add' ? 'Apasă pe teren ca să pui puncte' : 'Apăsările pe teren nu mai adaugă puncte' }, t))),
       el('label', { class: 'ap-switch', style: 'margin:0', title: 'Punctele se lipesc de o grilă de 3 in' }, el('input', { type: 'checkbox', checked: edSnap, onchange: (e) => { edSnap = e.target.checked; drawEditor(); } }), el('span', { text: 'Grilă' })),
+      el('label', { class: 'ap-switch', style: 'margin:0', title: 'Arată traseul activ la meciuri, estompat' }, el('input', { type: 'checkbox', checked: edGhost, onchange: (e) => { edGhost = e.target.checked; drawEditor(); } }), el('span', { text: 'Fantomă' })),
       el('span', { style: 'flex:1' }),
       el('button', { class: 'ap-tool', title: 'Anulează (Ctrl+Z)', onclick: undoEd }, '↶'), el('button', { class: 'ap-tool', title: 'Refă (Ctrl+Y)', onclick: redoEd }, '↷'),
-      el('button', { class: 'ap-tool', title: 'Șterge punctul selectat (Delete)', onclick: () => { const pts = curPts(); if (edSel < 0 || !pts[edSel]) return toast('Selectează întâi un punct.'); pts.splice(edSel, 1); edSel = Math.min(edSel, pts.length - 1); stopPlay(); commit(); refreshAll(); } }, '🗑'));
+      el('button', { class: 'ap-tool', title: 'Șterge punctul selectat (Delete)', onclick: () => { const pts = curPts(); if (edSel < 0 || !pts[edSel]) return toast('Selectează întâi un punct.'); pts.splice(edSel, 1); edSel = Math.min(edSel, pts.length - 1); stopPlay(); commit(); refreshAll(); } }, '🗑'),
+      el('button', { class: 'ap-tool', title: 'Copiază codul traseului (îl poți trimite altcuiva)', onclick: shareAuto }, '🔗'), el('button', { class: 'ap-tool', title: 'Lipește un cod de traseu', onclick: importAuto }, '📥'));
     const tlrow = el('div', { class: 'ap-tlrow' }, el('button', { class: 'ap-tool', id: 'apPlayBtn', title: 'Previzualizare', onclick: togglePlay }, '▶'),
       el('input', { type: 'range', id: 'apScrub', min: 0, max: 1000, value: 0, oninput: (e) => { if (!curPts().length) return; ensurePlay(); edPlay.playing = false; edPlay.t = (+e.target.value / 1000) * edPlay.tl.total; drawEditor(); updateTlUi(); } }), el('span', { id: 'apTime', text: '0,0 / 0,0 s' }));
     const legend = el('div', { class: 'ap-legend' },
@@ -1249,16 +1788,17 @@
     if (!S || !S.region) { ['phone', 'phoneBd'].forEach((i) => { const n = document.getElementById(i); if (n) n.remove(); }); }
     if (!S) { app.append(welcome()); return; }
     if (!S.region) { app.append(pickView()); return; }
-    ensureAutos();
-    const views = { hub: hubView, robot: robotView, auto: autoView, sponsors: sponsorsView, event: eventView, history: historyView };
-    app.append(header(), nav(), el('main', { class: 'cr-main' }, pendingBanner(), views[tab]()));
+    ensureAutos(); applySeasonTheme();
+    const views = { hub: hubView, robot: robotView, auto: autoView, team: teamView, sponsors: sponsorsView, event: eventView, history: historyView };
+    if (!views[tab]) tab = 'hub';
+    app.append(el('div', { class: 'cr-shell' }, sidebar(), el('div', { class: 'cr-body' }, topbar(), el('main', { class: 'cr-main' }, pendingBanner(), views[tab]()))));
     if (S.lastMatch) showMatchResult(); else if (S.summary) showSummary(); else if (S.card != null) showCard();
     ensurePhone(); if (S.alertNew) { S.alertNew = false; alertPhone(); } else paintPhone();
   }
 
   // ---------- boot: pick up a finished match from the game ----------
   S = load(); migrate();
-  { const q = location.search.match(/[?&]tab=(\w+)/); if (q && ['hub', 'robot', 'auto', 'sponsors', 'event', 'history'].includes(q[1])) tab = q[1]; }
+  { const q = location.search.match(/[?&]tab=(\w+)/); if (q && ['hub', 'robot', 'auto', 'team', 'sponsors', 'event', 'history'].includes(q[1])) tab = q[1]; }
   edSlot = clamp((S && S.edSlot) | 0, 0, 2);
   if (S) {
     let res = null; try { res = JSON.parse(localStorage.getItem(RESULT_KEY) || 'null'); } catch (e) { }

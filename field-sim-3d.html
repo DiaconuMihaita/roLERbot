@@ -509,7 +509,7 @@
       H.cell.forEach((e) => G.balls.push({ x: c.x + out * 5, y: c.y + (Math.random() - .5) * 10, vx: out * (26 + Math.random() * 30), vy: (Math.random() - .5) * 46, z: 16 + Math.random() * 6, vz: 30 + Math.random() * 50, st: 'spill', c: e, life: 0 }));
       H.cell = []; H.up = 1 - H.up; H.tips++; H.flash = 1; H.v += (H.up ? 1 : -1) * 2.2;
       G.rings.push({ x: c.x, y: c.y, t: 0, c: al }); G.shake = Math.max(G.shake, 0.5);
-      pop(c.x, c.y, '+' + PT.tip + ' HIVE TIP', al);
+      pop(c.x, c.y, '+' + PT.tip + ' HIVE TIP', al); if (G.rp) G.rp.ev.push([Math.round(G.t * 10) / 10, 'tip', al]);
       if (G.nq[al] > 0) G.release.push({ al, at: G.t + 1.0 });
     }
     function stepBalls(dt) {
@@ -785,7 +785,7 @@
           if (hasN) G.flowers.forEach((f) => { if (f.stack.length >= 7) return; const d = Math.hypot(f.x - r.x, f.y - r.y) + (owned(f) ? 40 : 0) + (r.slot ? (f.x < 72 ? 0 : 25) : 0); if (d < bd) { bd = d; fl = f; } });
           else G.flowers.forEach((f) => { if (!owned(f) || f.stack.length >= 7) return; const d = Math.hypot(f.x - r.x, f.y - r.y); if (d < bd) { bd = d; fl = f; } });
           if (fl) { r.role = 'flower'; r.fl = fl; const p = standNearFlower(fl); r.tx = p.x; r.ty = p.y; } else { r.role = 'launch'; }
-        } else if (r.hold.length >= 3 || (r.hold.length >= 1 && !collect())) r.role = 'launch';
+        } else if (r.hold.length >= (r.pol === 'shoot' ? 1 : r.pol === 'collect' ? 4 : 3) || (r.hold.length >= 1 && !collect())) r.role = 'launch';
         else if (!collect()) { r.role = 'launch'; }
         if (r.role === 'launch') { const c = upCell(al), out = c.x < 72 ? -1 : 1; r.tx = clamp(c.x + out * 27, R + 2, IN - R - 2); r.ty = c.y; }
       }
@@ -837,6 +837,7 @@
       G.fx.forEach((p) => { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }); G.fx = G.fx.filter((p) => p.life > 0);
       G.pops.forEach((p) => { p.t += dt; p.y -= 12 * dt; }); G.pops = G.pops.filter((p) => p.t < 1.3);
       eval_();
+      if (CAREER && CAREER.type !== 'autotest') { const Rp = G.rp || (G.rp = { s: [], sc: [], ev: [], acc: 0 }); Rp.acc += dt; if (Rp.acc >= 0.5) { Rp.acc -= 0.5; Rp.s.push(G.robots.map((r) => [Math.round(r.x * 10) / 10, Math.round(r.y * 10) / 10, Math.round(r.a * 100) / 100])); Rp.sc.push([G.score.red, G.score.blue]); } }
       if (!G.free && G.t >= MATCH_T) endMatch();
       if (CAREER && CAREER.type === 'autotest') autotestTick();
     }
@@ -2316,7 +2317,7 @@
       me.mods = CAREER.mods; me.pname = String(CAREER.team.name).slice(0, 16); me.num = String(CAREER.team.num);
       if (CAREER.auto && CAREER.auto.pts && CAREER.auto.pts.length) me.auto = { name: String(CAREER.auto.name || 'Autonom').slice(0, 18), pts: CAREER.auto.pts.map((p) => ({ x: +p.x, y: +p.y, h: p.h, act: (p.act || []).map((a) => Object.assign({}, a)) })), i: 0, ph: 'move', ai: 0, at: 0, wt: 0, t: 0, ex: 0, ey: 0, sig: 1.1 / (CAREER.mods.assist || 1), off: false, s0: 0, h0: 0, c0: 0 };
       const setAI = (r, t) => { if (!r || !t) return; r.passive = !!t.passive; r.skill = clamp(+t.skill || 0.5, 0, 1); r.pname = String(t.name).replace(' (antrenament)', '').slice(0, 16); if (t.num != null) r.num = String(t.num); };
-      if (two) { setAI(G.robots[1], CAREER.partner); setAI(G.robots[2], CAREER.opps[0]); setAI(G.robots[3], CAREER.opps[1]); } else setAI(op, CAREER.opp);
+      if (two) { setAI(G.robots[1], CAREER.partner); setAI(G.robots[2], CAREER.opps[0]); setAI(G.robots[3], CAREER.opps[1]); if (CAREER.plan === 'shoot' || CAREER.plan === 'collect') G.robots[1].pol = CAREER.plan; } else setAI(op, CAREER.opp);
     }
 
     // ---- autonomous period: the robot follows the path drawn in the career editor ----
@@ -2392,7 +2393,8 @@
         return;
       }
       const my = cfg.alliance, op = OPP[my], me = G.robots[0], P = G.parts[my] || {};
-      try { localStorage.setItem('rbCareerResult', JSON.stringify({ id: CAREER.id, my: G.score[my], opp: G.score[op], tips: G.hive[my].tips, lp: P.lp || 0, flowers: P.flower || 0, shots: me.shots, hits: me.hits, ts: Date.now() })); } catch (e) { }
+      const rep = G.rp && G.rp.s.length ? { s: G.rp.s, sc: G.rp.sc, ev: G.rp.ev, als: G.robots.map((r) => r.al), names: G.robots.map((r) => r.pname || ''), me: my } : null;
+      try { localStorage.setItem('rbCareerResult', JSON.stringify({ id: CAREER.id, my: G.score[my], opp: G.score[op], tips: G.hive[my].tips, lp: P.lp || 0, flowers: P.flower || 0, shots: me.shots, hits: me.hits, rep, ts: Date.now() })); } catch (e) { }
       $('btnAgain').style.display = 'none'; const bm = $('btnMenu'); bm.textContent = 'Continuă cariera'; bm.onclick = () => { location.href = 'field-sim-3d.html?page=career'; };
       $('endNote').innerHTML = '<b style="color:var(--g-pink-hi)">' + CAREER.label + '</b><br>Rezultatul se salvează în carieră.';
     }
