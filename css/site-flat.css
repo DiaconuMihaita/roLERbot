@@ -1,0 +1,268 @@
+/* roLERbot · site (index + blog): limbaj „bold editorial”
+   Luat din sweet-tape.com (blocuri mari de culoare, litere uriașe, benzi înclinate), ridetorio.com (margini zimțate, butoane cu contur) și
+   nickho-motorsports.nl (hero cinematic, cifre uriașe, linii verticale). Se încarcă după modern.css și îi suprascrie tokenii.
+   Fără sticlă și fără blur; mișcarea folosește doar transform/opacity. */
+
+:root {
+  --ink: #f4f1ea; --ink-dim: rgba(244, 241, 234, .72); --mute: rgba(244, 241, 234, .55);
+  --line: rgba(244, 241, 234, .16); --line-strong: rgba(244, 241, 234, .4);
+  --bg: #0b0b0d; --bg-2: #141417; --bg-3: #1d1d21;
+  --pink: #f9056c; --pink-hi: #ff4d94; --pink-lo: #7a0334;
+  --sun: #f4f1ea; --cream: #f4f1ea; --night: #0b0b0d; --hard: #f4f1ea;
+  --f-display: "Anton", "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --f-head: "Bricolage Grotesque", system-ui, sans-serif;
+  --nav-h: 76px;
+}
+body { background: var(--bg); }
+body::after { opacity: .045; }
+::selection { background: #f9056c; color: #fff; }
+
+/* ───────── culori de bloc: tokenii se schimbă singuri, tot ce e înăuntru rămâne lizibil ───────── */
+.blk-hot, .blk-cream { --ink: #0b0b0d; --ink-dim: rgba(11, 11, 13, .75); --mute: rgba(11, 11, 13, .6); --line: rgba(11, 11, 13, .22); --line-strong: rgba(11, 11, 13, .55); --hard: #0b0b0d; color: #0b0b0d; }
+.blk-hot { --pink: #0b0b0d; --pink-hi: #0b0b0d; --pink-lo: #0b0b0d; --bg-2: #ff4d94; --bg-3: #ff6aa7; background: #f9056c; --blk: #f9056c; }
+.blk-cream { --pink: #f9056c; --pink-hi: #c20054; --pink-lo: #7a0334; --bg-2: #fff; --bg-3: #ebe6da; background: var(--cream); --blk: #f4f1ea; }
+.blk-ink { background: var(--bg); --blk: #0b0b0d; }
+.blk-hot .mono-label, .blk-cream .mono-label { color: #0b0b0d; }
+.blk-cream .mono-label { color: #c20054; }
+.section--bone { background: var(--cream); color: #0b0b0d; }
+
+/* margini: zimțate (ridetorio) și curbe (sweet-tape), pictate în culoarea secțiunii care vine */
+.edge-zig, .edge-curve, .edge-wave { position: relative; }
+.edge-zig::before { content: ''; position: absolute; left: 0; right: 0; top: -27px; height: 28px; z-index: 2; pointer-events: none; background: var(--blk);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='28'%3E%3Cpath d='M0 28 28 0 56 28z'/%3E%3C/svg%3E") repeat-x bottom / 56px 28px;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='28'%3E%3Cpath d='M0 28 28 0 56 28z'/%3E%3C/svg%3E") repeat-x bottom / 56px 28px; }
+.edge-curve::before { content: ''; position: absolute; left: -2%; right: -2%; top: -1px; height: clamp(40px, 6vw, 90px); z-index: 2; pointer-events: none; transform: translateY(-99%); background: var(--blk); border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+.section { padding-block: clamp(100px, 14vw, 200px); }
+
+/* ───────── titluri: Anton uriaș, majuscule ───────── */
+.h-xl, .h-lg, .hero-title, .footer-talk, .tl-end a, .menu-sheet a, .modal-title, .tl-year, .stat-n, .footer-mark, .marquee-item, .season-y, .hs b, .hud .clock {
+  font-family: var(--f-display); font-weight: 400; text-transform: uppercase; letter-spacing: .005em; }
+.h-lg { font-size: clamp(48px, 8vw, 128px); line-height: .92; }
+.sec-head { gap: 18px; }
+.mono-label { font-weight: 500; letter-spacing: .16em; }
+.mono-label::before { height: 3px; width: 34px; }
+.sec-index, .tl-date, .post-date, .stat-l, .footer h4 { letter-spacing: .14em; }
+
+/* ───────── butoane: umbră dură ───────── */
+.btn { background: var(--pink); color: #fff; box-shadow: 4px 4px 0 var(--hard); font-family: var(--f-head); font-weight: 800; transition: transform .2s cubic-bezier(.34, 1.56, .5, 1), box-shadow .2s; }
+.btn::before { display: none; }
+.btn:hover { color: #fff; transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--hard); }
+.btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--hard); }
+.btn .btn-dot { background: #0b0b0d; color: #fff; }
+.btn:hover .btn-dot { background: #0b0b0d; color: #fff; transform: rotate(-45deg); }
+.btn--ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+.btn--ghost:hover { background: var(--ink); color: var(--bg); box-shadow: 4px 4px 0 var(--pink); }
+.btn--ghost .btn-dot { background: var(--pink); color: #fff; }
+.blk-hot .btn { background: #0b0b0d; color: var(--cream); } .blk-hot .btn .btn-dot { background: var(--cream); color: #0b0b0d; }
+.blk-cream .btn--ghost:hover { background: #0b0b0d; color: #fff; }
+.section--bone .btn--ghost { color: #0b0b0d; box-shadow: inset 0 0 0 2px #0b0b0d; }
+.section--bone .btn--ghost:hover { color: #fff; background: #0b0b0d; }
+
+/* ───────── navigare: pastilă plată cu contur (ridetorio) ───────── */
+.nav-bar { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: 0 0 0 2px var(--cream), 4px 4px 0 var(--pink); padding: 6px 6px 6px 8px; }
+.nav-logo { box-shadow: 0 0 0 2px var(--cream); }
+.nav-links a { font-family: var(--f-head); font-weight: 700; color: var(--cream); font-size: 14px; text-transform: uppercase; letter-spacing: .04em; }
+.nav-links a:hover, .nav-links a.is-active { color: #0b0b0d; }
+.nav-pill { background: var(--cream); box-shadow: none; }
+.lang { background: none; box-shadow: inset 0 0 0 2px rgba(244, 241, 234, .3); }
+.lang::before { background: var(--pink); }
+.lang button { color: var(--cream); font-weight: 600; }
+.nav-toggle { background: var(--pink); }
+.nav-toggle span { background: #fff; }
+.menu-sheet { background: var(--pink); }
+.menu-sheet a { color: #0b0b0d; font-size: clamp(56px, 15vw, 128px); line-height: .95; }
+.menu-sheet a:hover { color: var(--cream); }
+.menu-sheet .menu-foot { color: rgba(11, 11, 13, .7); font-weight: 600; }
+.scroll-progress { background: var(--pink); height: 4px; }
+
+/* ───────── hero (nickho): cinematic, linii verticale, cifre uriașe, statistici ───────── */
+.hero-shade { background: linear-gradient(180deg, rgba(11, 11, 13, .7) 0%, rgba(11, 11, 13, .1) 38%, rgba(11, 11, 13, .88) 100%); }
+.hero-tint { background: #f9056c; mix-blend-mode: multiply; opacity: .35; }
+.hero-grid { opacity: 1; background-image: linear-gradient(90deg, rgba(244, 241, 234, .13) 1px, transparent 1px); background-size: calc(100% / 6) 100%; mask-image: none; -webkit-mask-image: none; }
+.hero-title { font-size: clamp(84px, min(21vw, 32svh * 1.6), 440px); line-height: .8; letter-spacing: .005em; margin-left: -.02em; color: var(--cream); }
+.hero-title .ch > i { background: none; color: var(--cream); -webkit-text-fill-color: var(--cream); transition: transform 1.1s cubic-bezier(.2, .7, .1, 1), color .25s; }
+.hero-title .ch.is-pink > i { color: var(--pink); -webkit-text-fill-color: var(--pink); }
+.js-split.in .ch:hover > i { transform: translateY(-.05em) rotate(-3deg); color: var(--cream); -webkit-text-fill-color: var(--cream); transition-duration: .25s, .2s; transition-delay: 0s; }
+.hero-lead { font-family: var(--f-head); font-weight: 700; max-width: 26ch; }
+.tag-pill { backdrop-filter: none; background: var(--sun); color: #0b0b0d; box-shadow: none; font-weight: 600; }
+.tag-pill::before { background: #0b0b0d; box-shadow: none; }
+.hero-stats { position: absolute; left: 0; right: 0; top: calc(var(--nav-h) + 84px); }
+.hero-stats .wrap { display: grid; gap: 22px; width: fit-content; margin-left: max(0px, calc((100vw - var(--maxw)) / 2)); }
+.hs { display: grid; grid-template-columns: auto 1fr; align-items: end; gap: 14px; }
+.hs b { font-size: clamp(34px, 4vw, 56px); line-height: .9; color: var(--cream); font-variant-numeric: tabular-nums; }
+.hs b sup { font-size: .5em; color: var(--pink); margin-left: 2px; vertical-align: top; }
+.hs span { padding-bottom: 4px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim); }
+.hud { color: var(--ink-dim); }
+.hud .phase::before { background: var(--pink); }
+.hud-bars i.f { background: var(--pink); }
+.sound-toggle { backdrop-filter: none; box-shadow: inset 0 0 0 2px var(--cream); }
+.sound-toggle:hover { background: var(--cream); color: #0b0b0d; }
+@media (max-width: 900px) { .hero-stats { top: calc(var(--nav-h) + 70px); } .hero-stats .wrap { gap: 14px; } .hero-grid { background-size: calc(100% / 3) 100%; } }
+@media (max-width: 700px) { .hero-stats { display: none; } }
+
+/* ───────── bandă înclinată (sweet-tape) ───────── */
+.marquee { z-index: 5; margin: -26px -4vw -26px; transform: rotate(-1.8deg); background: var(--sun); border: 0; box-shadow: 0 6px 0 #0b0b0d; }
+.marquee-item { color: #0b0b0d; font-size: clamp(30px, 4.4vw, 62px); padding-block: 18px; letter-spacing: .02em; }
+.marquee-item .star { color: var(--pink); }
+.marquee-item .o { color: transparent; -webkit-text-stroke: 1.5px #0b0b0d; }
+.marquee-track { animation-duration: 30s; }
+
+/* ───────── echipa (bloc roz) ───────── */
+#services { padding-top: clamp(140px, 17vw, 240px); }
+.team-copy p:first-child { font-family: var(--f-head); font-weight: 800; letter-spacing: -.03em; }
+.team-copy .highlight { color: var(--cream); background: #0b0b0d; padding: 0 .25em; border-radius: 6px; font-weight: 800; }
+.team-photo { border-radius: 24px; box-shadow: 0 0 0 3px #0b0b0d, 10px 10px 0 #0b0b0d; }
+.team-visual::before { display: none; }
+.team-badge-wrap { background: var(--sun); box-shadow: 0 0 0 3px #0b0b0d; }
+.team-badge-wrap svg text { fill: #0b0b0d; }
+.stats { border-top: 3px solid #0b0b0d; }
+.stat { border-right: 3px solid #0b0b0d; }
+.stat-n { font-size: clamp(64px, 10vw, 160px); line-height: .88; }
+.stat-n sup { color: var(--cream); }
+.stat-l { color: #0b0b0d; font-weight: 600; }
+
+/* ───────── sponsori (bloc crem, margine zimțată) ───────── */
+.sponsor { border-radius: 24px; background: #fff; box-shadow: 0 0 0 2px #0b0b0d, 6px 6px 0 #0b0b0d; transition: transform .25s cubic-bezier(.34, 1.56, .5, 1), box-shadow .25s; }
+.sponsor::after { background: var(--pink); }
+.sponsor:hover { box-shadow: 0 0 0 2px #0b0b0d, 10px 10px 0 #0b0b0d; }
+.sponsor-meta { color: #0b0b0d; font-weight: 600; }
+.sponsor:hover .sponsor-meta, .sponsor:hover .sponsor-num { color: #fff; }
+.sponsor:hover .arr { background: #fff; color: var(--pink); }
+.sponsor-num { color: #6b6773; }
+.sponsor-cta { background: var(--pink); box-shadow: 0 0 0 2px #0b0b0d, 6px 6px 0 #0b0b0d; }
+.sponsor-cta .t, .sponsor-cta .sponsor-meta { color: #fff; }
+.sponsor-cta:hover .t { color: #fff; }
+.sponsor-cta::after { background: #0b0b0d; }
+
+/* ───────── progres (bloc negru) ───────── */
+.tl-rail { background: rgba(244, 241, 234, .18); width: 4px; }
+.tl-rail i { background: var(--pink); box-shadow: none; }
+.tl-item::before { background: var(--bg); box-shadow: 0 0 0 3px var(--cream); }
+.tl-item.in::before { background: var(--pink); box-shadow: 0 0 0 3px #0b0b0d, 0 0 0 6px var(--pink); }
+.tl-year { -webkit-text-stroke: 2px rgba(244, 241, 234, .5); font-size: clamp(90px, 14vw, 220px); line-height: .8; }
+.tl-item.in .tl-year { color: var(--pink); }
+.tl-title { font-family: var(--f-display); font-weight: 400; text-transform: uppercase; letter-spacing: .01em; font-size: clamp(34px, 4.4vw, 68px); line-height: .95; }
+.tl-date { color: var(--pink-hi); font-weight: 600; }
+.tl-img { border-radius: 20px; box-shadow: 0 0 0 3px var(--cream), 8px 8px 0 var(--pink); }
+.tl-end a { font-size: clamp(60px, 11vw, 170px); line-height: .85; }
+.tl-end a:hover { color: var(--pink); }
+.tl-end a em { color: var(--pink); }
+
+/* ───────── blog (bloc galben) ───────── */
+#team { background: #f9056c !important; color: #0b0b0d; --ink: #0b0b0d; --ink-dim: rgba(11, 11, 13, .75); --mute: rgba(11, 11, 13, .6); --line: rgba(11, 11, 13, .22); --line-strong: rgba(11, 11, 13, .55); --pink: #0b0b0d; --pink-hi: #0b0b0d; --hard: #0b0b0d; --blk: #f9056c; }
+#team .mono-label { color: #0b0b0d; }
+#team .btn--ghost { color: #0b0b0d; }
+#team .btn--ghost:hover { background: #0b0b0d; color: #fff; }
+.rail-btn { box-shadow: inset 0 0 0 2px #0b0b0d; color: #0b0b0d; transition: transform .25s cubic-bezier(.34, 1.56, .5, 1), background .2s, color .2s; }
+.rail-btn:hover { background: #0b0b0d; color: #fff; box-shadow: none; transform: scale(1.1) rotate(-6deg); }
+.rail-bar { background: rgba(11, 11, 13, .22); height: 4px; }
+.rail-bar i { background: #0b0b0d; height: 4px; top: 0; }
+.post { background: var(--cream); color: #0b0b0d; border-radius: 26px; box-shadow: 0 0 0 3px #0b0b0d, 8px 8px 0 #0b0b0d; transition: transform .25s cubic-bezier(.34, 1.56, .5, 1), box-shadow .25s; }
+.post:hover { transform: translate(-3px, -5px); box-shadow: 0 0 0 3px #0b0b0d, 12px 13px 0 #0b0b0d; }
+.post-img::after { display: none; }
+.post-tag { background: #0b0b0d; color: #fff; font-weight: 600; }
+.post-n { font-family: var(--f-display); font-weight: 400; color: transparent; -webkit-text-stroke: 2px #fff; right: 16px; bottom: 4px; font-size: 90px; }
+.post-date { color: #5f5b66; }
+.post-title { font-family: var(--f-head); font-weight: 800; color: #0b0b0d; }
+.post-desc { color: #3b3840; }
+.blog-cta .btn--ghost { box-shadow: inset 0 0 0 2px #0b0b0d; }
+
+/* ───────── blog.html: hero + membri + sezoane ───────── */
+.hero--blog { background: var(--bg); }
+.hero--blog .hero-title { font-size: clamp(150px, 36vw, 620px); line-height: .76; }
+.paper { filter: drop-shadow(10px 12px 0 rgba(0, 0, 0, .6)); }
+.blog-page #team-members { background: #f9056c; color: #0b0b0d; --ink: #0b0b0d; --ink-dim: rgba(11, 11, 13, .75); --mute: rgba(11, 11, 13, .6); --line: rgba(11, 11, 13, .22); --line-strong: rgba(11, 11, 13, .55); --pink: #0b0b0d; --pink-hi: #0b0b0d; --blk: #f9056c; }
+.blog-page #team-members .mono-label { color: #0b0b0d; }
+.member { background: var(--cream); color: #0b0b0d; border-radius: 28px; box-shadow: 0 0 0 3px #0b0b0d, 8px 8px 0 #0b0b0d; transition: transform .25s cubic-bezier(.34, 1.56, .5, 1), box-shadow .25s; }
+.member:hover { transform: translate(-3px, -5px) rotate(-1.4deg); box-shadow: 0 0 0 3px #0b0b0d, 12px 13px 0 #0b0b0d; }
+.member-pic { background: var(--pink); }
+.member-pic::before { font-family: var(--f-display); font-weight: 400; color: rgba(11, 11, 13, .35); font-size: 96px; }
+.member-pic img { mix-blend-mode: normal; }
+.member-name { font-family: var(--f-head); font-weight: 800; color: #0b0b0d; }
+.member-dept { color: #c20054; font-weight: 600; }
+.blog-page #activities-section { background: var(--cream) !important; color: #0b0b0d; --ink: #0b0b0d; --ink-dim: rgba(11, 11, 13, .78); --mute: rgba(11, 11, 13, .6); --line: rgba(11, 11, 13, .25); --line-strong: rgba(11, 11, 13, .55); --pink: #f9056c; --pink-hi: #c20054; --blk: #f4f1ea; }
+.blog-page #activities-section .mono-label { color: #c20054; }
+.season { background: #fff; color: #0b0b0d; border-radius: 30px; box-shadow: 0 0 0 3px #0b0b0d, 8px 8px 0 #0b0b0d; transition: transform .25s cubic-bezier(.34, 1.56, .5, 1), box-shadow .25s; }
+.season:hover, .season:focus-visible { transform: translate(-3px, -6px); box-shadow: 0 0 0 3px #0b0b0d, 13px 14px 0 #0b0b0d; }
+.season-pic { background: #f9056c; }
+.season-n { font-family: var(--f-display); font-weight: 400; color: rgba(11, 11, 13, .35); font-size: 72px; }
+.season-y { color: #0b0b0d; font-size: clamp(40px, 4.4vw, 68px); }
+.season-y small { color: #c20054; font-family: var(--f-mono); font-weight: 600; }
+.season-go { box-shadow: inset 0 0 0 2px #0b0b0d; color: #0b0b0d; }
+.season:hover .season-go { background: #0b0b0d; color: #fff; box-shadow: none; }
+
+/* ───────── fereastra sezonului ───────── */
+.modal-overlay { backdrop-filter: none; background: rgba(11, 11, 13, .86); }
+.modal-window { background: var(--bg); box-shadow: -4px 0 0 var(--pink); }
+.modal-close { box-shadow: inset 0 0 0 2px var(--cream); }
+.modal-close:hover { background: var(--pink); color: #fff; box-shadow: none; }
+.tab-btn { font-weight: 600; }
+.tab-btn::after { height: 4px; background: var(--pink); }
+.modal-body h5 { color: var(--pink-hi); }
+.modal-body .badge { background: var(--pink); color: #fff; }
+.modal-body .activity-card, .modal-body .card { box-shadow: inset 0 0 0 2px var(--line); }
+.modal-body .activity-card:hover { box-shadow: inset 0 0 0 2px var(--pink); }
+.modal-body ul li::before { background: var(--pink); height: 3px; }
+.modal-body .robot-media { background: var(--cream); }
+
+/* ───────── subsol ───────── */
+.footer { background: var(--bg); border-top: 0; }
+.footer-talk { font-size: clamp(56px, 11vw, 190px); line-height: .88; max-width: 14ch; }
+.footer-talk a { color: var(--pink); background-image: linear-gradient(var(--cream), var(--cream)); background-size: 0 .12em; background-position: 0 92%; }
+.footer-talk a:hover { background-size: 100% .12em; }
+.footer-list a:hover { color: var(--pink-hi); }
+.socials a { box-shadow: inset 0 0 0 2px var(--line-strong); font-weight: 600; }
+.socials a:hover { background: var(--pink); color: #fff; box-shadow: none; }
+.footer-mark { -webkit-text-stroke: 2px rgba(244, 241, 234, .35); font-size: clamp(80px, 24vw, 460px); line-height: .78; background-image: linear-gradient(180deg, var(--pink) 0%, var(--pink) 100%); }
+.footer-bottom .to-top { color: var(--pink-hi); font-weight: 600; }
+
+@media (max-width: 1000px) { .stat { border-right: 0; border-bottom: 3px solid #0b0b0d; } }
+@media (max-width: 700px) { .marquee { margin-block: -16px; } .h-lg { font-size: clamp(44px, 14vw, 72px); } }
+@media (prefers-reduced-motion: reduce) { .marquee { transform: none; } }
+.footer { overflow: visible; overflow-x: clip; }
+/* Anton are litere înalte: lăsăm loc deasupra și dedesubt ca să nu fie tăiate de măștile de animație */
+.js-split .ch { padding: .14em .02em .1em; margin: -.14em -.02em -.1em; }
+.hero-title { line-height: .86; }
+.hero--blog .hero-title { line-height: .82; }
+.tl-item { grid-template-columns: minmax(150px, 350px) 1fr; }
+.tl-year { font-size: clamp(76px, 11.5vw, 175px); }
+@media (max-width: 700px) { .tl-item { grid-template-columns: 1fr; } .tl-year { font-size: 84px; } }
+.footer-mark { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: transparent; -webkit-text-stroke: 2px var(--pink); transition: color 1s ease .2s; margin-bottom: -.1em; padding-bottom: .1em; }
+.footer-mark.in { color: var(--pink); }
+.hero--blog .hero-title { font-size: clamp(120px, min(30vw, 44svh * 1.45), 520px); }
+.hero--blog { padding-bottom: 90px; }
+.member-pic { background: #0b0b0d; }
+.member-pic::before { color: #f9056c; }
+
+/* ───────── subsol: „ROLERBOT” încape exact în coloană și e centrat ───────── */
+.footer-mark { font-size: min(calc((100vw - var(--gutter) * 2) / 3.72), 356px); text-align: center; line-height: .8; margin: 14px auto 0; padding: 0 0 .04em; width: 100%; }
+
+/* ───────── mișcare legată de scroll ───────── */
+.hero { position: sticky; top: 0; z-index: 0; }
+.hero::after { content: ''; position: absolute; inset: 0; z-index: 4; pointer-events: none; background: #0b0b0d; opacity: var(--cover, 0); }
+main > *:not(.hero) { position: relative; z-index: 2; }
+.scrub { background: linear-gradient(180deg, currentColor calc(var(--sp, 0) * 140% - 40%), rgba(11, 11, 13, .22) calc(var(--sp, 0) * 140%)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.scrub .highlight { -webkit-text-fill-color: #0b0b0d; }
+.tl-img img { scale: 1.22; }
+.rail.is-driven { scroll-snap-type: none; }
+.hero-title, .h-lg, .team-photo, .stat, .sponsor, .tl-img img, .footer-mark, .tl-end a { will-change: auto; }
+@media (max-width: 700px) { .hero { position: relative; } }
+@media (prefers-reduced-motion: reduce) { .hero { position: relative; } .scrub { background: none; -webkit-text-fill-color: currentColor; } }
+.member-pic { background: #ff5fa2; }
+.member-pic img { mix-blend-mode: multiply; }
+.member-pic::before { color: rgba(11, 11, 13, .55); }
+
+/* poze de membri naturale (fără nuanță roz) */
+.member-pic { background: #f4f1ea; }
+.member-pic img { mix-blend-mode: normal; }
+.member-pic::before { color: rgba(249, 5, 108, .9); }
+/* fără derulare orizontală: nimic nu mai poate împinge pagina în lateral */
+html { overflow-x: clip; }
+body { overflow-x: clip; max-width: 100%; }
+main { overflow-x: clip; }
+#services { padding-top: clamp(110px, 13vw, 190px); }
+.edge-curve::before { box-shadow: 0 3px 0 var(--blk); }
+/* conținutul din hero stă deasupra marginii curbe a secțiunii roz */
+.hero:not(.hero--blog) { padding-bottom: calc(clamp(40px, 6vw, 90px) + clamp(32px, 4.5vw, 64px)); }
+/* „ROLERBOT” din prima pagină: exact cât coloana, centrat */
+.hero:not(.hero--blog) .hero-title { width: 100%; margin: 0 auto; text-align: center; font-size: min(calc((min(100vw, var(--maxw) + var(--gutter) * 2) - var(--gutter) * 2) / 3.66), 36svh * 1.6); }

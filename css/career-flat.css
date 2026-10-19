@@ -7,7 +7,7 @@
   --font: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --display: "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
   --r: 16px; --r-lg: 28px;
-  --hot: var(--accent); --sun: #ffd23f; --cream: #efeadc; --ink: #0d0d0f;
+  --hot: var(--accent); --sun: #ffffff; --cream: #efeadc; --ink: #0d0d0f;
   --bg: #e9e4d6; --bg2: #fbf8f0; --bg3: #efeadc; --inset: rgba(13, 13, 15, .06);
   --label: #0d0d0f; --label2: rgba(13, 13, 15, .62); --label3: rgba(13, 13, 15, .34);
   --sep: rgba(13, 13, 15, .14); --sep-strong: rgba(13, 13, 15, .3);

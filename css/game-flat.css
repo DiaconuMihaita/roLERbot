@@ -2,7 +2,7 @@
    Se încarcă ultimul. Fără blur și fără gradienți: suprafețe pline, contururi groase, umbre dure, accente pe culori pline. */
 
 :root {
-  --f-ink: #0d0d0f; --f-card: #17171a; --f-card2: #222226; --f-cream: #f4f1ea; --f-hot: #ff375f; --f-sun: #ffd23f;
+  --f-ink: #0d0d0f; --f-card: #17171a; --f-card2: #222226; --f-cream: #f4f1ea; --f-hot: #ff375f; --f-sun: #f4f1ea;
   --f-line: rgba(244, 241, 234, .14); --f-line2: rgba(244, 241, 234, .28); --f-dim: rgba(244, 241, 234, .62);
   --f-spring: cubic-bezier(.34, 1.56, .5, 1);
 }
@@ -116,7 +116,7 @@ body.immersive .tb-bar { height: 4px; }
 body.immersive .side > .card2:first-child, body.immersive .side > .card2:nth-child(3), .card2 { background: var(--f-card) !important; backdrop-filter: none !important; border-radius: 22px !important; box-shadow: 0 0 0 2px var(--f-line2) !important; }
 .card2 h3 { font-weight: 800; }
 .pip { box-shadow: inset 0 0 0 2px var(--f-line2); }
-.pip.y { background: var(--f-sun); box-shadow: none; } .pip.r { background: #ff4d5e; box-shadow: none; } .pip.b { background: #3d8bff; box-shadow: none; }
+.pip.y { background: #ffc933; box-shadow: none; } .pip.r { background: #ff4d5e; box-shadow: none; } .pip.b { background: #3d8bff; box-shadow: none; }
 .pip.y, .pip.r, .pip.b { transform: scale(1.04); }
 .meter { height: 8px; background: rgba(244, 241, 234, .14); }
 .meter i { background: var(--f-hot); }
