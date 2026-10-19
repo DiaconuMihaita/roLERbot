@@ -266,3 +266,19 @@ main { overflow-x: clip; }
 .hero:not(.hero--blog) { padding-bottom: calc(clamp(40px, 6vw, 90px) + clamp(32px, 4.5vw, 64px)); }
 /* „ROLERBOT” din prima pagină: exact cât coloana, centrat */
 .hero:not(.hero--blog) .hero-title { width: 100%; margin: 0 auto; text-align: center; font-size: min(calc((min(100vw, var(--maxw) + var(--gutter) * 2) - var(--gutter) * 2) / 3.66), 36svh * 1.6); }
+/* ecrane mai mici / mai joase (laptop): titlul se micșorează după înălțime și statisticile stau într-un rând, ca să nu se atingă */
+.hero:not(.hero--blog) .hero-title { font-size: clamp(100px, min(calc((min(100vw, var(--maxw) + var(--gutter) * 2) - var(--gutter) * 2) / 3.66), calc((100svh - 440px) / .9)), 460px); }
+.hero-stats .wrap { display: flex; gap: clamp(22px, 3.2vw, 52px); align-items: flex-end; width: auto; margin-left: 0; }
+.hs { grid-template-columns: none; grid-auto-flow: row; gap: 4px; align-items: start; }
+.hs b { font-size: clamp(28px, 3vw, 46px); }
+.hs span { padding: 0; }
+.hero-stats { top: calc(var(--nav-h) + 92px); }
+@media (max-height: 700px) { .hero-stats { top: calc(var(--nav-h) + 88px); } .hs b { font-size: 26px; } .hs span { font-size: 10px; } }
+/* videoul se vede în tot ecranul; întunecăm doar sus (meniu, cifre) și jos (text) */
+.hero-shade { background: linear-gradient(180deg, rgba(11, 11, 13, .55) 0%, rgba(11, 11, 13, .12) 24%, rgba(11, 11, 13, 0) 45%, rgba(11, 11, 13, 0) 62%, rgba(11, 11, 13, .62) 100%); }
+.hero-tint { opacity: .12; }
+.hero-media video { filter: saturate(1.1) contrast(1.05); }
+/* laptop: titlul mai mic (mărimea scade repede când înălțimea ecranului e sub ~800px) */
+.hero:not(.hero--blog) .hero-title { font-size: clamp(88px, min(calc((min(100vw, var(--maxw) + var(--gutter) * 2) - var(--gutter) * 2) / 3.66), calc((100svh - 520px) / .8)), 460px); }
+/* mărimea depinde și direct de lățimea ecranului: laptopurile (1280–1600px) primesc un titlu clar mai mic, monitoarele mari rămân la fel */
+.hero:not(.hero--blog) .hero-title { font-size: clamp(84px, min(calc((min(100vw, var(--maxw) + var(--gutter) * 2) - var(--gutter) * 2) / 3.66), calc((100svh - 520px) / .8), 15vw), 460px); }
