@@ -1,0 +1,507 @@
+<title>roLERbot Career Mode</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          // hex values mirror the :root tokens so Tailwind opacity modifiers (bg-acc/10) work
+          ink: '#0b0f19',
+          line: 'rgba(255,255,255,0.10)',
+          fg: '#e8ecf4',
+          dim: '#9aa4b8',
+          mute: '#5d6679',
+          acc: '#6aa6ff',
+          ok: '#3ecf8e',
+          warn: '#f5b84b'
+        },
+        fontFamily: {
+          sans: ['Geist', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'Roboto', 'sans-serif'],
+          mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace']
+        }
+      }
+    }
+  };
+</script>
+<style>
+  /* Layout: sticky glass header → hero (title + next-event robot card) → KPI row → stage grid + sticky side panel */
+  :root {
+    color-scheme: dark;
+    --bg: #0b0f19;          /* deep blue-black ground */
+    --panel: rgba(255,255,255,0.03);
+    --line: rgba(255,255,255,0.10);
+    --fg: #e8ecf4;          /* primary text, slight cool bias */
+    --dim: #9aa4b8;         /* secondary text */
+    --mute: #5d6679;        /* tertiary / locked */
+    --acc: #6aa6ff;         /* azure: active state + primary actions */
+    --ok: #3ecf8e;          /* completed */
+    --warn: #f5b84b;        /* pending requirement */
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: Geist, ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .gutter {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .glass {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+  .num { font-variant-numeric: tabular-nums; }
+  h1, h2, h3 { text-wrap: balance; }
+  .eyebrow { letter-spacing: 0.08em; text-transform: uppercase; }
+  .bar { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .bar > i {
+    display: block; height: 100%; border-radius: inherit;
+    transition: width 700ms cubic-bezier(.2,.8,.2,1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .live { animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(62,207,142,.45); } 50% { box-shadow: 0 0 0 5px rgba(62,207,142,0); } }
+  .stage { transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease; }
+  .stage:hover { background: rgba(255,255,255,0.05); }
+  .stage[aria-pressed="true"] { border-color: rgba(106,166,255,0.55); background: rgba(106,166,255,0.06); }
+  .stage:active { transform: scale(0.995); }
+  :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; border-radius: 10px; }
+  .seg button[aria-selected="true"] { background: rgba(255,255,255,0.08); color: var(--fg); }
+  .feed li + li { border-top: 1px solid var(--line); }
+  @media (prefers-reduced-motion: reduce) {
+    .live { animation: none; }
+    .bar > i, .stage { transition: none; }
+  }
+</style>
+
+<!-- Header -->
+<header class="sticky z-30 border-b border-line bg-ink/70 backdrop-blur-xl" style="top: env(safe-area-inset-top, 0px)">
+  <div class="gutter mx-auto flex h-16 max-w-7xl items-center gap-6">
+    <a href="#" class="flex items-center gap-2.5 shrink-0" aria-label="roLERbot Career Mode, acasă">
+      <span class="grid h-8 w-8 place-items-center rounded-lg border border-line bg-white/[0.04]">
+        <i data-lucide="bot" class="h-4 w-4 text-acc"></i>
+      </span>
+      <span class="font-semibold tracking-tight">roLERbot</span>
+      <span class="hidden sm:inline text-dim">/ Mod carieră</span>
+      <span class="rounded-md border border-acc/30 bg-acc/10 px-1.5 py-0.5 font-mono text-[11px] text-acc">v1.0 beta</span>
+    </a>
+
+    <nav class="hidden md:flex items-center gap-1 text-sm" aria-label="Navigare principală">
+      <a href="#" class="rounded-md px-3 py-1.5 text-fg bg-white/[0.06]" aria-current="page">Carieră</a>
+      <a href="#" class="rounded-md px-3 py-1.5 text-dim hover:text-fg hover:bg-white/[0.04]">Simulare 3D</a>
+      <a href="#" class="rounded-md px-3 py-1.5 text-dim hover:text-fg hover:bg-white/[0.04]">Atelier</a>
+      <a href="#" class="rounded-md px-3 py-1.5 text-dim hover:text-fg hover:bg-white/[0.04]">Sponsori</a>
+      <a href="#" class="rounded-md px-3 py-1.5 text-dim hover:text-fg hover:bg-white/[0.04]">Clasament</a>
+    </nav>
+
+    <div class="ml-auto flex items-center gap-3">
+      <div class="hidden sm:flex items-center gap-2 rounded-full border border-line px-3 py-1 text-xs text-dim">
+        <span class="live h-1.5 w-1.5 rounded-full bg-ok"></span>
+        <span>Server online</span>
+        <span class="font-mono num text-mute">42 ms</span>
+      </div>
+      <button id="menuBtn" class="md:hidden grid h-9 w-9 place-items-center rounded-lg border border-line" aria-expanded="false" aria-controls="mobileNav" aria-label="Deschide meniul">
+        <i data-lucide="menu" class="h-4 w-4"></i>
+      </button>
+    </div>
+  </div>
+  <nav id="mobileNav" class="gutter md:hidden border-t border-line pb-3 pt-2" hidden aria-label="Navigare mobilă">
+    <div class="grid gap-1 text-sm">
+      <a href="#" class="rounded-md px-3 py-2 bg-white/[0.06]" aria-current="page">Carieră</a>
+      <a href="#" class="rounded-md px-3 py-2 text-dim">Simulare 3D</a>
+      <a href="#" class="rounded-md px-3 py-2 text-dim">Atelier</a>
+      <a href="#" class="rounded-md px-3 py-2 text-dim">Sponsori</a>
+      <a href="#" class="rounded-md px-3 py-2 text-dim">Clasament</a>
+      <div class="mt-1 flex items-center gap-2 px-3 text-xs text-dim">
+        <span class="h-1.5 w-1.5 rounded-full bg-ok"></span> Server online · <span class="font-mono num">42 ms</span>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main class="gutter mx-auto max-w-7xl pb-16 pt-10 sm:pt-14">
+
+  <!-- Hero -->
+  <section class="grid gap-6 lg:grid-cols-12 lg:items-stretch">
+    <div class="lg:col-span-7 flex flex-col justify-center gap-8 min-w-0">
+      <div>
+        <p class="eyebrow font-mono text-xs text-dim">
+          Sezonul BIOBUZZ · <span id="weekLabel" class="num text-fg">Săptămâna 9</span> din 24
+        </p>
+        <h1 class="mt-4 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-[56px]">
+          Drumul spre<br><span class="text-dim">Campionatul Mondial.</span>
+        </h1>
+        <p class="mt-5 max-w-[56ch] text-[15px] leading-relaxed text-dim">
+          Construiește robotul, adună puncte în meet-uri și calificați-vă etapă cu etapă.
+          Următorul pas: League Tournament, regionala care decide cine merge la național.
+        </p>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <button id="advanceBtn" class="group inline-flex items-center gap-2 rounded-lg bg-acc px-4 py-2.5 text-sm font-medium text-ink hover:brightness-110">
+          <i data-lucide="fast-forward" class="h-4 w-4"></i>
+          <span id="advanceText">Săptămâna următoare</span>
+          <span class="font-mono num text-xs opacity-70">−350 €</span>
+        </button>
+        <a href="#" class="inline-flex items-center gap-2 rounded-lg border border-line bg-white/[0.03] px-4 py-2.5 text-sm font-medium hover:bg-white/[0.06]">
+          <i data-lucide="box" class="h-4 w-4 text-dim"></i>
+          Deschide simularea 3D
+        </a>
+      </div>
+    </div>
+
+    <!-- Next event + robot readiness -->
+    <aside class="glass lg:col-span-5 rounded-2xl p-5 sm:p-6 min-w-0" aria-labelledby="nextEvt">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="eyebrow font-mono text-[11px] text-dim">Următorul eveniment</p>
+          <h2 id="nextEvt" class="mt-2 text-lg font-semibold tracking-tight">League Tournament</h2>
+          <p class="text-sm text-dim">Regionala București · 6 meciuri de calificare</p>
+        </div>
+        <div class="text-right shrink-0">
+          <p id="countdown" class="font-mono num text-3xl font-medium leading-none">4</p>
+          <p class="mt-1 text-xs text-dim">săptămâni</p>
+        </div>
+      </div>
+
+      <div class="mt-6 border-t border-line pt-5">
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-medium">Configurația robotului</p>
+          <p class="font-mono num text-xs text-dim"><span id="robotScore">10</span>/15 niveluri</p>
+        </div>
+        <ul id="robot" class="mt-4 grid gap-3"></ul>
+      </div>
+
+      <div class="mt-6 grid grid-cols-2 gap-3 border-t border-line pt-5 text-sm">
+        <div>
+          <p class="text-xs text-dim">Buget disponibil</p>
+          <p id="budget" class="font-mono num mt-1 text-base">3 850 €</p>
+        </div>
+        <div>
+          <p class="text-xs text-dim">Reputație</p>
+          <p class="font-mono num mt-1 text-base">47 <span class="text-dim text-xs">/ 60 pt. național</span></p>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- KPI row -->
+  <section class="mt-10 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Statistici carieră">
+    <div class="glass rounded-xl p-4 sm:p-5">
+      <div class="flex items-center gap-2 text-xs text-dim"><i data-lucide="sparkles" class="h-3.5 w-3.5"></i>Total XP</div>
+      <p id="xpTotal" class="font-mono num mt-3 text-2xl sm:text-[28px] font-medium tracking-tight">12 480</p>
+      <p class="mt-1 text-xs text-mute">+<span id="xpWeek" class="num">0</span> săptămâna asta</p>
+    </div>
+    <div class="glass rounded-xl p-4 sm:p-5">
+      <div class="flex items-center gap-2 text-xs text-dim"><i data-lucide="gauge" class="h-3.5 w-3.5"></i>Nivel echipă</div>
+      <p class="font-mono num mt-3 text-2xl sm:text-[28px] font-medium tracking-tight" id="lvl">14</p>
+      <div class="mt-2.5 bar"><i id="lvlBar" class="bg-acc" style="width:68%"></i></div>
+      <p class="mt-1.5 font-mono num text-[11px] text-mute"><span id="lvlXp">680</span> / 1 000 XP până la <span id="lvlNext">15</span></p>
+    </div>
+    <div class="glass rounded-xl p-4 sm:p-5">
+      <div class="flex items-center gap-2 text-xs text-dim"><i data-lucide="trophy" class="h-3.5 w-3.5"></i>Rang carieră</div>
+      <p class="mt-3 text-xl sm:text-2xl font-medium tracking-tight">Pretendent</p>
+      <p class="mt-1 text-xs text-mute">locul <span class="num">7</span> din <span class="num">42</span> în regiune</p>
+    </div>
+    <div class="glass rounded-xl p-4 sm:p-5">
+      <div class="flex items-center gap-2 text-xs text-dim"><i data-lucide="target" class="h-3.5 w-3.5"></i>Misiuni active</div>
+      <p id="questCount" class="font-mono num mt-3 text-2xl sm:text-[28px] font-medium tracking-tight">2</p>
+      <p class="mt-1 text-xs text-mute">cerințe rămase pentru regională</p>
+    </div>
+  </section>
+
+  <!-- Career overview + side panel -->
+  <section class="mt-14 grid gap-6 lg:grid-cols-12">
+    <div class="lg:col-span-8 min-w-0">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-semibold tracking-tight">Etapele carierei</h2>
+          <p class="mt-1 text-sm text-dim">Alege o etapă ca să vezi ce îți trebuie pentru ea.</p>
+        </div>
+        <div class="seg flex rounded-lg border border-line p-0.5 text-xs" role="tablist" aria-label="Filtrează etapele">
+          <button role="tab" data-f="all" aria-selected="true" class="rounded-md px-3 py-1.5 text-dim">Toate</button>
+          <button role="tab" data-f="active" aria-selected="false" class="rounded-md px-3 py-1.5 text-dim">Active</button>
+          <button role="tab" data-f="done" aria-selected="false" class="rounded-md px-3 py-1.5 text-dim">Finalizate</button>
+          <button role="tab" data-f="locked" aria-selected="false" class="rounded-md px-3 py-1.5 text-dim">Blocate</button>
+        </div>
+      </div>
+
+      <div class="mt-5 rounded-xl border border-line px-4 py-3.5">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-dim">Progres sezon</span>
+          <span class="font-mono num"><span id="seasonPct">52</span>%</span>
+        </div>
+        <div class="bar mt-2.5"><i id="seasonBar" class="bg-acc" style="width:52%"></i></div>
+      </div>
+
+      <div id="stages" class="mt-4 grid gap-3 sm:grid-cols-2"></div>
+    </div>
+
+    <aside class="lg:col-span-4 min-w-0">
+      <div class="lg:sticky lg:top-24 grid gap-4">
+        <div class="glass rounded-2xl p-5" aria-live="polite">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="eyebrow font-mono text-[11px] text-dim">Cerințe</p>
+              <h3 id="reqTitle" class="mt-1.5 font-semibold tracking-tight">League Tournament</h3>
+            </div>
+            <span id="reqPill"></span>
+          </div>
+          <ul id="reqList" class="mt-4 grid gap-2.5"></ul>
+          <div class="mt-5 flex items-center justify-between border-t border-line pt-4 text-xs">
+            <span class="text-dim">Îndeplinite</span>
+            <span id="reqCount" class="font-mono num">3 / 5</span>
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-5">
+          <div class="flex items-center justify-between">
+            <p class="eyebrow font-mono text-[11px] text-dim">Activitate recentă</p>
+            <i data-lucide="history" class="h-3.5 w-3.5 text-mute"></i>
+          </div>
+          <ol id="feed" class="feed mt-3"></ol>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <footer class="mt-16 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-xs text-mute">
+    <span>roLERbot Field Sim · Mod carieră</span>
+    <span>Valorile afișate sunt date de exemplu pentru prototip.</span>
+  </footer>
+</main>
+
+<script>
+(function () {
+  const fmt = (n) => n.toLocaleString('ro-RO').replace(/\./g, ' ');
+  const icon = (name, cls) => `<i data-lucide="${name}" class="${cls || 'h-4 w-4'}"></i>`;
+
+  // ---- State (example data) ----
+  const S = {
+    week: 9, eventWeek: 13, budget: 3850, weekCost: 350,
+    xp: 12480, xpWeek: 0, level: 14, lvlXp: 680, lvlSize: 1000,
+    notebook: 74, launcherReady: 10,
+    filter: 'all', selected: 'reg'
+  };
+
+  const ROBOT = [
+    { n: 'Șasiu și roți', t: 3 },
+    { n: 'Motoare drivetrain', t: 2 },
+    { n: 'Intake', t: 2 },
+    { n: 'Lansator', t: 1, building: true },
+    { n: 'Electronică și software', t: 2 }
+  ];
+
+  const STAGES = [
+    { id: 'calib', n: '01', title: 'Calibrare în simulatorul 3D', kind: 'Simulare 3D', ic: 'box',
+      meta: 'Teren BIOBUZZ · autonom de 30 s', status: 'done', rewards: ['+150 XP'],
+      reqs: () => [
+        { t: 'Autonom terminat în sub 30 s', ok: true, v: '27,4 s' },
+        { t: 'Teleop: 40 de puncte într-un meci', ok: true, v: '52 pct' }
+      ] },
+    { id: 'meets', n: '02', title: 'Meet-uri de calificare', kind: 'Eveniment', ic: 'calendar-check',
+      meta: '3 meet-uri · regiunea București', status: 'done', rewards: ['1 500 €', '+8 rep', '+300 XP'],
+      reqs: () => [
+        { t: 'Participă la minimum 2 meet-uri', ok: true, v: '3 / 3' },
+        { t: 'Loc mediu în top 8', ok: true, v: 'loc 4,3' }
+      ] },
+    { id: 'reg', n: '03', title: 'League Tournament', kind: 'Regională', ic: 'flag',
+      meta: '6 meciuri · Săptămâna 13', status: 'active', rewards: ['până la 4 200 €', '+18 rep', '+500 XP'],
+      reqs: () => [
+        { t: 'Înscriere confirmată', ok: true, v: 'confirmat' },
+        { t: 'Autonom testat pe terenul de antrenament', ok: true, v: '2 rutine' },
+        { t: 'Buget de deplasare de 1 200 €', ok: S.budget >= 1200, v: fmt(S.budget) + ' €' },
+        { t: 'Lansator nivel 2 montat', ok: S.week >= S.launcherReady, v: S.week >= S.launcherReady ? 'montat' : 'în montaj · 1 săpt.' },
+        { t: 'Caiet tehnic de cel puțin 80%', ok: S.notebook >= 80, v: S.notebook + '%' }
+      ] },
+    { id: 'nat', n: '04', title: 'Campionatul național', kind: 'Național', ic: 'medal',
+      meta: '6 meciuri · calificare din top 3', status: 'locked', rewards: ['până la 7 500 €', '+28 rep', '+800 XP'],
+      reqs: () => [
+        { t: 'Top 3 la League Tournament', ok: false, v: 'după săpt. 13' },
+        { t: 'Reputație de cel puțin 60', ok: false, v: '47' },
+        { t: 'Electronică și software nivel 3', ok: false, v: 'nivel 2' }
+      ] },
+    { id: 'wld', n: '05', title: 'Campionatul mondial', kind: 'Mondial', ic: 'globe',
+      meta: 'Houston · calificare din top 2', status: 'locked', rewards: ['până la 12 000 €', '+50 rep', '+1 200 XP'],
+      reqs: () => [
+        { t: 'Top 2 la Campionatul național', ok: false, v: 'blocat' },
+        { t: 'Reputație de cel puțin 100', ok: false, v: '47' },
+        { t: 'Nivel echipă 24', ok: false, v: String(S.level) }
+      ] }
+  ];
+
+  const FEED = [
+    { ic: 'package-check', t: 'Au sosit piesele: Lansator dublu cu volantă', w: 9, tone: 'dim' },
+    { ic: 'trophy', t: 'Meet #3 terminat pe locul 2 · +900 €', w: 8, tone: 'ok' },
+    { ic: 'handshake', t: 'Sponsor nou: Atelierul Mecanic Cluj · 600 €/lună', w: 7, tone: 'acc' },
+    { ic: 'wrench', t: 'Montat: Intake cu role din silicon', w: 6, tone: 'dim' },
+    { ic: 'target', t: 'Obiectiv atins: primul autonom de 30 s', w: 5, tone: 'ok' }
+  ];
+
+  const PILL = {
+    done:   { l: 'Finalizat', ic: 'check', c: 'border-ok/30 bg-ok/10 text-ok' },
+    active: { l: 'Activ',     ic: null,    c: 'border-acc/30 bg-acc/10 text-acc' },
+    locked: { l: 'Blocat',    ic: 'lock',  c: 'border-line bg-white/[0.03] text-mute' }
+  };
+  const pill = (s) => {
+    const p = PILL[s];
+    const lead = p.ic ? icon(p.ic, 'h-3 w-3') : '<span class="h-1.5 w-1.5 rounded-full bg-acc"></span>';
+    return `<span class="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium ${p.c}">${lead}${p.l}</span>`;
+  };
+  const progressOf = (st) => {
+    if (st.status === 'done') return 100;
+    const r = st.reqs(); return Math.round(r.filter((x) => x.ok).length / r.length * 100);
+  };
+  const barColor = (s) => s === 'done' ? 'bg-ok' : s === 'active' ? 'bg-acc' : 'bg-white/20';
+
+  // ---- Renderers ----
+  function renderRobot() {
+    const host = document.getElementById('robot');
+    const ready = S.week >= S.launcherReady;
+    ROBOT[3].t = ready ? 2 : 1; ROBOT[3].building = !ready;
+    host.innerHTML = ROBOT.map((r) => `
+      <li class="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1.5">
+        <span class="text-[13px] text-dim truncate">${r.n}${r.building ? ' <span class="text-warn">· în montaj</span>' : ''}</span>
+        <span class="font-mono num text-[11px] text-mute">L${r.t}</span>
+        <div class="col-span-2 grid grid-cols-3 gap-1">
+          ${[1, 2, 3].map((k) => `<span class="h-1 rounded-full ${k <= r.t ? 'bg-fg/80' : (r.building && k === r.t + 1 ? 'bg-warn/50' : 'bg-white/[0.07]')}"></span>`).join('')}
+        </div>
+      </li>`).join('');
+    document.getElementById('robotScore').textContent = ROBOT.reduce((a, r) => a + r.t, 0);
+  }
+
+  function renderStages() {
+    const host = document.getElementById('stages');
+    const list = STAGES.filter((s) => S.filter === 'all' || s.status === S.filter);
+    host.innerHTML = list.map((s) => {
+      const pct = progressOf(s);
+      const locked = s.status === 'locked';
+      return `
+      <button type="button" data-id="${s.id}" aria-pressed="${S.selected === s.id}"
+        class="stage glass text-left rounded-xl p-5 flex flex-col gap-4 min-w-0">
+        <div class="flex items-center justify-between gap-3">
+          <span class="flex items-center gap-2 font-mono text-[11px] text-mute">
+            <span class="grid h-7 w-7 place-items-center rounded-md border border-line ${locked ? 'text-mute' : 'text-dim'}">${icon(s.ic, 'h-3.5 w-3.5')}</span>
+            ETAPA ${s.n} · ${s.kind.toUpperCase()}
+          </span>
+          ${pill(s.status)}
+        </div>
+        <div>
+          <h3 class="font-semibold tracking-tight ${locked ? 'text-dim' : ''}">${s.title}</h3>
+          <p class="mt-1 text-[13px] text-mute">${s.meta}</p>
+        </div>
+        <div>
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-mute">${s.status === 'done' ? 'Completă' : locked ? 'Cerințe îndeplinite' : 'Pregătire'}</span>
+            <span class="font-mono num ${locked ? 'text-mute' : 'text-dim'}">${pct}%</span>
+          </div>
+          <div class="bar mt-2"><i class="${barColor(s.status)}" style="width:${pct}%"></i></div>
+        </div>
+        <div class="flex flex-wrap gap-1.5 border-t border-line pt-3.5">
+          ${s.rewards.map((r) => `<span class="rounded-md bg-white/[0.04] px-2 py-0.5 font-mono num text-[11px] ${locked ? 'text-mute' : 'text-dim'}">${r}</span>`).join('')}
+        </div>
+      </button>`;
+    }).join('') || `<p class="text-sm text-mute py-8">Nicio etapă în această categorie.</p>`;
+    host.querySelectorAll('[data-id]').forEach((b) => b.addEventListener('click', () => { S.selected = b.dataset.id; renderStages(); renderReqs(); }));
+    lucide.createIcons();
+  }
+
+  function renderReqs() {
+    const st = STAGES.find((s) => s.id === S.selected);
+    const reqs = st.reqs();
+    const ok = reqs.filter((r) => r.ok).length;
+    document.getElementById('reqTitle').textContent = st.title;
+    document.getElementById('reqPill').innerHTML = pill(st.status);
+    document.getElementById('reqCount').textContent = ok + ' / ' + reqs.length;
+    document.getElementById('reqList').innerHTML = reqs.map((r) => {
+      const pending = !r.ok && st.status === 'active';
+      const mark = r.ok
+        ? `<span class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ok/15 text-ok">${icon('check', 'h-3 w-3')}</span>`
+        : pending
+          ? `<span class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-warn/15 text-warn">${icon('clock-3', 'h-3 w-3')}</span>`
+          : `<span class="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-line text-mute">${icon('lock', 'h-2.5 w-2.5')}</span>`;
+      return `<li class="flex items-start gap-3">
+        ${mark}
+        <span class="min-w-0 flex-1 text-[13px] leading-5 ${r.ok ? 'text-dim' : 'text-fg'}">${r.t}</span>
+        <span class="shrink-0 font-mono num text-[11px] leading-5 ${r.ok ? 'text-mute' : pending ? 'text-warn' : 'text-mute'}">${r.v}</span>
+      </li>`;
+    }).join('');
+    lucide.createIcons();
+  }
+
+  function renderFeed() {
+    const tone = { ok: 'text-ok', acc: 'text-acc', dim: 'text-dim', warn: 'text-warn' };
+    document.getElementById('feed').innerHTML = FEED.slice(0, 6).map((f) => `
+      <li class="flex items-start gap-3 py-3">
+        <span class="mt-0.5 ${tone[f.tone]}">${icon(f.ic, 'h-4 w-4')}</span>
+        <span class="min-w-0 flex-1 text-[13px] leading-5">${f.t}</span>
+        <span class="shrink-0 font-mono num text-[11px] leading-5 text-mute">S${f.w}</span>
+      </li>`).join('');
+    lucide.createIcons();
+  }
+
+  function renderStats() {
+    const reg = STAGES.find((s) => s.id === 'reg');
+    const pending = reg.reqs().filter((r) => !r.ok).length;
+    const left = Math.max(0, S.eventWeek - S.week);
+    document.getElementById('weekLabel').textContent = 'Săptămâna ' + S.week;
+    document.getElementById('countdown').textContent = left;
+    document.getElementById('budget').textContent = fmt(S.budget) + ' €';
+    document.getElementById('xpTotal').textContent = fmt(S.xp);
+    document.getElementById('xpWeek').textContent = fmt(S.xpWeek);
+    document.getElementById('lvl').textContent = S.level;
+    document.getElementById('lvlNext').textContent = S.level + 1;
+    document.getElementById('lvlXp').textContent = fmt(S.lvlXp);
+    document.getElementById('lvlBar').style.width = (S.lvlXp / S.lvlSize * 100) + '%';
+    document.getElementById('questCount').textContent = pending;
+    const season = Math.round(STAGES.reduce((a, s) => a + progressOf(s), 0) / STAGES.length);
+    document.getElementById('seasonPct').textContent = season;
+    document.getElementById('seasonBar').style.width = season + '%';
+    const btn = document.getElementById('advanceBtn');
+    if (left === 0) {
+      btn.disabled = true;
+      btn.classList.add('opacity-50', 'cursor-not-allowed');
+      document.getElementById('advanceText').textContent = 'Regionala începe azi';
+    }
+  }
+
+  function renderAll() { renderRobot(); renderStages(); renderReqs(); renderFeed(); renderStats(); }
+
+  // ---- Interactions ----
+  document.getElementById('advanceBtn').addEventListener('click', () => {
+    if (S.week >= S.eventWeek) return;
+    S.week += 1;
+    S.budget -= S.weekCost;
+    S.notebook = Math.min(100, S.notebook + 3);
+    const gain = 140;
+    S.xp += gain; S.xpWeek = gain; S.lvlXp += gain;
+    if (S.lvlXp >= S.lvlSize) { S.lvlXp -= S.lvlSize; S.level += 1; FEED.unshift({ ic: 'arrow-up-circle', t: 'Nivel nou: echipa a ajuns la nivelul ' + S.level, w: S.week, tone: 'acc' }); }
+    if (S.week === S.launcherReady) FEED.unshift({ ic: 'wrench', t: 'Montat: Lansator dublu cu volantă (L2)', w: S.week, tone: 'ok' });
+    FEED.unshift({ ic: 'notebook-pen', t: 'Antrenament pe teren · caiet tehnic ' + S.notebook + '% · +' + gain + ' XP', w: S.week, tone: 'dim' });
+    renderAll();
+  });
+
+  document.querySelectorAll('.seg [data-f]').forEach((b) => b.addEventListener('click', () => {
+    S.filter = b.dataset.f;
+    document.querySelectorAll('.seg [data-f]').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+    renderStages();
+  }));
+
+  const menuBtn = document.getElementById('menuBtn');
+  const mobileNav = document.getElementById('mobileNav');
+  menuBtn.addEventListener('click', () => {
+    mobileNav.hidden = !mobileNav.hidden;
+    menuBtn.setAttribute('aria-expanded', String(!mobileNav.hidden));
+  });
+
+  renderAll();
+  lucide.createIcons();
+})();
+</script>

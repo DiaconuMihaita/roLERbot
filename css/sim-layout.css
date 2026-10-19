@@ -1,0 +1,98 @@
+/* Field Sim 3D: layout pass (match setup, in-match HUD, pause / end screens). Loaded after the other sheets. */
+
+/* ---------- match setup: everything fits one screen, the start button never leaves the viewport ---------- */
+#menu.su { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 12px; padding: clamp(14px, 2.4vw, 32px) clamp(18px, 5vw, 72px) 0; overflow: hidden; }
+#menu.su.hidden { display: none; }
+#menu.su .su-back { flex: none; padding: 8px 14px; font-size: 13px; }
+#menu.su .su-head { flex: none; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+#menu.su .su-head h2 { margin: 0; font-size: clamp(26px, 3.4vw, 42px); }
+#menu.su .su-grid { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 4px 4px 12px; margin: 0 -4px; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(14px, 2vw, 28px); align-content: start; align-items: stretch; }
+#menu.su .su-grid > section { display: flex; flex-direction: column; min-width: 0; }
+#menu.su .su-lbl { margin-bottom: 8px; }
+#menu.su .pick { flex: 1; }
+#menu.su .pick.two { grid-template-columns: 1fr; }
+#menu.su .pick.three { grid-template-columns: 1fr; }
+#menu.su .pick button { padding: 14px 16px; min-height: 76px; justify-content: center; }
+#menu.su .pick button b { font-size: 17px; }
+#menu.su .pick button:hover { transform: none; }
+#menu.su .pick button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+#menu.su .su-foot { flex: none; margin: 0 calc(clamp(18px, 5vw, 72px) * -1); padding: 12px clamp(18px, 5vw, 72px) calc(14px + env(safe-area-inset-bottom)); background: rgba(9, 9, 11, .9); border-top: 1px solid rgba(244, 241, 236, .1); }
+#menu.su .su-go { height: 52px; font-size: 17px !important; }
+@media (max-width: 1000px) {
+  #menu.su .su-grid { grid-template-columns: 1fr 1fr; }
+  #menu.su .su-grid > section:nth-child(3) { grid-column: 1 / -1; }
+  #menu.su .pick.three { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 640px) {
+  #menu.su .su-grid { grid-template-columns: 1fr; }
+  #menu.su .pick.two, #menu.su .pick.three { grid-template-columns: 1fr; }
+  #menu.su .pick button { min-height: 0; padding: 12px 14px; }
+  #menu.su .su-foot { flex-direction: column; align-items: stretch; text-align: center; }
+  #menu.su .su-go { width: 100%; }
+}
+@media (max-height: 640px) and (min-width: 700px) {
+  #menu.su .pick button small { display: none; }
+  #menu.su .pick button { min-height: 56px; }
+  #menu.su .pick .mini { display: none; }
+}
+
+/* ---------- in-match HUD ---------- */
+body.immersive .topbar2 { top: 12px; width: min(560px, calc(100vw - 170px)); padding: 7px 18px 9px; border-radius: 16px; background: rgba(9, 9, 11, .55); backdrop-filter: blur(14px) saturate(1.3); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), 0 12px 30px -16px rgba(0, 0, 0, .7); gap: 8px; }
+body.immersive .tb-score { font-size: 10px; gap: 8px; }
+body.immersive .tb-score b, body.immersive .tb-time { font-size: 28px; }
+body.immersive .tb-phase { font-size: 10px; letter-spacing: .2em; }
+body.immersive .tb-bar { margin-top: 5px; height: 2px; }
+
+/* bottom-left: tray + reload in one slim bar */
+body.immersive .side { padding: 14px; gap: 12px; }
+body.immersive .side > .card2:first-child { width: auto !important; min-width: 232px; padding: 10px 14px 12px !important; border-radius: 16px !important; background: rgba(9, 9, 11, .55) !important; backdrop-filter: blur(14px) saturate(1.3) !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1) !important; }
+body.immersive .side > .card2:first-child h3 { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; font-family: var(--g-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--g-dim); margin: 0 0 8px; font-weight: 500; }
+body.immersive .side > .card2:first-child .pips { gap: 6px; margin-bottom: 8px; }
+body.immersive .side > .card2:first-child .pip { width: 30px; height: 30px; }
+body.immersive .side > .card2:first-child .lbl { font-size: 9px; margin: 0; letter-spacing: .16em; }
+body.immersive .side > .card2:first-child .meter { margin: 4px 0 8px; height: 4px; }
+body.immersive .side > .card2:first-child .kv:nth-of-type(1) { font-size: 12px; padding: 0; border: 0; }
+
+/* bottom-right: score breakdown, compact, collapses to a single line when it is not the focus */
+body.immersive .side > .card2:nth-child(3) { width: 224px !important; padding: 10px 14px !important; border-radius: 16px !important; background: rgba(9, 9, 11, .5) !important; backdrop-filter: blur(14px) saturate(1.3) !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1) !important; opacity: .86; transition: opacity .2s; }
+body.immersive .side > .card2:nth-child(3):hover { opacity: 1; }
+body.immersive .side > .card2:nth-child(3) h3 { font-size: 11px; font-family: var(--g-mono); font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--g-dim); margin: 0 0 4px; }
+body.immersive .side > .card2:nth-child(3) .kv { font-size: 11.5px; padding: 3px 0; border-color: rgba(255, 255, 255, .06); }
+body.immersive .side > .card2:nth-child(3) .kv span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
+
+/* tools: smaller, quieter until hovered */
+.fs-tools { top: 12px; right: 12px; gap: 6px; }
+.fs-tool { width: 36px; height: 36px; border-radius: 11px; opacity: .8; }
+.fs-tool:hover, .fs-tool:focus-visible { opacity: 1; }
+
+/* ---------- pause / countdown / end ---------- */
+#paused, #end { background: rgba(9, 9, 11, .62); backdrop-filter: blur(10px) saturate(1.2); }
+#paused h1, #end h1 { font: 800 clamp(34px, 5vw, 56px) var(--g-display); letter-spacing: -.035em; margin: 0 0 14px !important; }
+#paused .row2, #end .row2 { gap: 10px; }
+#end { gap: 4px; }
+#end .result-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; align-items: stretch; margin: 6px 0 14px; border-radius: 20px; overflow: hidden; background: rgba(255, 255, 255, .05); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); width: min(440px, 92%); }
+#end .result-grid::before { content: ''; grid-column: 2; grid-row: 1; width: 1px; background: rgba(255, 255, 255, .12); }
+#end .result-grid > div { padding: 18px 12px 16px; text-align: center; }
+#end .result-grid > .r { grid-column: 1; grid-row: 1; background: linear-gradient(180deg, rgba(255, 77, 94, .16), transparent); }
+#end .result-grid > .b { grid-column: 3; grid-row: 1; background: linear-gradient(180deg, rgba(61, 139, 255, .16), transparent); }
+#end .result-grid b { font-size: clamp(44px, 7vw, 68px); margin-bottom: 4px; }
+#end .lbl { max-width: 460px; line-height: 1.6; text-transform: none; letter-spacing: .02em; font-size: 12px; }
+
+/* ---------- narrow screens, in-match ---------- */
+@media (max-width: 760px) {
+  body.immersive .topbar2 { top: 10px; width: calc(100vw - 112px); left: 12px; transform: none; padding: 6px 12px 8px; }
+  body.immersive .tb-score b, body.immersive .tb-time { font-size: 22px; }
+  body.immersive .tb-score { font-size: 9px; gap: 5px; }
+  body.immersive .tb-score.red i, body.immersive .tb-score.blue i { display: none; }
+  body.immersive .side { padding: 8px; }
+  body.immersive .side > .card2:first-child { min-width: 0; padding: 8px 10px !important; }
+  body.immersive .side > .card2:first-child h3, body.immersive .side > .card2:first-child .lbl { display: none; }
+  body.immersive .side > .card2:first-child .pip { width: 22px; height: 22px; }
+  body.immersive .side > .card2:first-child .kv { display: none !important; }
+  .fs-tools { right: 8px; top: 10px; }
+}
+@media (pointer: coarse) {
+  body.immersive .side { bottom: auto; top: 64px; left: 0; right: auto; align-items: flex-start; padding: 8px 12px; }
+  body.immersive .side > .card2:nth-child(3) { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) { #menu.su { animation: none; } }

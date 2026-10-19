@@ -1,0 +1,130 @@
+/* Field Sim 3D: limbaj plat și bold (același ca în carieră) pentru tot în afară de meniul principal și ecranul de încărcare.
+   Se încarcă ultimul. Fără blur și fără gradienți: suprafețe pline, contururi groase, umbre dure, accente pe culori pline. */
+
+:root {
+  --f-ink: #0d0d0f; --f-card: #17171a; --f-card2: #222226; --f-cream: #f4f1ea; --f-hot: #ff375f; --f-sun: #ffd23f;
+  --f-line: rgba(244, 241, 234, .14); --f-line2: rgba(244, 241, 234, .28); --f-dim: rgba(244, 241, 234, .62);
+  --f-spring: cubic-bezier(.34, 1.56, .5, 1);
+}
+body:not(.in-menu) { background: var(--f-ink) !important; }
+::selection { background: var(--f-hot); color: #0d0d0f; }
+:focus-visible { outline: 3px solid var(--f-hot); outline-offset: 2px; }
+
+/* ───────── butoane (toate ecranele: setup, pauză, final, ferestre) ───────── */
+.btn-retro, .retro-btn { background: var(--f-hot) !important; color: #0d0d0f !important; box-shadow: 4px 4px 0 var(--f-cream) !important; font-weight: 800 !important; transition: transform .2s var(--f-spring), box-shadow .2s !important; }
+.btn-retro::before, .retro-btn::before { display: none !important; }
+.btn-retro:hover, .retro-btn:hover { background: var(--f-hot) !important; color: #0d0d0f !important; transform: translate(-2px, -2px) !important; box-shadow: 6px 6px 0 var(--f-cream) !important; }
+.btn-retro:active, .retro-btn:active { transform: translate(3px, 3px) !important; box-shadow: 0 0 0 var(--f-cream) !important; }
+.btn-retro[onclick*="clearLeaderboard"], #clearLeaderboardBtn { background: transparent !important; color: var(--f-hot) !important; box-shadow: inset 0 0 0 2px var(--f-hot) !important; }
+.ghost-link { border: 0; box-shadow: inset 0 0 0 2px var(--f-line2); background: none; color: var(--f-cream); font-weight: 800; transition: transform .2s var(--f-spring), background .2s, color .2s; }
+.ghost-link:hover { background: var(--f-cream); color: #0d0d0f; transform: translate(-2px, -2px); }
+
+/* ───────── ecrane suprapuse ───────── */
+.overlay-screen, .overlay { background: rgba(13, 13, 15, .9) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.overlay-screen h1 { color: var(--f-cream) !important; }
+.overlay-screen h1::first-line { color: var(--f-hot); }
+#paused, #end { background: rgba(13, 13, 15, .9) !important; backdrop-filter: none !important; }
+#paused h1, #end h1 { font-size: clamp(40px, 6vw, 76px) !important; line-height: .9 !important; text-transform: uppercase; }
+#end .result-grid { gap: 12px; background: none; box-shadow: none; overflow: visible; grid-template-columns: 1fr 1fr; }
+#end .result-grid::before { display: none; }
+#end .result-grid > div { border-radius: 28px; color: rgba(13, 13, 15, .72); }
+#end .result-grid > .r { grid-column: 1; background: #ff4d5e; }
+#end .result-grid > .b { grid-column: 2; background: #3d8bff; }
+#end .result-grid b, #end .result-grid .r b, #end .result-grid .b b { color: #0d0d0f; font-size: clamp(54px, 8vw, 92px); letter-spacing: -.05em; }
+.big { color: var(--f-hot); text-shadow: none; }
+.seg { background: none; box-shadow: inset 0 0 0 2px var(--f-line2); }
+.seg button { font-weight: 800; transition: background .2s, color .2s, transform .25s var(--f-spring); }
+.seg button:hover:not(.on) { background: rgba(244, 241, 234, .1); }
+.seg button.on.pink { background: var(--f-hot); color: #0d0d0f; }
+.seg button.on[data-al="red"], .seg button.on[data-al="blue"] { color: #0d0d0f; }
+
+/* ───────── pregătirea meciului ───────── */
+#menu.su { background: var(--f-ink); animation: fsIn .5s cubic-bezier(.16, 1, .3, 1); }
+@keyframes fsIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+#menu.su .su-back, .set-modal.page .set-back, #onl.page .onl-back { border: 0; box-shadow: inset 0 0 0 2px var(--f-line2); border-radius: 999px; color: var(--f-cream); font-weight: 700; transition: transform .2s var(--f-spring), background .2s, color .2s; }
+#menu.su .su-back:hover, .set-modal.page .set-back:hover, #onl.page .onl-back:hover { background: var(--f-cream); color: #0d0d0f; transform: translateX(-3px); }
+.su-head h2, #menu.su .su-head h2, .set-modal.page .set-head h2, #onl.page .onl-head h2 { font: 800 clamp(40px, 5.6vw, 84px)/.9 var(--g-display); letter-spacing: -.05em; text-transform: uppercase; }
+.su-lbl, .onl-sec { font: 800 12px var(--g-body); letter-spacing: .1em; color: var(--f-dim); }
+.pick button { border: 0; border-radius: 26px; background: var(--f-card); box-shadow: inset 0 0 0 2px var(--f-line); color: var(--f-cream); transition: transform .3s var(--f-spring), box-shadow .25s, background .2s; }
+.pick button:hover { transform: translate(-2px, -3px); border-color: transparent; box-shadow: inset 0 0 0 2px var(--f-cream), 5px 6px 0 var(--f-cream); }
+#menu.su .pick button:hover { transform: translate(-2px, -3px); }
+.pick button b { font: 800 20px var(--g-display); letter-spacing: -.03em; }
+.pick button small { color: var(--f-dim); }
+.pick button.on { background: var(--f-hot); box-shadow: 5px 5px 0 var(--f-cream); color: #0d0d0f; border-color: transparent; }
+.pick button.on small, .pick button.on .mini u { color: rgba(13, 13, 15, .72); }
+.pick button.on .mini u s { background: rgba(13, 13, 15, .2); }
+.pick button.on .mini u s::after { background: #0d0d0f; }
+#segAlliance button.red.on { background: #ff4d5e; border-color: transparent; box-shadow: 5px 5px 0 var(--f-cream); }
+#segAlliance button.blue.on { background: #3d8bff; border-color: transparent; box-shadow: 5px 5px 0 var(--f-cream); }
+.pick .mini u s::after { background: var(--f-hot); }
+#menu.su .su-foot { background: var(--f-ink); border-top: 2px solid var(--f-line); }
+#menu.su .su-go { height: 56px; }
+
+/* ───────── setări și online (pagini + ferestre) ───────── */
+.set-modal, .onl { background: rgba(13, 13, 15, .86); backdrop-filter: none; }
+.set-modal.page, #onl.page { background: var(--f-ink); backdrop-filter: none; }
+.set-card, .onl-card { background: var(--f-card); border: 0; border-radius: 32px; box-shadow: 0 0 0 2px var(--f-cream), 8px 8px 0 var(--f-hot); }
+.set-modal.page .set-card, #onl.page .onl-card { background: transparent; box-shadow: none; }
+.set-head h2, .onl-card h2 { font: 800 clamp(26px, 3vw, 40px)/.95 var(--g-display); letter-spacing: -.045em; text-transform: uppercase; }
+.set-x2, .onl-x { border: 0; box-shadow: inset 0 0 0 2px var(--f-line2); transition: transform .25s var(--f-spring), background .2s, color .2s; }
+.set-x2:hover, .onl-x:hover { background: var(--f-hot); color: #0d0d0f; transform: rotate(90deg); border-color: transparent; }
+.set-tabs, .onl-tabs { gap: 8px; }
+.set-tabs button, .onl-tabs button { border: 0; border-radius: 999px; box-shadow: inset 0 0 0 2px var(--f-line2); color: var(--f-cream); font-weight: 800; transition: transform .25s var(--f-spring), background .2s, color .2s; }
+.set-tabs button:hover:not(.on), .onl-tabs button:hover:not(.on) { background: rgba(244, 241, 234, .1); }
+.set-tabs button.on, .onl-tabs button.on { background: var(--f-hot); color: #0d0d0f; box-shadow: 3px 3px 0 var(--f-cream); }
+.set-sub, .onl-sub { color: var(--f-dim); }
+.set-row { border-bottom: 2px solid var(--f-line); padding: 12px 0; font-weight: 600; transition: padding-left .25s var(--f-spring); }
+.set-row:hover { padding-left: 6px; }
+.set-key { border: 0; border-radius: 12px; background: var(--f-card2); box-shadow: 0 3px 0 var(--f-cream), inset 0 0 0 2px var(--f-line); font-weight: 800; transition: transform .15s, box-shadow .15s; }
+.set-key:hover { border-color: transparent; transform: translateY(-1px); box-shadow: 0 4px 0 var(--f-cream), inset 0 0 0 2px var(--f-line2); }
+.set-key:active { transform: translateY(3px); box-shadow: 0 0 0 var(--f-cream), inset 0 0 0 2px var(--f-line2); }
+.set-key.listen { background: var(--f-hot); color: #0d0d0f; box-shadow: 0 3px 0 var(--f-cream); }
+.set-sl b { color: var(--f-hot); }
+.set-tg input, .set-sl input[type=range], #optSpd { accent-color: #ff375f; }
+.set-sel, .onl-in { border: 0; border-radius: 16px; background: var(--f-card2); box-shadow: inset 0 0 0 2px var(--f-line); color: var(--f-cream); }
+.onl-in:focus { box-shadow: inset 0 0 0 2px var(--f-hot); }
+.set-btn, .onl-btn { border: 0; border-radius: 999px; background: var(--f-card2); box-shadow: inset 0 0 0 2px var(--f-line2); color: var(--f-cream); font-weight: 800; transition: transform .2s var(--f-spring), box-shadow .2s, background .2s; }
+.set-btn:hover, .onl-btn:hover:not(:disabled) { border-color: transparent; background: var(--f-cream); color: #0d0d0f; transform: translate(-1px, -2px); }
+.onl-btn.pri, .set-foot .primary { background: var(--f-hot); color: #0d0d0f; box-shadow: 4px 4px 0 var(--f-cream); border-color: transparent; }
+.onl-btn.pri:hover:not(:disabled), .set-foot .primary:hover { background: var(--f-hot); color: #0d0d0f; transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--f-cream); border-color: transparent; }
+.onl-btn.pri:active:not(:disabled), .set-foot .primary:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--f-cream); }
+.set-foot { border-top: 2px solid var(--f-line); }
+.onl-friend, .onl-team, .onl-slot { border: 0; border-radius: 20px; background: var(--f-card2); box-shadow: inset 0 0 0 2px var(--f-line); }
+.onl-team.red { background: rgba(255, 77, 94, .14); box-shadow: inset 0 0 0 2px #ff4d5e; }
+.onl-team.blue { background: rgba(61, 139, 255, .14); box-shadow: inset 0 0 0 2px #3d8bff; }
+.onl-slot { background: rgba(13, 13, 15, .35); }
+.onl-slot.me { box-shadow: inset 0 0 0 2px var(--f-cream); }
+.onl-slot.free { box-shadow: inset 0 0 0 2px var(--f-line); }
+.onl-team h4 { font: 800 12px var(--g-body); }
+.onl-seg { border: 0; border-radius: 999px; box-shadow: inset 0 0 0 2px var(--f-line2); }
+.onl-seg button.on { background: var(--f-hot); color: #0d0d0f; }
+.onl-code { border: 0; border-radius: 20px; background: var(--f-sun); color: #0d0d0f; font: 800 34px var(--g-display); letter-spacing: .2em; box-shadow: 5px 5px 0 var(--f-cream); transition: transform .2s var(--f-spring), box-shadow .2s; }
+.onl-code:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--f-cream); border-color: transparent; }
+.onl-dot.on { background: #7be0a0; box-shadow: none; }
+.onl-dot.lobby { background: var(--f-sun); }
+.onl-dot.play { background: var(--f-hot); }
+.onl-toast { background: var(--f-card); border: 0; border-radius: 22px; box-shadow: 0 0 0 2px var(--f-cream), 5px 5px 0 var(--f-hot); font-weight: 600; animation: fsToast .45s var(--f-spring); }
+@keyframes fsToast { from { opacity: 0; transform: translateX(24px) scale(.95); } }
+.rules-card summary { font-weight: 800; }
+
+/* ───────── în timpul meciului: HUD solid (fără blur peste scena WebGL) ───────── */
+body.immersive .topbar2, body.in-menu .topbar2 { background: var(--f-card) !important; backdrop-filter: none !important; border-radius: 22px; box-shadow: 0 0 0 2px var(--f-line2), 4px 4px 0 var(--f-hot) !important; }
+.tb-phase { color: var(--f-hot); font-weight: 800; }
+.tb-bar { height: 4px; background: rgba(244, 241, 234, .14); }
+.tb-bar i { background: var(--f-hot); }
+body.immersive .tb-bar { height: 4px; }
+body.immersive .side > .card2:first-child, body.immersive .side > .card2:nth-child(3), .card2 { background: var(--f-card) !important; backdrop-filter: none !important; border-radius: 22px !important; box-shadow: 0 0 0 2px var(--f-line2) !important; }
+.card2 h3 { font-weight: 800; }
+.pip { box-shadow: inset 0 0 0 2px var(--f-line2); }
+.pip.y { background: var(--f-sun); box-shadow: none; } .pip.r { background: #ff4d5e; box-shadow: none; } .pip.b { background: #3d8bff; box-shadow: none; }
+.pip.y, .pip.r, .pip.b { transform: scale(1.04); }
+.meter { height: 8px; background: rgba(244, 241, 234, .14); }
+.meter i { background: var(--f-hot); }
+.kv { border-bottom: 2px solid var(--f-line); }
+.keys kbd { background: var(--f-card2); box-shadow: 0 2px 0 var(--f-cream); border-radius: 8px; font-weight: 800; }
+.fs-tool { background: var(--f-card); backdrop-filter: none; border: 0; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--f-line2); color: var(--f-cream); transition: transform .25s var(--f-spring), background .2s, color .2s; }
+.fs-tool:hover { background: var(--f-hot); color: #0d0d0f; transform: scale(1.1) rotate(-6deg); border-color: transparent; }
+.set-fps { background: var(--f-card); border-radius: 999px; box-shadow: inset 0 0 0 2px var(--f-line); }
+.toggle input:checked { background: var(--f-hot); }
+
+@media (prefers-reduced-motion: reduce) { #menu.su, .onl-toast { animation: none; } }
