@@ -263,3 +263,78 @@ html.fx-idle *, html.fx-idle *::before, html.fx-idle *::after { animation-play-s
 .phone .cr-eyebrow { font-weight: 700; }
 .phone .prog, .phone .cr-bar .track { height: 8px; border-radius: 4px; }
 @media (max-width: 900px) { .tb-wid .clock b { font-size: 48px; } }
+
+/* ═════════ tutorial / ghid ═════════ */
+.tour { position: fixed; inset: 0; z-index: 300; opacity: 0; transition: opacity .35s; }
+.tour.on { opacity: 1; }
+.tour-hole { position: fixed; box-shadow: 0 0 0 9999px rgba(8, 8, 10, .66), 0 0 0 3px var(--hot), 5px 5px 0 3px var(--hard); transition: left .55s cubic-bezier(.34, 1.3, .5, 1), top .55s cubic-bezier(.34, 1.3, .5, 1), width .55s cubic-bezier(.34, 1.3, .5, 1), height .55s cubic-bezier(.34, 1.3, .5, 1), border-radius .4s; pointer-events: none; }
+.tour-card { position: fixed; width: min(560px, calc(100vw - 24px)); display: grid; gap: 12px; padding: 32px; border-radius: 34px; background: var(--bg2); color: var(--label); box-shadow: 0 0 0 3px var(--label), 10px 10px 0 var(--hot); transition: left .55s cubic-bezier(.34, 1.3, .5, 1), top .55s cubic-bezier(.34, 1.3, .5, 1); }
+.tour-card.swap > * { animation: tourIn .5s cubic-bezier(.16, 1, .3, 1) both; }
+.tour-card.swap > :nth-child(2) { animation-delay: .04s; } .tour-card.swap > :nth-child(3) { animation-delay: .08s; } .tour-card.swap > :nth-child(4) { animation-delay: .12s; } .tour-card.swap > :nth-child(5) { animation-delay: .16s; }
+@keyframes tourIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.tour-dots { display: flex; gap: 5px; margin-bottom: 4px; }
+.tour-dots i { width: 8px; height: 8px; border-radius: 99px; background: var(--fill); transition: width .4s cubic-bezier(.34, 1.5, .5, 1), background .3s; }
+.tour-dots i.past { background: var(--label); }
+.tour-dots i.on { width: 30px; background: var(--hot); }
+.tour-k { color: var(--label2); font: 700 13px var(--font); letter-spacing: .08em; text-transform: uppercase; }
+.tour-card h3 { margin: 0; font: 800 clamp(30px, 4vw, 40px)/1.05 var(--display); letter-spacing: -.035em; }
+.tour-card p { margin: 0; color: var(--label2); font-size: 17px; line-height: 1.6; }
+.tour-nav { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.tour-nav .cr-btn { min-height: 48px; padding: 0 24px; font-size: 16px; }
+.tour-sp { flex: 1; }
+.tour-skip { padding: 10px 6px; border: 0; background: none; color: var(--label2); font-size: 15px; cursor: pointer; }
+.tour-skip:hover { color: var(--label); }
+.tour-todo { display: grid; gap: 6px; margin-top: 4px; }
+.tour-step { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; border: 0; border-radius: 20px; background: var(--fill3); text-align: left; cursor: pointer; transition: background .2s, transform .25s cubic-bezier(.16, 1, .3, 1); }
+.tour-step:hover { background: var(--fill2); transform: translateX(3px); }
+.tour-step b { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--hot); color: #0d0d0f; font: 800 16px var(--display); box-shadow: 2px 2px 0 var(--hard); }
+.tour-step span { flex: 1; display: grid; gap: 1px; }
+.tour-step strong { font-size: 17px; font-weight: 700; }
+.tour-step small { color: var(--label2); font-size: 14px; }
+.tour-step .chev { width: 16px; height: 16px; color: var(--label3); }
+@media (max-width: 700px) { .tour-card { padding: 22px; border-radius: 26px; box-shadow: 0 0 0 2px var(--label), 6px 6px 0 var(--hot); } .tour-card h3 { font-size: 26px; } .tour-card p { font-size: 15.5px; } .tour-nav .cr-btn { min-height: 44px; padding: 0 18px; } }
+@media (prefers-reduced-motion: reduce) { .tour-hole, .tour-card { transition: none; } .tour-card.swap > * { animation: none; } }
+
+.tour.sc .tour-hole, .tour.sc .tour-card { transition: none; }
+
+/* ═════════ ghid interactiv: capitole, misiuni, mod fără blocare ═════════ */
+.tour-card { max-height: calc(100vh - 24px); overflow-y: auto; }
+.tour-head { display: flex; align-items: center; gap: 10px; }
+.tour-ch { padding: 4px 11px; border-radius: 99px; background: var(--label); color: var(--bg2); font: 800 11px var(--font); letter-spacing: .08em; text-transform: uppercase; }
+.tour-head .tour-k { margin-left: auto; }
+.tour-x { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: var(--fill3); color: var(--label); cursor: pointer; transition: background .2s, transform .25s var(--spring); }
+.tour-x:hover { background: var(--fill); transform: rotate(90deg); }
+.tour-x .ico { width: 15px; height: 15px; }
+.tour-bar { height: 6px; border-radius: 99px; background: var(--fill3); overflow: hidden; }
+.tour-bar i { display: block; height: 100%; border-radius: 99px; background: var(--hot); transition: width .6s var(--ease-out); }
+.tour-ul { display: grid; gap: 10px; margin: 2px 0 0; padding: 0; list-style: none; }
+.tour-ul li { position: relative; padding-left: 22px; color: var(--label); font-size: 16px; line-height: 1.5; }
+.tour-ul li::before { content: ''; position: absolute; left: 0; top: .5em; width: 10px; height: 10px; border-radius: 3px; background: var(--hot); box-shadow: 1px 1px 0 var(--hard); transform: rotate(45deg) scale(.8); }
+.tour-goal { display: flex; align-items: flex-start; gap: 14px; margin-top: 4px; padding: 14px 16px; border-radius: 20px; background: var(--inset); box-shadow: inset 0 0 0 2px var(--sep-strong); transition: background .3s, box-shadow .3s; }
+.tour-goal > div { flex: 1; display: grid; gap: 3px; min-width: 0; }
+.tour-goal b { font-size: 17px; font-weight: 800; line-height: 1.25; }
+.tour-goal small { color: var(--label2); font-size: 14px; line-height: 1.45; }
+.tour-goal .cr-btn { align-self: center; flex: none; min-height: 40px; padding: 0 16px; font-size: 14px; }
+.tour-chk { display: grid; place-items: center; flex: none; width: 30px; height: 30px; margin-top: 1px; border-radius: 50%; background: none; box-shadow: inset 0 0 0 3px var(--label3); transition: background .3s, box-shadow .3s; }
+.tour-chk .ico { width: 17px; height: 17px; color: #0d0d0f; stroke-width: 3; }
+.tour-goal.ok { background: color-mix(in srgb, var(--ok) 16%, transparent); box-shadow: inset 0 0 0 2px var(--ok); animation: goalOk .6s var(--spring); }
+.tour-goal.ok .tour-chk { background: var(--ok); box-shadow: none; animation: chkPop .5s var(--spring); }
+@keyframes goalOk { 0% { transform: scale(.96); } 100% { transform: none; } }
+@keyframes chkPop { 0% { transform: scale(.3) rotate(-30deg); } 100% { transform: none; } }
+.tour-nav .cr-btn.pulse { animation: tourBtn 1.4s ease-in-out infinite; }
+@keyframes tourBtn { 50% { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--hard); } }
+.tour-nav .cr-btn:disabled { opacity: .4; }
+.tour.away { opacity: 0 !important; pointer-events: none; }
+
+/* misiune: pagina rămâne folosibilă, cardul stă într-un colț și ținta pulsează */
+.tour.task { pointer-events: none; z-index: 85; }
+.tour.task .tour-card { pointer-events: auto; left: 108px !important; top: auto !important; bottom: 20px; width: min(500px, calc(100vw - 140px)); box-shadow: 0 0 0 3px var(--label), 8px 8px 0 var(--hot); transition: none; }
+.tour.task.alt .tour-card { bottom: auto; top: 88px !important; left: auto !important; right: 24px; }
+.tour.task .tour-hole { box-shadow: 0 0 0 3px var(--hot), 0 0 0 10px color-mix(in srgb, var(--hot) 38%, transparent); animation: tourPulse 1.7s ease-in-out infinite; }
+@keyframes tourPulse { 50% { box-shadow: 0 0 0 3px var(--hot), 0 0 0 18px color-mix(in srgb, var(--hot) 8%, transparent); } }
+@media (max-width: 900px) {
+  .tour.task .tour-card, .tour.task.alt .tour-card { left: 12px !important; right: 12px; top: auto !important; bottom: 76px; width: auto; padding: 18px; }
+  .tour-goal { padding: 12px; gap: 10px; }
+}
+@media (max-height: 700px) { .tour-card { padding: 22px; gap: 9px; } .tour-card h3 { font-size: 28px; } .tour-ul li { font-size: 15px; } }
+@media (prefers-reduced-motion: reduce) { .tour.task .tour-hole, .tour-nav .cr-btn.pulse, .tour-goal.ok, .tour-goal.ok .tour-chk { animation: none; } }

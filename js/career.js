@@ -594,6 +594,7 @@
     const pop = el('div', { class: 'prof-pop', role: 'dialog', 'aria-label': 'Profil' },
       el('div', { class: 'pp-team' }, el('div', { class: 'sd-av', text: initials() }), el('div', null, el('b', { text: S.team.name }), el('small', { text: '#' + S.team.num + ' · ' + regionOf(S.region).name + ' · ' + repLevel(S.rep) }))),
       el('div', { class: 'pp-set' }, el('small', { text: 'Aspect' }), themeSeg()),
+      el('button', { class: 'cr-btn', onclick: () => { close(); startTour(!!S.tourFin); } }, icon('bulb'), el('span', { text: S.tourFin ? 'Ghid de început' : 'Continuă ghidul' })),
       cloudChip(),
       el('div', { class: 'pp-links' }, FRAMED ? el('button', { class: 'cr-link', onclick: backToMenu }, '← Meniul jocului') : menuLink(), FRAMED ? null : el('a', { class: 'cr-link', href: 'index.html' }, 'Site')));
     document.body.append(pop);
@@ -1882,7 +1883,7 @@
     const alliance = S.atAl === 'blue' ? 'blue' : 'red';
     const payload = { id: 'autotest-' + Date.now(), type: 'autotest', label: 'Test autonom · ' + A.name, alliance, robot: canTurret() ? S.type : 'strafe', mods: modsOf(S), team: S.team, opp: { name: 'Adversar', skill: 0.4, passive: !S.atOpp }, auto: { name: A.name, pts: alliance === 'blue' ? A.pts.map(mirrorPt) : clonePts(A.pts) }, ts: Date.now() };
     try { localStorage.setItem(MATCH_KEY, JSON.stringify(payload)); localStorage.removeItem(RESULT_KEY); } catch (e) { return toast('Nu pot porni testul (stocarea e blocată).'); }
-    S.edSlot = edSlot; save(); flushCloud(1200).then(() => goTop('field-sim-3d.html?career=1&test=1'));
+    S.edSlot = edSlot; S.autoTested = true; save(); flushCloud(1200).then(() => goTop('field-sim-3d.html?career=1&test=1'));
   }
   function autoView() {
     ensureAutos(); if (!edLast) histReset();
@@ -1909,6 +1910,191 @@
       el('div', { class: 'cr-card s5' }, el('div', { id: 'autoPanel' })));
     setTimeout(() => { bindEditor(cv); renderAutoPanel(); renderTimeline(); drawEditor(); }, 0);
     return view;
+  }
+
+  // ---------- tutorial interactiv: misiuni reale, în ordinea în care contează (se poate relua din profil) ----------
+  const matchCount = () => S.stats.w + S.stats.t + S.stats.l;
+  const enrolledAny = () => S.cal.some((x) => x.type === 'meet' && x.enrolled);
+  const canEnroll = () => S.cal.some((x) => x.type === 'meet' && !x.done && !x.enrolled && S.week < x.week);
+  const hasShootAuto = () => S.autos.some((a) => a.pts.length >= 2 && a.pts.some((p) => (p.act || []).some((x) => x.t === 'shoot')));
+  const autosSig = () => S.autos.map((a) => JSON.stringify(a.pts));
+  const mySlot = () => { const b = tbase('autos', autosSig), c = autosSig(); return c.findIndex((x, i) => x !== b[i]); };
+  const tbase = (id, init) => { S.tourBase = S.tourBase || {}; if (!(id in S.tourBase)) { S.tourBase[id] = init(); save(); } return S.tourBase[id]; };
+  const TOUR = [
+    { ch: 'Început', t: 'Bun venit în carieră', x: 'Ești managerul echipei tale FTC. Ghidul durează cam 10 minute și nu e doar de citit: vei face lucrurile pe bune, în ordinea în care contează.',
+      b: ['Te înscrii la un meet și îți comanzi terenul de antrenament', 'Accepți un sponsor și desenezi un autonom', 'Intri în eveniment și joci primul meci în simulator'] },
+    { ch: 'Început', tab: 'hub', sel: ['.tb-res'], t: 'Bani și reputație', x: 'Sus sunt cele două resurse care conduc tot jocul.',
+      b: ['Buget: cu el cumperi piese. Fiecare săptămână costă ' + WEEK_COST + ' € cu cheltuielile echipei.', 'Reputația crește cu rezultatele: deblochează piesele de top (treptele 3 și 4 cer 15 și 45 de puncte) și sponsori mai buni.', 'Bani iei din premiile evenimentelor, din contractele de sponsorizare și din antrenamente.'] },
+    { ch: 'Început', tab: 'hub', sel: ['.cr-tb .cta'], t: 'Timpul trece pe săptămâni', x: 'Butonul acesta mută jocul o săptămână înainte. Nu e un cronometru: tu hotărăști când.',
+      b: ['Piesele comandate avansează doar când treci săptămâni.', 'Evenimentele se țin sâmbăta. Nu poți sări peste ziua unui eveniment la care ești înscris.', 'Uneori apare o întâmplare (un motor ars, baterii la ofertă) și alegi cum reacționezi.'] },
+    { ch: 'Început', tab: 'hub', sel: ['.strip'], t: 'Drumul sezonului', x: 'Sezonul are patru trepte. Fiecare te duce mai sus.',
+      b: ['League Meet-uri: cinci în sezon (săpt. 2, 4, 6, 8, 10). Te înscrii la 2–5.', 'Regionala (săpt. 13) e obligatorie. Primele 3 locuri merg la Național.', 'Național (săpt. 17): primele 2 locuri merg la Mondiale.', 'Mondiale (săpt. 21): finala sezonului.'] },
+    { ch: 'Meet-uri', tab: 'event', sel: ['.cal'], t: 'Sezon: calendarul tău', x: 'Aici alegi la ce meet-uri participi. Fiecare meet are 8–20 de echipe și 6 meciuri 2 contra 2.',
+      b: ['La începutul evenimentului primești lista tuturor meciurilor: cu cine ești în alianță și în ce culoare.', 'Cele mai bune 10 scoruri din meet-uri îți dau bonus de seed la Regională.', 'Recomandat: între 2 și 5 meet-uri. Poți și să te retragi, dacă ai nevoie de timp.'] },
+    { ch: 'Meet-uri', tab: 'event', task: true, sel: ['.cal-row .cr-btn.pri'], t: 'Misiune: înscrie-te la un meet', goal: 'Înscrie-te la League Meet #1 (săpt. 2)', hint: 'Apasă „Înscrie-te” pe rândul meet-ului din calendar.',
+      done: () => enrolledAny() || !canEnroll(), ok: 'Ești înscris. Meet-ul e în săptămâna 2.' },
+    { ch: 'Robot', tab: 'robot', sel: ['.hw-grid'], t: 'Robot: upgrade în doi pași', x: 'Un upgrade nu apare pe robot imediat. Trece prin etape, cu timp între ele.',
+      b: ['1. Comanzi piesele din magazin (tableta). Livrarea durează 1–2 săptămâni, în funcție de treaptă.', '2. Când sosesc, le montezi în atelier. Montajul durează încă 1–3 săptămâni, iar atelierul face o singură lucrare odată.', 'Express: piesele ajung imediat, dar costă cu 40% mai mult.', 'Treptele de sus cer reputație. Upgrade-urile cresc viteza, intake-ul, precizia și ajutorul la țintire.'] },
+    { ch: 'Robot', tab: 'robot', task: true, sel: ['.fld'], t: 'Misiune: terenul de antrenament', x: 'Cu terenul poți face antrenamente 1 contra 1 (câștigi bani și experiență, de 2 ori pe săptămână) și poți testa autonomul. Fără el nu poți face niciuna.', goal: 'Comandă terenul de antrenament',
+      hint: 'În cardul Atelier apasă „Comandă”: se deschide magazinul din tabletă. Alege terenul de antrenament și cumpără-l (livrare standard: 1 săptămână).', done: () => !!(S.field || S.fieldOrder), ok: 'Comandat. Va ajunge după o săptămână.' },
+    { ch: 'Sponsori', tab: 'sponsors', sel: ['.cr-card.s7'], t: 'Sponsori: bani pentru obiective', x: 'Sponsorii îți propun contracte. Banii mari vin când atingi obiectivul, nu când semnezi.',
+      b: ['La semnare primești imediat un bonus (20% din sumă).', 'Obiectivele sunt de felul „scorează 20 de puncte într-un meci”, „termină în top 4” sau „răstoarnă stupul de 3 ori”.', 'Fiecare contract e valabil 2 evenimente. Dacă nu-l îndeplinești, pierzi 3 puncte de reputație.', 'Poți avea cel mult ' + MAX_SPONSORS + ' contracte active. Alege obiective pe care le poți atinge.'] },
+    { ch: 'Sponsori', tab: 'sponsors', task: true, sel: ['.cr-card.s7 .sp .cr-btn.pri'], t: 'Misiune: primul contract', goal: 'Acceptă un contract', hint: 'Citește obiectivul și suma, apoi apasă „Acceptă” la oferta care ți se pare cea mai ușoară.',
+      done: () => activeSponsors().length >= 1, ok: 'Contract semnat. Obiectivul se verifică singur după meciuri și evenimente.' },
+    { ch: 'Echipă', tab: 'team', sel: ['.crew-grid'], t: 'Echipă și caiet tehnic', x: 'Oamenii și documentația contează la fel de mult ca piesele.',
+      b: ['Șoferul, programatorul și constructorul cresc cu fiecare meci și antrenament. Fiecare nivel îmbunătățește robotul.', 'Poți antrena un membru al echipei pe 100 €.', 'Caietul tehnic se completează de 2 ori pe săptămână și contează la jurizare (regională, național, mondiale).', 'Obiectivele de sezon aduc bani și reputație.'] },
+    { ch: 'Echipă', sel: ['.sd-row', '.sd-it.more'], t: 'Tableta echipei', x: 'Tableta e telefonul echipei, mereu la îndemână.',
+      b: ['Primești notificări: meet-uri noi, sponsori, piese sosite. Vibrează și sună când contează.', 'Are magazinul de piese, harta cu meet-urile din alte regiuni, calendarul și clasamentele.'] },
+    { ch: 'Timp', tab: 'hub', task: true, sel: ['.cr-tb .cta'], t: 'Misiune: prima săptămână', x: 'Terenul a fost comandat, iar meet-ul e în săptămâna 2. Lasă timpul să treacă.', goal: 'Treci în săptămâna 2', hint: 'Apasă „Săptămâna următoare” sus. Terenul ajunge, iar azi e ziua primului meet.',
+      done: () => S.week >= 2, ok: 'Săptămâna 2. A ajuns terenul și azi e competiție.' },
+    { ch: 'Autonom', tab: 'auto', sel: ['.ap-map'], t: 'Autonom: robotul joacă singur', x: 'În primele 30 de secunde din fiecare meci robotul merge singur pe traseul tău. Punctele sigure de aici sunt un avantaj la clasament.',
+      b: ['Desenezi traseul pe teren: apasă ca să pui puncte, robotul le parcurge în ordine.', 'La fiecare punct poți adăuga o acțiune: trage în stup, ia sau depune mingi la floare, intake sau așteaptă.', 'Mingea intră în celulă doar din partea ei deschisă, deci la un punct de tragere trebuie să fii în fața celulei. Panoul „De rezolvat” îți spune ce nu merge.', 'Precizia depinde de electronică (IMU, odometrie, cameră). Cu hardware mai bun greșește mai puțin.', 'Puncte în autonom: +3 dacă pleci de lângă perete, +5 dacă parchezi în zona de încărcare, +2 pentru fiecare minge în celulă și +20 când răstorni stupul.'] },
+    { ch: 'Autonom', tab: 'auto', task: true, sel: ['#autoPanel .ap-presets', '#autoPanel .ap-newcmd'], t: 'Misiune: traseul tău', goal: 'Construiește-ți propriul traseu într-un slot (de exemplu „Auto 3”, care e gol)', hint: 'Alege un slot, apoi pune puncte pe teren, adaugă „Comandă nouă” (+) sau pornește de la un traseu gata făcut și modifică-l. Apasă ▶ ca să vezi cum merge. Trebuie să tragă cel puțin o dată.',
+      done: () => mySlot() >= 0 && hasShootAuto(), ok: 'Ai un traseu. Verifică în panou secțiunea „De rezolvat”: dacă nu e nimic acolo, traseul e corect.' },
+    { ch: 'Autonom', tab: 'auto', task: true, sel: ['#autoPanel .ap-switch'], t: 'Misiune: activează-l', goal: 'Bifează „Folosește acest autonom la meciuri”', hint: 'Autonomul bifat rulează singur la începutul fiecărui meci. Poți avea 3 salvate și alegi unul.',
+      done: () => { const m = mySlot(); return S.autoSel >= 0 && !!S.autos[S.autoSel] && S.autos[S.autoSel].pts.length >= 2 && (m < 0 || S.autoSel === m); }, ok: 'Activ. Se rulează automat la fiecare meci.' },
+    { ch: 'Autonom', tab: 'auto', task: true, sel: ['#autoPanel .cr-btn.pri.big'], t: 'Misiune: testează-l pe teren', x: 'Un traseu bun pe hartă poate ieși prost pe teren: robotul are inerție și greșește puțin. De-asta testezi.', goal: 'Testează traseul pe terenul 3D', hint: 'Apasă „Testează pe terenul 3D”. Robotul rulează traseul fără meci și afli punctele, timpul și eroarea de poziție. Revii aici cu „Înapoi la carieră”.',
+      done: () => !!S.autoTested || !S.field, ok: 'Testat. Dacă a ratat, mută punctele sau ia electronică mai bună și testează iar.' },
+    { ch: 'Meciul', tab: 'event', task: true, sel: ['.cr-card.s8 .cr-btn.pri'], t: 'Misiune: intră în eveniment', goal: 'Intră în eveniment', hint: 'E ziua meet-ului. Apasă „Intră în eveniment”: primești lista tuturor meciurilor.',
+      done: () => { const nx = nextEvent(); return !!S.event || !(nx && nx.week <= S.week); }, ok: 'Ești înăuntru. Lista meciurilor e publicată.' },
+    { ch: 'Meciul', tab: 'event', sel: ['.vs2'], t: 'Cum arată un meci', x: 'Un meci se joacă 2 contra 2: tu și un partener împotriva altor doi.',
+      b: ['Partenerul și adversarii sunt echipe din regiune conduse de AI. Vezi culoarea alianței tale.', '„Autonom la acest meci” alege traseul, iar „Strategie cu partenerul AI” spune dacă trage imediat sau adună mingi și trage în rafală.', 'Primești 3 puncte de clasament (RP) pentru victorie, 1 pentru egal, 0 pentru înfrângere. Bonus: +1 RP pentru SWARM, +1 pentru 4 stupi răsturnați și încă +1 pentru 7.', 'După cele 6 meciuri clasamentul decide, după RP și apoi după puncte.'] },
+    { ch: 'Meciul', t: 'Cum faci puncte în meci', x: 'Meciul durează 2:30: 30 de secunde de autonom, apoi conduci tu.',
+      b: ['Mingi în celula stupului: 2 puncte fiecare. Când celula se umple, stupul se răstoarnă: +20.', 'Nectarul (roșu sau albastru) merge în flori doar în ultimele 60 de secunde, altfel primești fault. Cine îl are cel mai de sus deține floarea: 2 puncte pe element.', 'Polenul din grădină valorează 1 punct. Parcarea la final aduce +5.', 'Nectarul de culoarea adversarului dă avertisment, apoi fault.', 'Tastele le vezi și le schimbi din Setări, în simulator.'] },
+    { ch: 'Meciul', tab: 'event', task: true, sel: ['.cr-card.s7 .cr-btn.pri'], t: 'Misiune: primul meci', goal: 'Joacă primul tău meci', hint: 'Apasă „Joacă meciul 1”. Se deschide simulatorul 3D. Termină meciul și apasă „Continuă cariera”: ghidul te așteaptă aici.',
+      done: () => matchCount() > tbase('mc', matchCount) || !S.event, ok: 'Primul meci e jucat!' },
+    { ch: 'Meciul', tab: 'event', t: 'După meci', x: 'Atunci se întâmplă mai multe lucruri deodată.',
+      b: ['Primești puncte de clasament, iar clasamentul se actualizează cu meciurile celorlalte echipe.', 'Sponsorii sunt verificați: dacă ai atins un obiectiv, banii vin imediat.', 'Echipa câștigă experiență, iar obiectivele de sezon avansează. Poți revedea meciul cu „Replay” din Acasă.', 'Mai ai 5 meciuri la acest meet, fiecare cu alt partener și poate altă culoare.'] },
+    { ch: 'Meciul', fin: true, t: 'Ești pe drum', x: 'De aici sezonul e al tău. Un ritm bun:',
+      b: ['Între evenimente: comandă piese, montează-le, antrenează echipa și îmbunătățește autonomul.', 'Joacă toate cele 6 meciuri la fiecare meet: ele alimentează Top 10 pentru Regională.', 'Sponsorii plătesc bine pentru obiective ușoare: verifică-i după fiecare eveniment.', 'Poți relua ghidul oricând din profil, la „Ghid de început”.'] }
+  ];
+  let tourSig = '', tourEl = null, tourI = 0, tourKey = null, tourRe = null, tourSc = 0, tourReplay = false, tourTimer = 0, tourWasDone = false;
+  const tourVisible = (n) => !!n && n.getClientRects().length > 0 && getComputedStyle(n).visibility !== 'hidden';
+  const tourTarget = (st) => { for (const q of (st.sel || [])) { const n = document.querySelector(q); if (tourVisible(n)) return n; } return null; };
+  const tourDoneNow = (st) => { try { return !!st.done(); } catch (e) { return false; } };
+  function startTour(replay) {
+    if (tourEl || !S) return;
+    document.querySelectorAll('.prof-pop').forEach((n) => n.remove());
+    tourReplay = !!replay; tourI = replay ? 0 : Math.min(Math.max(S.tourStep | 0, 0), TOUR.length - 1);
+    tourEl = el('div', { class: 'tour', role: 'dialog', 'aria-modal': 'false', 'aria-label': 'Ghid interactiv' }, el('div', { class: 'tour-hole' }), el('div', { class: 'tour-card' }));
+    document.body.append(tourEl);
+    tourKey = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); endTour(false); return; }
+      if (e.target.closest && e.target.closest('input, textarea, select, .dd-menu, .tour-card button')) return;
+      if (e.key === 'ArrowRight' || e.key === 'Enter') { const st = TOUR[tourI]; if (st.task && !tourReplay && !tourDoneNow(st)) return; e.preventDefault(); tourGo(1); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); tourGo(-1); }
+    };
+    tourRe = (e) => { if (e && e.type === 'scroll' && tourEl) { tourEl.classList.add('sc'); clearTimeout(tourSc); tourSc = setTimeout(() => tourEl && tourEl.classList.remove('sc'), 180); } placeTour(); };
+    document.addEventListener('keydown', tourKey, true); addEventListener('resize', tourRe); addEventListener('scroll', tourRe, { passive: true, capture: true });
+    tourTimer = setInterval(tourTick, 450);
+    enterTourStep(true); setTimeout(() => { if (tourEl) tourEl.classList.add('on'); }, 30);
+  }
+  function endTour(finished) {
+    if (!tourEl) return;
+    document.removeEventListener('keydown', tourKey, true); removeEventListener('resize', tourRe); removeEventListener('scroll', tourRe, { capture: true }); clearInterval(tourTimer);
+    const n = tourEl; tourEl = null; n.classList.remove('on'); setTimeout(() => n.remove(), 350);
+    if (finished) { if (!tourReplay) { S.tourFin = true; S.tourDone = true; delete S.tourStep; save(); } }
+    else if (!tourReplay) { try { sessionStorage.setItem('rbTourSnooze', '1'); } catch (e) { } }
+  }
+  function tourGo(d) {
+    const n = tourI + d;
+    if (n < 0) return;
+    if (n >= TOUR.length) return endTour(true);
+    tourI = n; if (!tourReplay) { S.tourStep = n; save(); }
+    enterTourStep(true);
+  }
+  function enterTourStep(scroll) {
+    const st = TOUR[tourI];
+    if (document.querySelector('.phone.full')) closePhone();
+    if (st.tab && tab !== st.tab) go(st.tab);
+    tourWasDone = st.task ? tourDoneNow(st) : false; tourSig = tourSigNow();
+    paintTour(scroll);
+  }
+  function tourTick() {
+    if (!tourEl) return;
+    const modal = !!document.querySelector('.cr-modal:not(.prof-pop)');
+    tourEl.classList.toggle('away', modal);
+    const st = TOUR[tourI];
+    const sg = tourSigNow(); if (sg !== tourSig) { tourSig = sg; tourWasDone = st.task ? tourDoneNow(st) : false; paintTour(false); return; }
+    if (st.sel) placeTour();
+  }
+  function placeTour() {
+    if (!tourEl) return;
+    const st = TOUR[tourI], hole = tourEl.querySelector('.tour-hole'), card = tourEl.querySelector('.tour-card'), tgt = tourTarget(st);
+    const pad = 8, vw = innerWidth, vh = innerHeight, cw = card.offsetWidth, ch = card.offsetHeight;
+    tourEl.classList.toggle('task', !!st.task);
+    const ring = (r, br) => { hole.style.cssText = 'left:' + (r.left - pad) + 'px;top:' + (r.top - pad) + 'px;width:' + (r.width + pad * 2) + 'px;height:' + (r.height + pad * 2) + 'px;border-radius:' + Math.min(br + pad, 40) + 'px;opacity:1'; };
+    const none = () => { hole.style.cssText = 'left:' + (vw / 2) + 'px;top:' + (vh / 2) + 'px;width:0;height:0;border-radius:0;opacity:' + (st.task ? 0 : 1); };
+    if (st.task) {
+      // misiunile nu blochează pagina: cardul stă într-un colț și lasă ținta liberă
+      if (tgt) { const r = tgt.getBoundingClientRect(); ring(r, parseFloat(getComputedStyle(tgt).borderTopLeftRadius) || 12); } else none();
+      card.style.left = ''; card.style.top = '';
+      const r0 = tgt ? tgt.getBoundingClientRect() : null, side = vw < 700 ? null : { l: 108, t: vh - ch - 20, r: 108 + cw, b: vh - 20 };
+      const hit = r0 && side && r0.right > side.l - 10 && r0.left < side.r + 10 && r0.bottom > side.t - 10 && r0.top < side.b + 10;
+      tourEl.classList.toggle('alt', !!hit);
+      return;
+    }
+    tourEl.classList.remove('alt');
+    if (!tgt) { none(); card.style.left = Math.max(12, (vw - cw) / 2) + 'px'; card.style.top = Math.max(12, (vh - ch) / 2) + 'px'; return; }
+    const r = tgt.getBoundingClientRect(); ring(r, parseFloat(getComputedStyle(tgt).borderTopLeftRadius) || 12);
+    let x, y; const gap = 22, wide = r.width > vw * 0.4 || vw < 700 || (r.top < 140 && r.left > 120);
+    if (!wide && r.right + gap + cw < vw) { x = r.right + gap + pad; y = r.top + r.height / 2 - ch / 2; }
+    else if (!wide && r.left - gap - cw > 0) { x = r.left - gap - cw - pad; y = r.top + r.height / 2 - ch / 2; }
+    else if (r.bottom + gap + ch < vh) { x = r.left + r.width / 2 - cw / 2; y = r.bottom + gap + pad; }
+    else if (r.top - gap - ch > 0) { x = r.left + r.width / 2 - cw / 2; y = r.top - gap - ch - pad; }
+    else { x = r.left + r.width / 2 - cw / 2; y = vh - ch - 12; }
+    card.style.left = Math.max(12, Math.min(vw - cw - 12, x)) + 'px'; card.style.top = Math.max(12, Math.min(vh - ch - 12, y)) + 'px';
+  }
+  function tourStartPlay(action) {
+    endTour(true);
+    if (action === 'robot') go('robot'); else if (action === 'event') go('event'); else if (action === 'auto') go('auto');
+  }
+  function paintTour(scroll) {
+    if (!tourEl) return;
+    const st = TOUR[tourI], card = tourEl.querySelector('.tour-card'), tgt = tourTarget(st), done = st.task ? tourDoneNow(st) : true;
+    tourEl.classList.toggle('task', !!st.task); tourEl.classList.toggle('fin', !!st.fin);
+    if (tgt && scroll) { const r0 = tgt.getBoundingClientRect(); if (r0.top < 70 || r0.bottom > innerHeight - 90) tgt.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    const chapters = []; TOUR.forEach((s) => { if (!chapters.includes(s.ch)) chapters.push(s.ch); });
+    const head = el('div', { class: 'tour-head' }, el('span', { class: 'tour-ch', text: st.ch }), el('span', { class: 'tour-k', text: (tourI + 1) + ' / ' + TOUR.length }),
+      el('button', { class: 'tour-x', 'aria-label': 'Închide ghidul', title: 'Închide (reiei de unde ai rămas)', onclick: () => endTour(false) }, icon('x')));
+    const bar = el('div', { class: 'tour-bar', 'aria-hidden': 'true' }, el('i', { style: 'width:' + Math.round(((tourI + (done ? 1 : 0.5)) / TOUR.length) * 100) + '%' }));
+    const body = [el('h3', { text: st.t })];
+    if (st.x) body.push(el('p', { text: st.x }));
+    if (st.b) body.push(el('ul', { class: 'tour-ul' }, st.b.map((t) => el('li', { text: t }))));
+    if (st.task) {
+      const elsewhere = st.tab && tab !== st.tab;
+      body.push(el('div', { class: 'tour-goal' + (done ? ' ok' : '') },
+        el('span', { class: 'tour-chk' }, done ? icon('check') : null),
+        el('div', null, el('b', { text: st.goal }), el('small', { text: done ? st.ok : st.hint })),
+        !done && elsewhere ? el('button', { class: 'cr-btn', onclick: () => { go(st.tab); setTimeout(() => placeTour(), 60); } }, 'Du-mă acolo') : null));
+    }
+    if (st.fin) {
+      body.push(el('div', { class: 'tour-todo' }, [['robot', 'Robot', 'Comandă primul upgrade'], ['auto', 'Autonom', 'Rafinează traseul'], ['event', 'Sezon', 'Continuă meciurile']].map(([a, t, s]) =>
+        el('button', { class: 'tour-step', onclick: () => tourStartPlay(a) }, el('b', { text: t[0] }), el('span', null, el('strong', { text: t }), el('small', { text: s })), icon('chevronR', 'chev')))));
+    }
+    const nav = el('div', { class: 'tour-nav' },
+      tourI > 0 ? el('button', { class: 'tour-skip', onclick: () => tourGo(-1) }, 'Înapoi') : null,
+      el('span', { class: 'tour-sp' }),
+      st.task && !done && tourReplay ? el('button', { class: 'tour-skip', onclick: () => tourGo(1) }, 'Sari peste') : null,
+      st.fin ? el('button', { class: 'cr-btn pri', onclick: () => endTour(true) }, 'Începe sezonul') : el('button', { class: 'cr-btn pri' + (st.task && done ? ' pulse' : ''), disabled: st.task && !done && !tourReplay, onclick: () => tourGo(1) }, tourI === 0 ? 'Începe ghidul' : st.task ? (done ? 'Continuă' : 'Fă misiunea') : 'Mai departe'));
+    card.replaceChildren(head, bar, ...body, nav);
+    card.classList.remove('swap'); void card.offsetWidth; card.classList.add('swap');
+    placeTour(); if (scroll) { [180, 420, 800].forEach((ms) => setTimeout(placeTour, ms)); }
+    if (!st.task) { const first = card.querySelector('.cr-btn.pri, .tour-step'); if (first) first.focus({ preventScroll: true }); }
+  }
+  const tourSigNow = () => { const st = TOUR[tourI]; return (st.task ? tourDoneNow(st) : '') + '|' + (st.tab ? tab === st.tab : ''); };
+  function tourAfterRender() {
+    if (!tourEl) return;
+    const sg = tourSigNow(); if (sg !== tourSig) { tourSig = sg; tourWasDone = TOUR[tourI].task ? tourDoneNow(TOUR[tourI]) : false; paintTour(false); }
+    [0, 120, 360].forEach((ms) => setTimeout(placeTour, ms));
+  }
+  function maybeTour() {
+    if (tourEl) return tourAfterRender();
+    if (!S || !S.region || S.tourFin || S.pending || S.lastMatch || S.summary || S.card != null) return;
+    if (S.tourStep == null && (S.week > 1 || S.history.length || matchCount() > 0 || S.tourDone)) { S.tourFin = true; save(); return; }   // carieră începută înainte de ghid
+    try { if (sessionStorage.getItem('rbTourSnooze')) return; } catch (e) { }
+    if (document.querySelector('.cr-modal')) return;
+    setTimeout(() => { if (!tourEl && S && !S.tourFin && !document.querySelector('.cr-modal') && document.querySelector('.cr-shell')) { if (S.tourStep == null) { S.tourStep = 0; save(); } startTour(false); } }, 900);
   }
 
   // ---------- render ----------
@@ -1939,6 +2125,7 @@
     if (renderedTab !== tab) { renderedTab = tab; const mn = app.querySelector('.cr-main'); if (mn) { mn.classList.add('enter'); setTimeout(() => mn.classList.remove('enter'), 1300); } }
     if (S.lastMatch) showMatchResult(); else if (S.summary) showSummary(); else if (S.card != null) showCard();
     ensurePhone(); if (S.alertNew) { S.alertNew = false; alertPhone(); } else paintPhone();
+    maybeTour();
   }
 
   // ---------- boot: pick up a finished match from the game ----------
