@@ -1,0 +1,74 @@
+/* roLERbot · subsol animat (se încarcă după site-flat.css). Mișcarea folosește doar transform / opacitate și se oprește când subsolul nu se vede;
+   totul e dezactivat la „mișcare redusă”. */
+
+.footer { position: relative; isolation: isolate; }
+
+.f-fx { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 6; pointer-events: none; }
+
+/* ───── titlul și săgeata ───── */
+.footer-talk { position: relative; }
+.footer-talk a.f-arrow { background-image: none; background-size: auto; position: absolute; right: 0; bottom: .12em; width: clamp(56px, 8vw, 128px); aspect-ratio: 1; display: grid; place-items: center; padding: clamp(14px, 2vw, 30px); border-radius: 50%; background-color: var(--pink); color: #0b0b0d;
+  box-shadow: 5px 5px 0 var(--hard); transition: rotate .5s cubic-bezier(.34, 1.56, .5, 1), box-shadow .25s, background-color .25s; animation: fNudge 3.4s ease-in-out infinite; animation-play-state: paused; }
+.footer.f-vis .footer-talk a.f-arrow { animation-play-state: running; }
+@keyframes fNudge { 0%, 70%, 100% { translate: 0 0; } 80% { translate: 6px -6px; } 90% { translate: 0 0; } }
+.footer-talk a.f-arrow:hover, .footer-talk:has(a:hover) a.f-arrow { rotate: 45deg; background-color: var(--cream); box-shadow: 8px 8px 0 var(--pink); animation: none; }
+@media (max-width: 700px) { .footer-talk a.f-arrow { position: static; display: grid; margin-top: 22px; width: 64px; } }
+.f-toast { position: fixed; left: 50%; bottom: 28px; z-index: 400; max-width: calc(100vw - 32px); padding: 14px 22px; border-radius: 999px; background: #f4f1ea; color: #0b0b0d; font: 700 14px var(--f-head, system-ui); box-shadow: 4px 4px 0 var(--pink); translate: -50% 140%; opacity: 0; transition: translate .45s cubic-bezier(.34, 1.56, .5, 1), opacity .25s; pointer-events: none; }
+.f-toast.on { translate: -50% 0; opacity: 1; }
+
+/* ───── linkuri: restul se estompează, cel de sub cursor primește linie ───── */
+.footer-list a { background: linear-gradient(currentColor, currentColor) 0 100% / 0 2px no-repeat; padding-bottom: 2px; transition: color .3s, transform .4s cubic-bezier(.34, 1.56, .5, 1), opacity .3s, background-size .45s cubic-bezier(.16, 1, .3, 1); }
+.footer-list a:hover, .footer-list a:focus-visible { background-size: 100% 2px; }
+.socials { gap: 10px; }
+.socials a { position: relative; transition: transform .35s cubic-bezier(.34, 1.56, .5, 1), background .25s, box-shadow .25s, color .25s; }
+.socials a:hover, .socials a:focus-visible { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--hard); background: var(--pink); color: #fff; }
+
+/* ───── cuvântul mare: roz; cursorul îl pictează cu alb (masca vine dintr-un canvas desenat în footer-fx.js) ───── */
+.footer .footer-mark, .footer .footer-mark.in { position: relative; z-index: 1; cursor: default; touch-action: pan-y; -webkit-user-select: none; user-select: none; margin-bottom: 0; padding: .2em 0 .08em; margin-top: -.2em; line-height: .82; color: transparent; -webkit-text-stroke: 2px #f9056c; transition: color 1s ease .2s; }
+.footer.f-in .footer-mark, .footer.f-in .footer-mark.in { color: #f9056c; }
+.footer-mark .f-ink { position: absolute; inset: 0; padding-top: .2em; text-align: center; color: #fff; -webkit-text-stroke: 2px #fff; pointer-events: none;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/%3E"); mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/%3E");
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+@media (prefers-reduced-motion: reduce) { .footer-mark:hover { color: #fff; } }
+.footer-bottom { position: relative; z-index: 2; padding: 22px 0; }
+
+/* ───── „sus”: cerc cu săgeată; inelul se umple pe măsură ce derulezi ───── */
+.footer-bottom { align-items: center; }
+.footer .to-top { display: inline-flex; align-items: center; gap: 14px; padding: 0; color: var(--pink-hi); font-weight: 700; letter-spacing: .14em; line-height: 1; -webkit-tap-highlight-color: transparent; }
+.tt-ring { position: relative; display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 50%; color: var(--pink-hi); transition: background .3s, color .3s, transform .4s cubic-bezier(.34, 1.56, .5, 1); }
+.tt-ring::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(var(--pink) calc(var(--p, 0) * 360deg), rgba(244, 241, 234, .18) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px)); }
+.tt-ring svg { position: relative; width: 20px; height: 20px; }
+.to-top:hover .tt-ring, .to-top:focus-visible .tt-ring { background: var(--pink); color: #fff; transform: translateY(-3px); }
+.to-top:hover .tt-ring svg { animation: ttUp .8s cubic-bezier(.5, 0, .3, 1) infinite; }
+@keyframes ttUp { 0% { transform: translateY(0); } 45% { transform: translateY(-9px); opacity: 0; } 46% { transform: translateY(9px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+.to-top:hover { color: #fff; }
+
+/* ───── intrare pe rând (doar dacă JS rulează, ca fără el să se vadă tot) ───── */
+.footer.f-js:not(.f-in) :is(.footer-cols > div, .footer-bottom) { opacity: 0; translate: 0 32px; }
+.footer.f-js :is(.footer-cols > div, .footer-bottom) { transition: opacity .8s cubic-bezier(.16, 1, .3, 1) calc(var(--i, 0) * 110ms + 100ms), translate .9s cubic-bezier(.16, 1, .3, 1) calc(var(--i, 0) * 110ms + 100ms); }
+.footer.f-js .footer-bottom { --i: 5; }
+.footer.f-in .footer-cols li, .footer.f-in .socials a { animation: fLi .7s cubic-bezier(.16, 1, .3, 1) calc(var(--i, 0) * 110ms + var(--j, 0) * 45ms + 250ms) backwards; }
+@keyframes fLi { from { opacity: 0; translate: -14px 0; } }
+
+/* ───── tablete și telefoane ───── */
+@media (min-width: 701px) and (max-width: 1000px) { .footer-cols { grid-template-columns: 1fr 1fr; gap: 44px 32px; } }
+@media (max-width: 700px) {
+  .footer.acc-on .footer-cols { gap: 0; margin-top: 44px; padding-bottom: 28px; }
+  .footer.acc-on .footer-cols > div:not(:first-child) { border-top: 2px solid var(--line); }
+  .footer.acc-on .footer-cols > div:first-child { padding-bottom: 28px; }
+  .footer.acc-on .footer-cols > div:not(:first-child) > h4 { display: flex; justify-content: space-between; align-items: center; margin: 0; padding: 20px 0; cursor: pointer; color: var(--ink); font-size: 13px; -webkit-tap-highlight-color: transparent; }
+  .footer.acc-on .footer-cols > div:not(:first-child) > h4::after { content: '+'; font: 400 28px/1 var(--f-head); color: var(--pink-hi); transition: rotate .35s cubic-bezier(.34, 1.56, .5, 1); }
+  .footer.acc-on .footer-cols > div.open > h4::after { rotate: 135deg; }
+  .footer.acc-on .footer-cols > div:not(:first-child) .footer-list { max-height: 0; overflow: hidden; opacity: 0; padding: 0; transition: max-height .55s cubic-bezier(.16, 1, .3, 1), opacity .3s, padding .4s; }
+  .footer.acc-on .footer-cols > div.open .footer-list { max-height: 720px; opacity: 1; padding-bottom: 22px; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .footer-mark { margin-top: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .to-top:hover .tt-ring svg { animation: none; }
+  .f-fx { display: none; }
+  .footer-talk a.f-arrow { animation: none; }
+  .footer.f-js:not(.f-in) :is(.footer-cols > div, .footer-bottom) { opacity: 1; translate: none; }
+  .footer.f-in .footer-cols li, .footer.f-in .socials a { animation: none; }
+}
